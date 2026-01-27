@@ -1,0 +1,217 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@theme inline {
+  --animate-first: moveVertical 30s ease infinite;
+  --animate-second: moveInCircle 20s reverse infinite;
+  --animate-third: moveInCircle 40s linear infinite;
+  --animate-fourth: moveHorizontal 40s ease infinite;
+  --animate-fifth: moveInCircle 20s ease infinite;
+  @keyframes shine {
+  0% {
+    background-position: 0% 0%;
+    }
+  50% {
+    background-position: 100% 100%;
+    }
+  to {
+    background-position: 0% 0%;
+    }
+  }
+  @keyframes rainbow {
+  0% {
+    background-position: 0%;
+    }
+  100% {
+    background-position: 200%;
+    }
+  }
+}
+
+@keyframes moveHorizontal {
+  0% {
+    transform: translateX(-50%) translateY(-10%);
+  }
+  50% {
+    transform: translateX(50%) translateY(10%);
+  }
+  100% {
+    transform: translateX(-50%) translateY(-10%);
+  }
+}
+
+@keyframes moveInCircle {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes moveVertical {
+  0% {
+    transform: translateY(-50%);
+  }
+  50% {
+    transform: translateY(50%);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+@layer base {
+  :root {
+    /* Corporate Design System - All colors in HSL */
+    --background: 0 0% 98%;
+    --foreground: 215 25% 15%;
+    --text:  215 30% 8%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    /* Professional blue palette */
+    --primary: 217 95% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 215 15% 92%;
+    --secondary-foreground: 215 25% 15%;
+
+    --muted: 215 15% 95%;
+    --muted-foreground: 215 15% 45%;
+
+    --accent: 214 95% 96%;
+    --accent-foreground: 214 95% 40%;
+
+    --destructive: 0 62% 46%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 15% 88%;
+    --input: 215 15% 88%;
+    --ring: 214 95% 50%;
+
+    --radius: 0.5rem;
+
+    /* Sidebar specific tokens */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 25% 25%;
+    --sidebar-primary: 214 95% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 95% 96%;
+    --sidebar-accent-foreground: 214 95% 40%;
+    --sidebar-border: 215 15% 90%;
+    --sidebar-ring: 214 95% 50%;
+    --sidebar-user-card: 215 15% 96%;
+
+    /* Page background */
+    --page-background: 215 20% 96%;
+    --color-1: oklch(66.2% 0.225 25.9);
+    --color-2: oklch(60.4% 0.26 302);
+    --color-3: oklch(69.6% 0.165 251);
+    --color-4: oklch(80.2% 0.134 225);
+    --color-5: oklch(90.7% 0.231 133);
+  }
+
+  .dark {
+    --background: 215 30% 8%;
+    --foreground: 215 10% 95%;
+    --text: 215 10% 90%;
+
+    --card: 215 28% 12%;
+    --card-foreground: 215 10% 95%;
+
+    --popover: 215 28% 12%;
+    --popover-foreground: 215 10% 95%;
+
+    --primary: 214 95% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 215 20% 18%;
+    --secondary-foreground: 215 10% 95%;
+
+    --muted: 215 20% 16%;
+    --muted-foreground: 215 10% 60%;
+
+    --accent: 215 20% 18%;
+    --accent-foreground: 214 95% 65%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 20% 20%;
+    --input: 215 20% 20%;
+    --ring: 214 95% 55%;
+
+    /* Fundo da lista */
+  --ant-list-bg: hsl(var(--card));
+  /* Cor da borda da lista */
+  --ant-list-border-color: hsl(var(--border));
+  /* Cor do texto */
+  --ant-list-color: hsl(var(--foreground));
+
+  .dark.ant-list {
+  background-color: var(--ant-list-bg) !important;
+  border: 1px solid var(--ant-list-border-color) !important;
+  border-radius: var(--radius);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.ant-list-item {
+  border-bottom: 1px solid var(--ant-list-border-color) !important;
+}
+
+.ant-list-item-meta-title,
+.ant-list-item-meta-description {
+  color: var(--ant-list-color) !important;
+}
+
+
+    /* Sidebar dark theme */
+    --sidebar-background: 215 28% 10%;
+    --sidebar-foreground: 215 10% 90%;
+    --sidebar-primary: 214 95% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 20% 16%;
+    --sidebar-accent-foreground: 214 95% 65%;
+    --sidebar-border: 215 20% 18%;
+    --sidebar-ring: 214 95% 55%;
+    --sidebar-user-card: 215 25% 14%;
+
+    --page-background: 215 28% 6%;
+
+    --color-1: oklch(66.2% 0.225 25.9);
+
+    --color-2: oklch(60.4% 0.26 302);
+
+    --color-3: oklch(69.6% 0.165 251);
+
+    --color-4: oklch(80.2% 0.134 225);
+
+    --color-5: oklch(90.7% 0.231 133);
+  }
+  .theme {
+    --animate-shine: shine var(--duration) infinite linear;
+    --animate-rainbow: rainbow var(--speed, 2s) infinite linear;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+::view-transition-old(root), ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}
