@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Calendar, Package, ShoppingCart, FileText, Users, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Package, ShoppingCart,Cpu, Store,ChartArea,SearchCheck, Users, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from "@/context/Authcontext";
 import { UserCard } from './UserCard';
@@ -18,9 +18,11 @@ const getInitials = (name: string = "") => {
 
 // Lista de navegação com permissões
 const navigation = [
-  { name: 'Agendamentos', href: '/appointments', icon: Calendar, roles: undefined },
-  { name: 'Produtos', href: '/products', icon: ShoppingCart, roles: undefined },
-  { name: 'Clientes', href: '/clients', icon: FileText, roles: [Roles.ADMIN, Roles.SUPPORT] },
+  { name: 'Agendamentos', href: '/appointments', icon: Calendar, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION] },
+  { name: 'Validação', href: '/validation', icon: SearchCheck, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION] },
+  { name: 'Relatórios', href: '/reports', icon: ChartArea, roles: [Roles.ADMIN] },
+  { name: 'Produtos', href: '/products', icon: Cpu, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION] },
+  { name: 'Clientes', href: '/clients', icon: Store , roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION] },
   { name: 'Usuários', href: '/users', icon: Users, roles: [Roles.ADMIN] },
 ];
 

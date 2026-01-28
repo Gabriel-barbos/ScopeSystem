@@ -94,7 +94,6 @@ const ScheduleDrawer = ({
   const { updateSchedule, deleteSchedule } = useScheduleService();
   const queryClient = useQueryClient();
 
-  // Carregar clientes e produtos quando entrar no modo de edição
   useEffect(() => {
     if (isEditing && schedule) {
       loadData();
@@ -147,7 +146,6 @@ const ScheduleDrawer = ({
     if (!editedSchedule) return;
 
     try {
-      // Preparar o payload convertendo os dados relacionados para IDs
       const payload: SchedulePayload = {
         plate: editedSchedule.plate,
         vin: editedSchedule.vin,
@@ -176,7 +174,6 @@ const ScheduleDrawer = ({
 
       toast.success("Agendamento atualizado com sucesso!");
 
-      // Invalidar queries para atualizar a lista
       queryClient.invalidateQueries({ queryKey: ["schedules"] });
       queryClient.invalidateQueries({ queryKey: ["schedule", editedSchedule._id] });
 
@@ -223,7 +220,6 @@ const ScheduleDrawer = ({
   const currentData = isEditing ? editedSchedule : schedule;
   if (!currentData) return null;
 
-  // Encontrar cliente e produto selecionados
   const selectedClient = clients.find(
     (c) => c._id === (typeof currentData.client === 'string' ? currentData.client : currentData.client._id)
   );

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SquareUser, SatelliteDish, Plus, Search, SquarePen, CirclePlus, ShoppingCart, MoreVertical, Plug2, Pen, Trash, Cable } from "lucide-react";
+import { Cpu , SatelliteDish, Plus, Search, SquarePen, CirclePlus, ShoppingCart, MoreVertical, Plug2, Pen, Trash, Cable } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -145,7 +145,7 @@ export default function Products() {
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-            <ShoppingCart className="h-6 w-6 text-primary" aria-hidden="true" />
+            <Cpu className="h-6 w-6 text-primary" aria-hidden="true" />
           </div>
           <div>
             <CardTitle className="text-2xl">Produtos</CardTitle>

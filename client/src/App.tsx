@@ -1,5 +1,5 @@
-import { Toaster as ShadcnToaster } from "@/components/ui/toaster"; // Para Login
-import { Toaster } from "@/components/ui/sonner"; // Para o resto
+import { Toaster as ShadcnToaster } from "@/components/ui/toaster"; 
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -12,7 +12,8 @@ import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/Login";
 import Reports from "./pages/Reports";
-
+import Validation
+ from "./pages/Validation";
 import { AuthProvider } from "@/context/Authcontext";
 import { AntdThemeProvider } from "@/providers/AntdThemeProvider";
 
@@ -93,6 +94,17 @@ const App = () => (
                 <PrivateRoute roles={[Roles.ADMIN]}>
                   <Layout>
                     <Users />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+
+                  <Route
+              path="/validation"
+              element={
+                <PrivateRoute roles={[Roles.ADMIN]}>
+                  <Layout>
+                    <Validation />
                   </Layout>
                 </PrivateRoute>
               }
