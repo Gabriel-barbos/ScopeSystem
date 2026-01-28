@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, X, Calendar, User } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -15,6 +16,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Schedule } from "@/services/ScheduleService";
+import { cn } from "@/lib/utils";
 
 interface ScheduleAutocompleteProps {
   schedules: Schedule[];
@@ -32,16 +34,23 @@ export function ScheduleAutocomplete({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
+  // Sincronizar valor do input com agendamento selecionado
+  useEffect(() => {
+    if (selectedSchedule) {
+      setSearchValue(selectedSchedule.plate || selectedSchedule.vin);
+    }
+  }, [selectedSchedule]);
+
   // Debounce para abrir o popover apenas após parar de digitar
   useEffect(() => {
-    if (searchValue.trim().length > 0) {
+    if (searchValue.trim().length > 0 && !selectedSchedule) {
       const timer = setTimeout(() => {
         setOpen(true);
-      }, 300); // 300ms de delay
+      }, 300);
 
       return () => clearTimeout(timer);
     }
-  }, [searchValue]);
+  }, [searchValue, selectedSchedule]);
 
   // Filtrar agendamentos baseado na busca (chassi ou placa)
   const filteredSchedules = useMemo(() => {
@@ -51,7 +60,8 @@ export function ScheduleAutocomplete({
     return schedules.filter(
       (schedule) =>
         schedule.vin.toLowerCase().includes(search) ||
-        schedule.plate?.toLowerCase().includes(search)
+        schedule.plate?.toLowerCase().includes(search) ||
+        schedule.client.name.toLowerCase().includes(search)
     );
   }, [schedules, searchValue]);
 
@@ -69,16 +79,34 @@ export function ScheduleAutocomplete({
     }
   };
 
+  const handleClear = () => {
+    setSearchValue("");
+    onSelect(null);
+    setOpen(false);
+  };
+
   const handleInputFocus = () => {
-    if (searchValue.trim().length > 0) {
+    if (searchValue.trim().length > 0 && !selectedSchedule) {
       setOpen(true);
     }
   };
 
+  // Formatar data para exibição
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
   return (
-    <div className="flex-1 max-w-sm">
-      <Label htmlFor="search" className="text-sm text-muted-foreground mb-2 block">
-        Buscar veículo
+    <div className="flex-1 w-full">
+      <Label
+        htmlFor="search"
+        className="text-sm font-medium text-foreground mb-2 block"
+      >
+        Buscar agendamento
       </Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -91,34 +119,100 @@ export function ScheduleAutocomplete({
             <Input
               id="search"
               type="text"
-              placeholder="Digite o chassi ou a placa"
-              className="pl-9 h-10"
+              placeholder="Digite o chassi, placa ou nome do cliente"
+              className={cn(
+                "pl-9 pr-9 h-11 transition-all",
+                selectedSchedule && "border-primary bg-primary/5"
+              )}
               value={searchValue}
               onChange={(e) => handleInputChange(e.target.value)}
               onFocus={handleInputFocus}
               disabled={isLoading}
             />
+            {searchValue && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:bg-muted"
+                onClick={handleClear}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Limpar</span>
+              </Button>
+            )}
           </div>
         </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <PopoverContent
+          className="w-[var(--radix-popover-trigger-width)] p-0"
+          align="start"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <Command shouldFilter={false}>
             <CommandList>
-              <CommandEmpty>Nenhum agendamento encontrado.</CommandEmpty>
+              <CommandEmpty className="py-6 text-center text-sm">
+                <div className="flex flex-col items-center gap-2">
+                  <Search className="h-8 w-8 text-muted-foreground" />
+                  <p className="text-muted-foreground">
+                    Nenhum agendamento encontrado
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Tente buscar por chassi, placa ou nome do cliente
+                  </p>
+                </div>
+              </CommandEmpty>
               <CommandGroup>
                 {filteredSchedules.map((schedule) => (
                   <CommandItem
                     key={schedule._id}
                     value={schedule._id}
                     onSelect={() => handleSelect(schedule)}
-                    className="cursor-pointer"
+                    className="cursor-pointer px-4 py-3 aria-selected:bg-accent"
                   >
-                    <div className="flex flex-col">
-                      <span className="font-medium">
-                        {schedule.plate || "Sem placa"} - {schedule.vin}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {schedule.client.name} • {schedule.serviceType}
-                      </span>
+                    <div className="flex flex-col gap-2 w-full">
+                      {/* Linha 1: Placa/Chassi e Modelo */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-foreground">
+                            {schedule.plate || "Sem placa"}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            •
+                          </span>
+                          <span className="text-sm text-muted-foreground font-mono">
+                            {schedule.vin}
+                          </span>
+                        </div>
+                        {schedule.model && (
+                          <span className="text-xs text-muted-foreground">
+                            {schedule.model}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Linha 2: Cliente e Tipo de Serviço */}
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          <span>{schedule.client.name}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>{formatDate(schedule.date)}</span>
+                        </div>
+                      </div>
+
+                      {/* Linha 3: Badge do tipo de serviço */}
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                          {schedule.serviceType}
+                        </span>
+                        {schedule.status && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                            {schedule.status}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </CommandItem>
                 ))}
@@ -127,6 +221,21 @@ export function ScheduleAutocomplete({
           </Command>
         </PopoverContent>
       </Popover>
+
+      {/* Dica de busca */}
+      {!selectedSchedule && !searchValue && (
+        <p className="text-xs text-muted-foreground mt-2">
+          Digite pelo menos 3 caracteres para começar a busca
+        </p>
+      )}
+
+      {/* Feedback de agendamento selecionado */}
+      {selectedSchedule && (
+        <div className="mt-2 flex items-center gap-2 text-xs text-primary">
+          <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+          <span className="font-medium">Agendamento selecionado</span>
+        </div>
+      )}
     </div>
   );
 }
