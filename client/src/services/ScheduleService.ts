@@ -33,13 +33,25 @@ export interface SchedulePayload {
   plate?: string;
   vin: string;
   model?: string;
-  scheduledDate?: any; // Aceita string, number ou Date
+  scheduledDate?: any;
   serviceType: string;
   notes?: string;
   client: string;
   product?: string;
   status?: "criado" | "agendado" | "concluido" | "atrasado" | "cancelado";
   createdBy?: string;
+}
+
+export interface BulkUpdatePayload {
+  vin: string;                    // obrigatório
+  status?: string;
+  client?: string;                // ObjectId
+  scheduledDate?: any;
+  model?: string;
+  plate?: string;
+  serviceType?: string;
+  product?: string;               // ObjectId
+  notes?: string;
 }
 
 export const scheduleApi = {
@@ -60,6 +72,13 @@ export const scheduleApi = {
 
   bulkCreate: async (schedules: SchedulePayload[]): Promise<{ success: boolean; count: number; message: string }> => {
     const { data } = await API.post("/schedules/bulk", { schedules });
+    return data;
+  },
+
+  bulkUpdate: async (schedules: BulkUpdatePayload[]): Promise<{
+    errors: any; success: boolean; count: number; message: string 
+}> => {
+    const { data } = await API.put("/schedules/bulk", { schedules });
     return data;
   },
 
@@ -96,6 +115,13 @@ export function useScheduleService() {
     },
   });
 
+  const bulkUpdateSchedules = useMutation({
+    mutationFn: scheduleApi.bulkUpdate,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["schedules"] });
+    },
+  });
+
   const updateSchedule = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: SchedulePayload }) => 
       scheduleApi.update(id, payload),
@@ -114,7 +140,8 @@ export function useScheduleService() {
   return {
     ...schedules,
     createSchedule,
-    bulkCreateSchedules, 
+    bulkCreateSchedules,
+    bulkUpdateSchedules, 
     updateSchedule,
     deleteSchedule,
   };

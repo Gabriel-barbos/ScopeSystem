@@ -29,7 +29,7 @@ export function ValidationSuccessModal({
               <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-500" />
             </div>
             <DialogTitle className="text-center text-xl">
-              Validação realizada com sucesso!
+              Veiculo validado com sucesso!
             </DialogTitle>
           </div>
           <DialogDescription className="text-center">

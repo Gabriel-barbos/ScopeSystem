@@ -24,7 +24,7 @@ export function ScheduleDetails({
   const ServiceIcon = service.icon;
 
   return (
-    <div className="space-y-6">
+<div className="flex flex-col gap-6 min-h-0">
       {/* Informações do Veículo */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -88,14 +88,18 @@ export function ScheduleDetails({
       )}
 
       {/* Separador antes do formulário */}
-      <Separator className="my-6" />
+<Separator />
 
       {/* Formulário de Validação */}
+      <div className="flex flex-col min-h-0">
+
       <ValidationForm
         onSubmit={onValidationSubmit}
         onCancel={onValidationCancel}
         isSubmitting={isSubmitting}
       />
+      </div>
+
     </div>
   );
 }

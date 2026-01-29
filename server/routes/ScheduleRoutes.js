@@ -5,6 +5,7 @@ const router = Router();
 
 router.post("/", ScheduleController.create);
 router.post("/bulk", ScheduleController.bulkCreate)
+router.put("/bulk", ScheduleController.bulkUpdate);
 router.get("/", ScheduleController.list);
 router.get("/:id", ScheduleController.findById);
 router.put("/:id", ScheduleController.update);

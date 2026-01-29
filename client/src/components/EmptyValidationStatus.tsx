@@ -8,7 +8,7 @@ export function EmptyValidationState() {
       </div>
       
       <h3 className="text-lg font-semibold text-foreground mb-2">
-        Selecione um agendamento para validar
+        Selecione um veiculo para validar
       </h3>
       
       <p className="text-sm text-muted-foreground text-center max-w-md mb-8">

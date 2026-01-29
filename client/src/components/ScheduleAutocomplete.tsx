@@ -52,18 +52,22 @@ export function ScheduleAutocomplete({
     }
   }, [searchValue, selectedSchedule]);
 
-  // Filtrar agendamentos baseado na busca (chassi ou placa)
-  const filteredSchedules = useMemo(() => {
-    if (!searchValue.trim()) return [];
+const filteredSchedules = useMemo(() => {
+  if (!searchValue.trim()) return [];
 
-    const search = searchValue.toLowerCase().trim();
-    return schedules.filter(
+  const search = searchValue.toLowerCase().trim();
+
+  return schedules
+    .filter(
+      (schedule) => schedule.serviceType !== "removal"
+    )
+    .filter(
       (schedule) =>
         schedule.vin.toLowerCase().includes(search) ||
         schedule.plate?.toLowerCase().includes(search) ||
         schedule.client.name.toLowerCase().includes(search)
     );
-  }, [schedules, searchValue]);
+}, [schedules, searchValue]);
 
   const handleSelect = (schedule: Schedule) => {
     onSelect(schedule);
@@ -91,14 +95,7 @@ export function ScheduleAutocomplete({
     }
   };
 
-  // Formatar data para exibição
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
+
 
   return (
     <div className="flex-1 w-full">
@@ -190,28 +187,12 @@ export function ScheduleAutocomplete({
                         )}
                       </div>
 
-                      {/* Linha 2: Cliente e Tipo de Serviço */}
+                      {/* Cliente e Tipo de Serviço */}
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <User className="h-3 w-3" />
                           <span>{schedule.client.name}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          <span>{formatDate(schedule.date)}</span>
-                        </div>
-                      </div>
-
-                      {/* Linha 3: Badge do tipo de serviço */}
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                          {schedule.serviceType}
-                        </span>
-                        {schedule.status && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                            {schedule.status}
-                          </span>
-                        )}
                       </div>
                     </div>
                   </CommandItem>
@@ -221,14 +202,6 @@ export function ScheduleAutocomplete({
           </Command>
         </PopoverContent>
       </Popover>
-
-      {/* Dica de busca */}
-      {!selectedSchedule && !searchValue && (
-        <p className="text-xs text-muted-foreground mt-2">
-          Digite pelo menos 3 caracteres para começar a busca
-        </p>
-      )}
-
       {/* Feedback de agendamento selecionado */}
       {selectedSchedule && (
         <div className="mt-2 flex items-center gap-2 text-xs text-primary">

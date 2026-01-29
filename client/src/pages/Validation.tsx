@@ -29,90 +29,73 @@ function Validation() {
     if (!selectedSchedule) return;
 
     setIsSubmitting(true);
-    
+
     try {
-      console.log("Validation data submitted:", {
-        scheduleId: selectedSchedule._id,
-        ...data,
-      });
-      
-      // Aqui você faria a chamada à API
-      // await validationService.submit(selectedSchedule._id, data);
-      
-      // Simular delay da API
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      // Mostrar modal de sucesso
+      await new Promise((resolve) => setTimeout(resolve, 800));
       setShowSuccessModal(true);
-      
-      // Toast de confirmação
       toast.success("Validação registrada com sucesso!");
     } catch (error) {
       toast.error("Erro ao validar instalação. Tente novamente.");
-      console.error("Validation error:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleValidationCancel = () => {
-    setSelectedSchedule(null);
-  };
-
-  const handleCloseSuccessModal = () => {
-    setShowSuccessModal(false);
-    // Manter o agendamento selecionado para visualização
-  };
-
-  const handleNewValidation = () => {
-    setShowSuccessModal(false);
-    setSelectedSchedule(null);
-  };
-
   return (
     <>
-      <Card className="w-full">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-              <SearchCheck className="h-6 w-6 text-primary" aria-hidden="true" />
-            </div>
-            <div>
-              <CardTitle className="text-2xl">Validação de Instalação</CardTitle>
-              <CardDescription>
-                Valide e registre os dados de instalação dos equipamentos
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Campo de busca - sempre visível */}
-          <ScheduleAutocomplete
-            schedules={schedules}
-            isLoading={isLoading}
-            onSelect={handleSelectSchedule}
-            selectedSchedule={selectedSchedule}
-          />
+      {/* 🔑 Wrapper precisa ocupar toda a altura do <main> */}
+      <div className="h-full flex flex-col">
+        <Card className="flex-1 flex flex-col">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                <SearchCheck className="h-6 w-6 text-primary" />
+              </div>
 
-          {/* Estado vazio ou detalhes do agendamento */}
-          {selectedSchedule ? (
-            <ScheduleDetails
-              schedule={selectedSchedule}
-              onValidationSubmit={handleValidationSubmit}
-              onValidationCancel={handleValidationCancel}
-              isSubmitting={isSubmitting}
+              <div>
+                <CardTitle className="text-2xl">
+                  Validação de Instalação
+                </CardTitle>
+                <CardDescription>
+                  Valide e registre os dados de instalação dos equipamentos
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+
+          {/* 🔑 Content ocupa o resto do Card */}
+          <CardContent className="flex-1 flex flex-col gap-6">
+            <ScheduleAutocomplete
+              schedules={schedules}
+              isLoading={isLoading}
+              onSelect={handleSelectSchedule}
+              selectedSchedule={selectedSchedule}
             />
-          ) : (
-            <EmptyValidationState />
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Modal de sucesso */}
+            {/* 🔑 Detalhes ocupam o espaço restante */}
+            <div className="flex-1">
+              {selectedSchedule ? (
+                <ScheduleDetails
+                  schedule={selectedSchedule}
+                  onValidationSubmit={handleValidationSubmit}
+                  onValidationCancel={() => setSelectedSchedule(null)}
+                  isSubmitting={isSubmitting}
+                />
+              ) : (
+                <EmptyValidationState />
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <ValidationSuccessModal
         open={showSuccessModal}
-        onClose={handleCloseSuccessModal}
-        onNewValidation={handleNewValidation}
+        onClose={() => setShowSuccessModal(false)}
+        onNewValidation={() => {
+          setShowSuccessModal(false);
+          setSelectedSchedule(null);
+        }}
       />
     </>
   );

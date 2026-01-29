@@ -1,4 +1,4 @@
-import { Calendar, CalendarPlus, SquarePen, CirclePlus, FileSpreadsheet } from "lucide-react";
+import { Calendar, CalendarPlus, SquarePen, CirclePlus, FileSpreadsheet, FilePen } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,11 +10,19 @@ import { useScheduleService } from "@/services/ScheduleService";
 import type { SchedulePayload } from "@/services/ScheduleService";
 import { useAuth } from "@/context/Authcontext";
 import { toast } from "sonner";
-
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { EditScheduleModal } from "@/components/schedule/EditScheduleModal";
 export default function Appointments() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const { bulkUpdateSchedules } = useScheduleService()
 
   const { bulkCreateSchedules } = useScheduleService();
   const { user } = useAuth();
@@ -54,6 +62,31 @@ export default function Appointments() {
     }
   };
 
+    const handleBulkUpdate = async (data: Record<string, any>[]) => {
+    try {
+      const result = await bulkUpdateSchedules.mutateAsync(data)
+      
+      toast.success(result.message)
+      
+      //  erros parciais
+      if (result.errors && result.errors.length > 0) {
+        toast.warning("Alguns registros apresentaram erros", {
+          description: result.errors.slice(0, 3).join(", ")
+        })
+      }
+    } catch (error: any) {
+      toast.error("Erro ao modificar agendamentos", {
+        description: error.response?.data?.error || error.message
+      })
+      
+      //
+      if (error.response?.data?.details) {
+        console.error("Detalhes dos erros:", error.response.data.details)
+      }
+      
+      throw error 
+    }
+  }
   return (
     <Card className="mx-auto">
       <CardHeader>
@@ -68,6 +101,16 @@ export default function Appointments() {
           <Button className="ml-auto" variant="outline" size="sm" onClick={() => setModalOpen(true)}>
             Importar Dados<FileSpreadsheet />
           </Button>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" onClick={() => setEditModalOpen(true)}> <FilePen /> </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Editar em Lote</p>
+            </TooltipContent>
+          </Tooltip>
+
 
           <Button size="sm" onClick={openCreate}>
             Criar Agendamento <CalendarPlus />
@@ -100,24 +143,31 @@ export default function Appointments() {
         </div>
       </CardHeader>
       <CardContent>
-<ImportModal
-  open={modalOpen}
-  onOpenChange={setModalOpen}
-  title="Importar Agendamentos"
-  templateUrl="/templates/agendamentos.xlsx"
-  templateName="template-agendamentos.xlsx"
-  onImport={handleImport}
-  columnMapping={{
-    Placa: "Placa",
-    Chassi: "Chassi",
-    Modelo: "Modelo",
-    Cliente: "Cliente",
-    Equipamento: "Equipamento",
-    TipoServico: "TipoServico",
-    Data: "Data",
-  }}
-/>
+        <ImportModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          title="Importar Agendamentos"
+          templateUrl="/templates/agendamentos.xlsx"
+          templateName="template-agendamentos.xlsx"
+          onImport={handleImport}
+          columnMapping={{
+            Placa: "Placa",
+            Chassi: "Chassi",
+            Modelo: "Modelo",
+            Cliente: "Cliente",
+            Equipamento: "Equipamento",
+            TipoServico: "TipoServico",
+            Data: "Data",
+          }}
+        />
 
+          <EditScheduleModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        templateUrl="/templates/Edit_agendamentos.xlsx"
+        templateName="template-edicao-agendamentos.xlsx"
+        onUpdate={handleBulkUpdate}
+      />
         <ScheduleTable />
       </CardContent>
     </Card>

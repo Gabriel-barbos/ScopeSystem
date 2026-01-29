@@ -25,6 +25,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+
       <AuthProvider>
         <AntdThemeProvider>
 
@@ -59,7 +60,7 @@ const App = () => (
               path="/products"
               element={
                 <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION]}>
-                  <Layout>
+                  <Layout >
                     <Products />
                   </Layout>
                 </PrivateRoute>
@@ -117,7 +118,6 @@ const App = () => (
         </BrowserRouter>
            </AntdThemeProvider>
       </AuthProvider>
-
       <ShadcnToaster /> {/* Para Login */}
       <Toaster position="bottom-right" richColors /> {/* Sonner para o resto */}
     </TooltipProvider>

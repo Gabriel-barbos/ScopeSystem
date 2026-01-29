@@ -58,7 +58,7 @@ export function ValidationForm({ onSubmit, onCancel, isSubmitting = false }: Val
         Dados de Instalação
       </h4>
 
-<form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Linha 1: ID do Equipamento + Local de Instalação */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
