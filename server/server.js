@@ -8,6 +8,7 @@ import productRoutes from "./routes/productRoutes.js";
 import clientRoutes from "./routes/clientRoutes.js";
 import userController from "./controllers/UserController.js";
 import scheduleRoutes from "./routes/ScheduleRoutes.js";
+import ServiceRoutes from "./routes/ServiceRoutes.js";
 
 dotenv.config();
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
@@ -29,6 +30,7 @@ app.use("/api/users", userController);
 app.use("/api/products", productRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/schedules", scheduleRoutes);
+app.use("/api/services", ServiceRoutes);
 
 // Servidor
 const PORT = process.env.PORT || 5000;
