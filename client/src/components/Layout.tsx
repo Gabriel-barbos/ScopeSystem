@@ -25,8 +25,10 @@ export function Layout({ children }: LayoutProps) {
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header userName={user?.name || "User"} userInitials={getInitials(user?.name)} />
         <main className="flex-1 overflow-y-auto bg-[hsl(var(--page-background))]">
-          <div className="w-full max-w-[1800px] mx-auto px-4 py-6 overflow-visible">
-            {children}
+<div 
+  className="w-full max-w-[1800px] mx-auto px-4 py-6"
+  style={{ height: 'auto', minHeight: 0 }}
+>            {children}
           </div>
         </main>
       </div>

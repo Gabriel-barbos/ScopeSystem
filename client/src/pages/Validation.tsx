@@ -7,10 +7,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SearchCheck } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { useScheduleService, Schedule } from "@/services/ScheduleService";
 import { ScheduleAutocomplete } from "@/components/ScheduleAutocomplete";
 import { ScheduleDetails } from "@/components/schedule/ScheduleDetails";
-import { ValidationFormData } from "@/components/forms/ValidationForm";
+import { ValidationForm, ValidationFormData } from "@/components/forms/ValidationForm";
 import { ValidationSuccessModal } from "@/components/ValidationSucessModal";
 import { EmptyValidationState } from "@/components/EmptyValidationStatus";
 import { toast } from "sonner";
@@ -43,51 +44,54 @@ function Validation() {
 
   return (
     <>
-      {/* 🔑 Wrapper precisa ocupar toda a altura do <main> */}
-      <div className="h-full flex flex-col">
-        <Card className="flex-1 flex flex-col">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <SearchCheck className="h-6 w-6 text-primary" />
-              </div>
-
-              <div>
-                <CardTitle className="text-2xl">
-                  Validação de Instalação
-                </CardTitle>
-                <CardDescription>
-                  Valide e registre os dados de instalação dos equipamentos
-                </CardDescription>
-              </div>
+      {/* SOLUÇÃO: style inline para forçar height auto */}
+      <Card style={{ height: 'auto', minHeight: 0, maxHeight: 'none' }}>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+              <SearchCheck className="h-6 w-6 text-primary" />
             </div>
-          </CardHeader>
 
-          {/* 🔑 Content ocupa o resto do Card */}
-          <CardContent className="flex-1 flex flex-col gap-6">
-            <ScheduleAutocomplete
-              schedules={schedules}
-              isLoading={isLoading}
-              onSelect={handleSelectSchedule}
-              selectedSchedule={selectedSchedule}
-            />
-
-            {/* 🔑 Detalhes ocupam o espaço restante */}
-            <div className="flex-1">
-              {selectedSchedule ? (
-                <ScheduleDetails
-                  schedule={selectedSchedule}
-                  onValidationSubmit={handleValidationSubmit}
-                  onValidationCancel={() => setSelectedSchedule(null)}
-                  isSubmitting={isSubmitting}
-                />
-              ) : (
-                <EmptyValidationState />
-              )}
+            <div>
+              <CardTitle className="text-2xl">
+                Validação de Instalação
+              </CardTitle>
+              <CardDescription>
+                Valide e registre os dados de instalação dos equipamentos
+              </CardDescription>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-6" style={{ height: 'auto', minHeight: 0 }}>
+          {/* Campo de busca */}
+          <ScheduleAutocomplete
+            schedules={schedules}
+            isLoading={isLoading}
+            onSelect={handleSelectSchedule}
+            selectedSchedule={selectedSchedule}
+          />
+
+          {selectedSchedule ? (
+            <>
+              {/* Informações do veículo e cliente */}
+              <ScheduleDetails schedule={selectedSchedule} />
+
+              {/* Separador */}
+              <Separator />
+
+              {/* Formulário de validação */}
+              <ValidationForm
+                onSubmit={handleValidationSubmit}
+                onCancel={() => setSelectedSchedule(null)}
+                isSubmitting={isSubmitting}
+              />
+            </>
+          ) : (
+            <EmptyValidationState />
+          )}
+        </CardContent>
+      </Card>
 
       <ValidationSuccessModal
         open={showSuccessModal}
@@ -101,4 +105,4 @@ function Validation() {
   );
 }
 
-export default Validation;
+export default Validation;  

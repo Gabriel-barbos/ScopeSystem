@@ -1,15 +1,10 @@
-import { useState } from "react";
-import { Wrench, MapPin, User, Gauge, Hash, Loader2 } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Wrench, MapPin, User, Gauge, Hash, Loader2, SatelliteDish , CheckCircle2 } from "lucide-react";
 import { InputWithIcon } from "@/components/InputWithIcon";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-
-interface ValidationFormProps {
-  onSubmit: (data: ValidationFormData) => void;
-  onCancel: () => void;
-  isSubmitting?: boolean;
-}
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 
 export interface ValidationFormData {
   equipmentId: string;
@@ -23,221 +18,151 @@ export interface ValidationFormData {
   protocolNumber: string;
 }
 
+interface ValidationFormProps {
+  onSubmit: (data: ValidationFormData) => void;
+  onCancel: () => void;
+  isSubmitting?: boolean;
+}
+
+const INITIAL_DATA: ValidationFormData = {
+  equipmentId: "",
+  installationLocation: "",
+  technicianName: "",
+  address: "",
+  hasSecondaryDevice: false,
+  secondaryDeviceId: "",
+  odometer: "",
+  blockingEnabled: true,
+  protocolNumber: "",
+};
+
+const FIELDS = [
+  { key: "equipmentId", label: "ID Equipamento", icon: Wrench, placeholder: "Digite o ID", required: true },
+  { key: "installationLocation", label: "Local de Instalação", icon: MapPin, placeholder: "Ex: Soleira do carro", required: true },
+  { key: "technicianName", label: "Técnico Responsável", icon: User, placeholder: "Nome do técnico", required: true },
+  { key: "address", label: "Endereço do Serviço", icon: MapPin, placeholder: "Endereço completo", required: true, colSpan: 2 },
+  { key: "odometer", label: "Odômetro (km)", icon: Gauge, placeholder: "Ex: 45000", type: "number" },
+  { key: "protocolNumber", label: "Nº Protocolo", icon: Hash, placeholder: "Número do protocolo" },
+] as const;
+
+const Field = ({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) => (
+  <div className="space-y-1">
+    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      {label} {required && <span className="text-destructive">*</span>}
+    </Label>
+    {children}
+  </div>
+);
+
+const ToggleButton = ({ active, onClick, label, disabled }: { active: boolean; onClick: () => void; label: string; disabled?: boolean }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+    className={cn(
+      "px-4 py-1.5 text-xs font-medium rounded-md transition-all border focus:outline-none focus:ring-2 focus:ring-primary/20",
+      active ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background text-muted-foreground border-border hover:bg-muted/50",
+      disabled && "opacity-50 cursor-not-allowed"
+    )}
+  >
+    {label}
+  </button>
+);
+
 export function ValidationForm({ onSubmit, onCancel, isSubmitting = false }: ValidationFormProps) {
-  const [hasSecondaryDevice, setHasSecondaryDevice] = useState(false);
-  const [blockingEnabled, setBlockingEnabled] = useState(true);
-  const [formData, setFormData] = useState<ValidationFormData>({
-    equipmentId: "",
-    installationLocation: "",
-    technicianName: "",
-    address: "",
-    hasSecondaryDevice: false,
-    secondaryDeviceId: "",
-    odometer: "",
-    blockingEnabled: true,
-    protocolNumber: "",
-  });
+  const [formData, setFormData] = useState(INITIAL_DATA);
+
+  const updateField = useCallback((field: keyof ValidationFormData, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      ...formData,
-      hasSecondaryDevice,
-      blockingEnabled,
-    });
+    onSubmit(formData);
   };
 
-  const handleInputChange = (field: keyof ValidationFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const toggleSecondary = () => {
+    setFormData(prev => ({
+      ...prev,
+      hasSecondaryDevice: !prev.hasSecondaryDevice,
+      secondaryDeviceId: prev.hasSecondaryDevice ? "" : prev.secondaryDeviceId,
+    }));
   };
 
   return (
-    <div className="rounded-lg border border-muted bg-muted/20 p-6">
-      <h4 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-        <Wrench className="h-4 w-4 text-primary" />
-        Dados de Instalação
-      </h4>
-
-<form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {/* Linha 1: ID do Equipamento + Local de Instalação */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="equipment-id" className="text-sm font-medium">
-              ID do Equipamento *
-            </Label>
-            <InputWithIcon
-              id="equipment-id"
-              icon={<Wrench className="h-4 w-4" />}
-              placeholder="Digite o ID do equipamento"
-              value={formData.equipmentId}
-              onChange={(e) => handleInputChange("equipmentId", e.target.value)}
-              disabled={isSubmitting}
-              required
-            />
+    <div className="rounded-xl border border-border/50 bg-gradient-to-b from-card to-card/80 shadow-sm overflow-hidden">
+      <div className="px-4 py-3 bg-muted/30 border-b border-border/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-primary/10">
+            <Wrench className="h-4 w-4 text-primary" />
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="installation-location" className="text-sm font-medium">
-              Local de Instalação *
-            </Label>
-            <InputWithIcon
-              id="installation-location"
-              icon={<MapPin className="h-4 w-4" />}
-              placeholder="Ex: Soleira do carro"
-              value={formData.installationLocation}
-              onChange={(e) => handleInputChange("installationLocation", e.target.value)}
-              disabled={isSubmitting}
-              required
-            />
-          </div>
+          <h4 className="text-sm font-semibold">Dados de Instalação</h4>
         </div>
+        <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+          * Obrigatório
+        </span>
+      </div>
 
-        {/* Linha 2: Nome do Técnico + Endereço */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="technician-name" className="text-sm font-medium">
-              Nome do Técnico *
-            </Label>
-            <InputWithIcon
-              id="technician-name"
-              icon={<User className="h-4 w-4" />}
-              placeholder="Digite o nome do técnico"
-              value={formData.technicianName}
-              onChange={(e) => handleInputChange("technicianName", e.target.value)}
-              disabled={isSubmitting}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="address" className="text-sm font-medium">
-              Endereço *
-            </Label>
-            <InputWithIcon
-              id="address"
-              icon={<MapPin className="h-4 w-4" />}
-              placeholder="Digite o endereço do serviço"
-              value={formData.address}
-              onChange={(e) => handleInputChange("address", e.target.value)}
-              disabled={isSubmitting}
-              required
-            />
-          </div>
-        </div>
-
-        {/* Linha 3: Dispositivo Secundário (checkbox) + Odômetro */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_200px] gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2 mb-2">
-              <Checkbox
-                id="secondary-device"
-                checked={hasSecondaryDevice}
-                onCheckedChange={(checked) => {
-                  setHasSecondaryDevice(checked === true);
-                  if (!checked) {
-                    handleInputChange("secondaryDeviceId", "");
-                  }
-                }}
-                disabled={isSubmitting}
-              />
-              <Label
-                htmlFor="secondary-device"
-                className="text-sm font-medium cursor-pointer"
-              >
-                Dispositivo Secundário
-              </Label>
+      <form onSubmit={handleSubmit} className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3">
+          {FIELDS.map(({ key, label, icon: Icon, placeholder, required, type, colSpan }) => (
+            <div key={key} className={colSpan === 2 ? "lg:col-span-2" : undefined}>
+              <Field label={label} required={required}>
+                <InputWithIcon
+                  icon={<Icon className="h-3.5 w-3.5" />}
+                  placeholder={placeholder}
+                  type={type}
+                  value={formData[key as keyof ValidationFormData] as string}
+                  onChange={(e) => updateField(key as keyof ValidationFormData, e.target.value)}
+                  disabled={isSubmitting}
+                  required={required}
+                  className="h-9 text-sm"
+                />
+              </Field>
             </div>
+          ))}
 
-            {hasSecondaryDevice && (
+          <Field label="Bloqueio" required>
+            <div className="flex gap-1 pt-0.5">
+              <ToggleButton active={formData.blockingEnabled} onClick={() => updateField("blockingEnabled", true)} label="Habilitado" disabled={isSubmitting} />
+              <ToggleButton active={!formData.blockingEnabled} onClick={() => updateField("blockingEnabled", false)} label="Desabilitado" disabled={isSubmitting} />
+            </div>
+          </Field>
+        </div>
+
+        <div className="mt-4 p-3 rounded-lg bg-muted/30 border border-border/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <SatelliteDish className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Dispositivo Secundário</p>
+                <p className="text-xs text-muted-foreground">Adicionar segundo rastreador</p>
+              </div>
+            </div>
+            <Switch checked={formData.hasSecondaryDevice} onCheckedChange={toggleSecondary} disabled={isSubmitting} />
+          </div>
+
+          {formData.hasSecondaryDevice && (
+            <div className="mt-3 pt-3 border-t border-border/50">
               <InputWithIcon
-                id="secondary-device-id"
-                icon={<Wrench className="h-4 w-4" />}
-                placeholder="Digite o ID do dispositivo secundário"
+                icon={<Wrench className="h-3.5 w-3.5" />}
+                placeholder="ID do dispositivo secundário"
                 value={formData.secondaryDeviceId}
-                onChange={(e) => handleInputChange("secondaryDeviceId", e.target.value)}
+                onChange={(e) => updateField("secondaryDeviceId", e.target.value)}
                 disabled={isSubmitting}
+                className="h-9 text-sm"
               />
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="odometer" className="text-sm font-medium">
-              Odômetro (km)
-            </Label>
-            <InputWithIcon
-              id="odometer"
-              icon={<Gauge className="h-4 w-4" />}
-              placeholder="Ex: 45000"
-              type="number"
-              value={formData.odometer}
-              onChange={(e) => handleInputChange("odometer", e.target.value)}
-              disabled={isSubmitting}
-            />
-          </div>
-        </div>
-
-        {/* Linha 4: Bloqueio + Número de Protocolo */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Bloqueio *</Label>
-            <div className="flex items-center space-x-4 pt-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="blocking-yes"
-                  checked={blockingEnabled}
-                  onCheckedChange={(checked) => setBlockingEnabled(checked === true)}
-                  disabled={isSubmitting}
-                />
-                <Label
-                  htmlFor="blocking-yes"
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  Sim
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="blocking-no"
-                  checked={!blockingEnabled}
-                  onCheckedChange={(checked) => setBlockingEnabled(checked === false)}
-                  disabled={isSubmitting}
-                />
-                <Label
-                  htmlFor="blocking-no"
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  Não
-                </Label>
-              </div>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="protocol-number" className="text-sm font-medium">
-              Número de Protocolo
-            </Label>
-            <InputWithIcon
-              id="protocol-number"
-              icon={<Hash className="h-4 w-4" />}
-              placeholder="Digite o número do protocolo"
-              value={formData.protocolNumber}
-              onChange={(e) => handleInputChange("protocolNumber", e.target.value)}
-              disabled={isSubmitting}
-            />
-          </div>
+          )}
         </div>
 
-        {/* Botões de ação */}
-        <div className="flex justify-end gap-3 pt-4 border-t mt-6">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Validando...
-              </>
-            ) : (
-              "Validar Instalação"
-            )}
+        {/* Footer */}
+        <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-end gap-2">
+          <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={isSubmitting} className="h-8 px-3 text-xs">
+            Cancelar
+          </Button>
+          <Button type="submit" size="sm" disabled={isSubmitting} className="h-8 px-4 text-xs gap-1.5">
+            {isSubmitting ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Validando...</> : <><CheckCircle2 className="h-3.5 w-3.5" /> Validar</>}
           </Button>
         </div>
       </form>

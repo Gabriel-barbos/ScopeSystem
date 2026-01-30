@@ -1,30 +1,20 @@
-import { Hash, KeySquare, Car, MessageSquare } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { Hash, KeySquare, Car } from "lucide-react";
 import InfoField from "@/components/global/InfoField";
 import { Schedule } from "@/services/ScheduleService";
 import { getStatusConfig, getServiceConfig } from "@/utils/badges";
-import { ValidationForm, ValidationFormData } from "@/components/forms/ValidationForm";
 
 interface ScheduleDetailsProps {
   schedule: Schedule;
-  onValidationSubmit: (data: ValidationFormData) => void;
-  onValidationCancel: () => void;
-  isSubmitting?: boolean;
 }
 
-export function ScheduleDetails({ 
-  schedule, 
-  onValidationSubmit,
-  onValidationCancel,
-  isSubmitting = false
-}: ScheduleDetailsProps) {
+export function ScheduleDetails({ schedule }: ScheduleDetailsProps) {
   const status = getStatusConfig(schedule.status);
   const service = getServiceConfig(schedule.serviceType);
 
   const ServiceIcon = service.icon;
 
   return (
-<div className="flex flex-col gap-6 min-h-0">
+    <div className="space-y-6">
       {/* Informações do Veículo */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -86,20 +76,6 @@ export function ScheduleDetails({
           </div>
         </div>
       )}
-
-      {/* Separador antes do formulário */}
-<Separator />
-
-      {/* Formulário de Validação */}
-      <div className="flex flex-col min-h-0">
-
-      <ValidationForm
-        onSubmit={onValidationSubmit}
-        onCancel={onValidationCancel}
-        isSubmitting={isSubmitting}
-      />
-      </div>
-
     </div>
   );
 }

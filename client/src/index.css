@@ -63,6 +63,7 @@
     transform: translateY(-50%);
   }
 }
+
 @layer base {
   :root {
     /* Corporate Design System - All colors in HSL */
@@ -215,3 +216,4 @@
     animation: none;
     mix-blend-mode: normal;
 }
+
