@@ -9,7 +9,7 @@
       serviceType: { type: String, required: true },
       notes: { type: String },
       createdBy: { type: String },
-
+      provider : {type: String, required: false },
       product: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product",

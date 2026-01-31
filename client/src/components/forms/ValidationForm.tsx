@@ -7,6 +7,8 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/Authcontext";
+
 
 export interface ValidationFormData {
   equipmentId: string;
@@ -21,6 +23,7 @@ export interface ValidationFormData {
   keepUnderObservation: boolean;
   hasObservations: boolean;
   observations?: string;
+  validatedBy: string;
 }
 
 interface ValidationFormProps {
@@ -42,6 +45,7 @@ const INITIAL_DATA: ValidationFormData = {
   keepUnderObservation: false,
   hasObservations: false,
   observations: "",
+  validatedBy: "",
 };
 
 const FIELDS = [
@@ -120,6 +124,7 @@ const SwitchCard = ({ icon: Icon, title, description, checked, onCheckedChange, 
 
 export function ValidationForm({ onSubmit, onCancel, isSubmitting = false }: ValidationFormProps) {
   const [formData, setFormData] = useState(INITIAL_DATA);
+  const { user } = useAuth();
 
   const updateField = useCallback((field: keyof ValidationFormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -135,7 +140,7 @@ export function ValidationForm({ onSubmit, onCancel, isSubmitting = false }: Val
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({ ...formData, validatedBy: user?.name || "" });
   };
 
   return (

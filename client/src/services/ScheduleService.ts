@@ -24,6 +24,7 @@ export interface Schedule {
   client: ClientRef;
   product?: ProductRef;
   status: "criado" | "agendado" | "concluido" | "atrasado" | "cancelado";
+  provider?: string;
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -40,18 +41,21 @@ export interface SchedulePayload {
   product?: string;
   status?: "criado" | "agendado" | "concluido" | "atrasado" | "cancelado";
   createdBy?: string;
+  provider?: string;
 }
 
 export interface BulkUpdatePayload {
-  vin: string;                    // obrigatório
+  vin: string;                    
   status?: string;
-  client?: string;                // ObjectId
+  client?: string;                
   scheduledDate?: any;
   model?: string;
   plate?: string;
   serviceType?: string;
-  product?: string;               // ObjectId
+  product?: string;               
   notes?: string;
+  provider?: string;
+  createdBy?: string;
 }
 
 export const scheduleApi = {

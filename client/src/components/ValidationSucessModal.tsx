@@ -39,9 +39,8 @@ export function ValidationSuccessModal({
         </DialogHeader>
         <DialogFooter className="sm:justify-center gap-2">
           <Button variant="outline" onClick={onClose}>
-            Voltar para pesquisa
+            Nova Validação
           </Button>
-          <Button onClick={onNewValidation}>Nova Validação</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

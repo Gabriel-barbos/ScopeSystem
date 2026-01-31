@@ -72,6 +72,7 @@ const FormSchema = z.object({
   serviceType: z.string().min(1, "Tipo de serviço é obrigatório"),
   notes: z.string().optional(),
   client: z.string().min(1, "Cliente é obrigatório"),
+  provider: z.string().optional(),
   product: z.string().optional(),
   status: z.string().optional(),
   createdBy: z.string().optional(),
@@ -131,6 +132,7 @@ export default function ScheduleForm({
       product: "",
       status: "",
       createdBy: "",
+      provider: "",
     },
   });
 
@@ -168,6 +170,7 @@ export default function ScheduleForm({
         product: schedule.product?._id,
         status: schedule.status,
         createdBy: schedule.createdBy,
+        provider: schedule.provider,
       });
     }
   }, [schedule, reset]);
@@ -180,6 +183,7 @@ export default function ScheduleForm({
         vin: data.vin,
         model: data.model,
         client: data.client,
+        provider: data.provider,
         serviceType: data.serviceType,
         ...(data.product && { product: data.product }),
         scheduledDate: data.scheduledDate || undefined,
@@ -401,6 +405,15 @@ export default function ScheduleForm({
           )}
         />
       </div>
+
+             <div>
+          <Label>Prestador</Label>
+          <InputWithIcon
+            icon={<ShieldUser className="h-4 w-4" />}
+            placeholder="Prestador"
+            {...register("provider")}
+          />
+        </div>
 
       {/* Notas */}
       <div>

@@ -41,6 +41,7 @@ import {
   Check,
   ChevronsUpDown,
   CalendarSearch,
+  UserCog,
 } from "lucide-react";
 import { getStatusConfig } from "@/utils/badges";
 import InfoField from "@/components/global/InfoField";
@@ -150,6 +151,7 @@ const ScheduleDrawer = ({
         plate: editedSchedule.plate,
         vin: editedSchedule.vin,
         model: editedSchedule.model,
+        provider: editedSchedule.provider,
         // Converter client para ID se for objeto
         client: typeof editedSchedule.client === 'string'
           ? editedSchedule.client
@@ -315,6 +317,7 @@ const ScheduleDrawer = ({
 
         <div className="flex-1 flex justify-between py-6">
           <div className="flex gap-12">
+            {/* Coluna 1: Dados do Veículo */}
             <div className="space-y-4">
               {isEditing ? (
                 <>
@@ -351,6 +354,7 @@ const ScheduleDrawer = ({
               )}
             </div>
 
+            {/* Coluna 2: Cliente e Serviço */}
             <div className="space-y-4">
               {isEditing ? (
                 <div className="flex flex-col gap-2">
@@ -505,6 +509,25 @@ const ScheduleDrawer = ({
                   icon={SatelliteDish}
                   label="Equipamento"
                   value={currentData.product?.name || "Não informado"}
+                />
+              )}
+            </div>
+
+            {/* Coluna 3: Prestador */}
+            <div className="space-y-4">
+              {isEditing ? (
+                <EditableField
+                  icon={UserCog}
+                  label="Prestador"
+                  value={currentData.provider || ""}
+                  onChange={(value) => updateField("provider", value)}
+                  placeholder="Nome do prestador"
+                />
+              ) : (
+                <InfoField
+                  icon={UserCog}
+                  label="Prestador"
+                  value={currentData.provider || "Não informado"}
                 />
               )}
             </div>

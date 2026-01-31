@@ -25,7 +25,9 @@ class ServiceController {
         createdBy: schedule.createdBy,
         product: schedule.product,
         client: schedule.client,
-
+        provider: schedule.provider,
+        
+        status: validationData.status,
         deviceId: validationData.deviceId,
         technician: validationData.technician,
         installationLocation: validationData.installationLocation,

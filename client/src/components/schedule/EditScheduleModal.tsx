@@ -25,6 +25,7 @@ const COLUMN_MAPPING = {
     "Equipamento": "product",            
     "Produto": "product",
     "Observações": "notes",
+    "Prestador": "provider",
     // Nomes alternativos aceitos:
     "VIN": "vin",
     "Data Agendamento": "scheduledDate",
