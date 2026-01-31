@@ -5,7 +5,7 @@ import {
   CheckCircle,
   Wrench,
   CircleX ,
-  User,
+  Settings,
   SquareX ,
   ClipboardList,
   BellPlus,
@@ -56,12 +56,12 @@ export const serviceConfig: Record<string, BadgeConfig> = {
   maintenance: {
     label: "Manutenção",
     className: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200 dark:border-orange-800",
-    icon: Wrench,
+    icon: Settings,
   },
   installation: {
     label: "Instalação",
     className: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
-    icon: Hammer,
+    icon: Wrench,
   },
 
   removal: {

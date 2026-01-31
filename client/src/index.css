@@ -117,6 +117,13 @@
     --color-3: oklch(69.6% 0.165 251);
     --color-4: oklch(80.2% 0.134 225);
     --color-5: oklch(90.7% 0.231 133);
+
+     --chart-1: 217 95% 50%;   /* azul primário */
+  --chart-2: 142 71% 45%;   /* verde */
+  --chart-3: 38 92% 50%;    /* amarelo */
+  --chart-4: 0 72% 51%;     /* vermelho */
+  --chart-5: 262 83% 58%;   /* roxo */
+
   }
 
   .dark {
@@ -149,6 +156,12 @@
     --input: 215 20% 20%;
     --ring: 214 95% 55%;
 
+      --chart-1: 217 95% 60%;
+  --chart-2: 142 71% 55%;
+  --chart-3: 38 92% 60%;
+  --chart-4: 0 72% 60%;
+  --chart-5: 262 83% 65%;
+  
     /* Fundo da lista */
   --ant-list-bg: hsl(var(--card));
   /* Cor da borda da lista */

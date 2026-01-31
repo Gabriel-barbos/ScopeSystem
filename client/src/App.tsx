@@ -94,7 +94,7 @@ const App = () => (
               element={
                 <PrivateRoute roles={[Roles.ADMIN]}>
                   <Layout>
-                    <Users />
+                    <Reports />
                   </Layout>
                 </PrivateRoute>
               }
