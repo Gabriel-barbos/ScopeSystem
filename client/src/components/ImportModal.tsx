@@ -34,6 +34,7 @@ export function ImportModal({
     const [fileName, setFileName] = useState("")
 
     const { data: products } = useProductService()
+    
     const { data: clients } = useClientService()
     const handleFileUpload = (file: File) => {
         if (!file) return
@@ -225,7 +226,7 @@ export function ImportModal({
                                 <PreviewTable
                                     data={data}
                                     onDataChange={setData}
-                                    products={products}
+                                    products={products?.filter(p => p.category === "Dispositivo")}
                                     clients={clients}
                                     productColumn="Equipamento"
                                     clientColumn="Cliente"

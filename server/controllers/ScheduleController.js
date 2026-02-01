@@ -10,6 +10,18 @@ import {
 const NOT_FOUND_MSG = "Agendamento não encontrado";
 
 class ScheduleController {
+
+    constructor() {
+    this.create = this.create.bind(this);
+    this.list = this.list.bind(this);
+    this.findById = this.findById.bind(this);
+    this.update = this.update.bind(this);
+    this.delete = this.delete.bind(this);
+    this.updateStatus = this.updateStatus.bind(this);
+    this.bulkCreate = this.bulkCreate.bind(this);
+    this.bulkUpdate = this.bulkUpdate.bind(this);
+  }
+  
   // CRUD Básico
   async create(req, res) {
     try {

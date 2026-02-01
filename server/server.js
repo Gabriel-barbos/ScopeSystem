@@ -7,9 +7,9 @@ import dns from "node:dns/promises";
 import productRoutes from "./routes/productRoutes.js";
 import clientRoutes from "./routes/clientRoutes.js";
 import userController from "./controllers/UserController.js";
-import scheduleRoutes from "./routes/ScheduleRoutes.js";
 import ServiceRoutes from "./routes/ServiceRoutes.js";
 import ReportRoutes from "./routes/ReportRoutes.js";
+import ScheduleRoutes from "./routes/ScheduleRoutes.js";
 
 dotenv.config();
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
@@ -30,7 +30,7 @@ mongoose
 app.use("/api/users", userController);
 app.use("/api/products", productRoutes);
 app.use("/api/clients", clientRoutes);
-app.use("/api/schedules", scheduleRoutes);
+app.use("/api/schedules", ScheduleRoutes);
 app.use("/api/services", ServiceRoutes);
 app.use("/api/reports", ReportRoutes);
 
