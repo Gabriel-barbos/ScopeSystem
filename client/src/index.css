@@ -77,7 +77,6 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 15%;
 
-    /* Professional blue palette */
     --primary: 217 95% 50%;
     --primary-foreground: 0 0% 100%;
 
@@ -118,12 +117,16 @@
     --color-4: oklch(80.2% 0.134 225);
     --color-5: oklch(90.7% 0.231 133);
 
-     --chart-1: 217 95% 50%;   /* azul primário */
-  --chart-2: 142 71% 45%;   /* verde */
-  --chart-3: 38 92% 50%;    /* amarelo */
-  --chart-4: 0 72% 51%;     /* vermelho */
-  --chart-5: 262 83% 58%;   /* roxo */
-
+--chart-1: 217 92% 62%;   /* Azul royal */
+--chart-2: 262 85% 58%;   /* Violeta intenso */
+--chart-3: 173 75% 42%;   /* Teal profundo */
+--chart-4: 335 78% 55%;   /* Rosa fúcsia */
+--chart-5: 24 95% 54%;    /* Laranja sunset */
+--chart-6: 152 70% 45%;   /* Verde jade */
+--chart-7: 45 93% 52%;    /* Amarelo solar */
+--chart-8: 190 90% 48%;   /* Azul piscina */
+--chart-9: 280 70% 58%;   /* Púrpura real */
+--chart-10: 355 85% 58%;  /* Vermelho cereja */
   }
 
   .dark {
@@ -156,11 +159,16 @@
     --input: 215 20% 20%;
     --ring: 214 95% 55%;
 
-      --chart-1: 217 95% 60%;
-  --chart-2: 142 71% 55%;
-  --chart-3: 38 92% 60%;
-  --chart-4: 0 72% 60%;
-  --chart-5: 262 83% 65%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 263 70% 65%;
+    --chart-3: 172 66% 50%;
+    --chart-4: 330 81% 60%;
+    --chart-5: 24 95% 58%;
+    --chart-6: 142 76% 50%;
+    --chart-7: 45 93% 58%;
+    --chart-8: 198 93% 55%;
+    --chart-9: 280 65% 60%;
+    --chart-10: 350 80% 65%;
   
     /* Fundo da lista */
   --ant-list-bg: hsl(var(--card));
