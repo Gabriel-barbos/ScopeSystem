@@ -83,7 +83,7 @@ const COL_LEFT: FieldDef[] = [
     { icon: KeySquare, label: "Placa", field: "plate", format: (v) => v || "Não informada" },
     {
         icon: SatelliteDish,
-        label: "Produto",
+        label: "Equipamento",
         field: "product",
         format: (v) => v?.name || "Não informado",
         editable: false,
@@ -399,7 +399,7 @@ const handleSave = async () => {
                             <div className="flex items-center gap-3">
                                 <span>Protocolo: {current.protocolNumber || "—"}</span>
                                 <Badge variant="secondary" className="text-xs">
-                                    {current.source === "validation" ? "Validação" : "Importação"}
+                                    {current.source === "validation" ? "Validado" : "Importado"}
                                 </Badge>
                             </div>
                         </div>

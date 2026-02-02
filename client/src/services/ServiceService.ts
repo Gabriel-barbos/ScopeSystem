@@ -32,7 +32,7 @@ export interface Service {
   product?: { _id: string; name: string };
   client: { _id: string; name: string; image?: string[] };
   deviceId: string;
-  provider: string;
+  provider?: string;
   technician: string;
   installationLocation: string;
   serviceAddress: string;
@@ -48,6 +48,29 @@ export interface Service {
   updatedAt?: string;
 }
 
+// Payload para importação em lote
+export interface BulkImportServicePayload {
+  plate?: string;
+  vin: string;
+  model: string;
+  serviceType: string;
+  client: string; // Nome ou ID do cliente
+  product?: string; // Nome ou ID do produto
+  deviceId: string;
+  technician: string;
+  provider?: string;
+  installationLocation: string;
+  serviceAddress: string;
+  odometer?: number;
+  blockingEnabled: boolean;
+  protocolNumber?: string;
+  validationNotes?: string;
+  secondaryDevice?: string;
+  validatedBy?: string;
+  validatedAt?: string | Date; // Data de validação
+  status?: string; // Status do serviço
+}
+
 export const serviceApi = {
   getAll: async (): Promise<Service[]> => {
     const { data } = await API.get("/services");
@@ -61,6 +84,11 @@ export const serviceApi = {
 
   createFromValidation: async (payload: CreateFromValidationPayload): Promise<Service> => {
     const { data } = await API.post("/services/from-validation", payload);
+    return data;
+  },
+
+  bulkImport: async (services: BulkImportServicePayload[]): Promise<{ success: boolean; count: number; message: string }> => {
+    const { data } = await API.post("/services/bulk-import", { services });
     return data;
   },
 
@@ -83,13 +111,20 @@ export function useServiceService() {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Após validação bem-sucedida, invalida tanto services quanto schedules
-  // porque o agendamento mudou para "concluido" no backend
+  // Validação - invalida services e schedules
   const createFromValidation = useMutation({
     mutationFn: serviceApi.createFromValidation,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["services"] });
       queryClient.invalidateQueries({ queryKey: ["schedules"] });
+    },
+  });
+
+  // Importação em lote
+  const bulkImport = useMutation({
+    mutationFn: serviceApi.bulkImport,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
     },
   });
 
@@ -100,17 +135,19 @@ export function useServiceService() {
     },
   });
 
-    const updateService = useMutation({
+  const updateService = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: Partial<Service> }) =>
       serviceApi.update(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["services"] });
     },
   });
+
   return {
     ...services,
     createFromValidation,
+    bulkImport,
     deleteService,
-    updateService
+    updateService,
   };
 }

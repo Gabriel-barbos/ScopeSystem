@@ -9,7 +9,7 @@ import {
   SquareX ,
   ClipboardList,
   BellPlus,
-  Hammer,
+  TriangleAlert,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
@@ -42,7 +42,7 @@ export const statusConfig: Record<StatusType, BadgeConfig> = {
    observacao: {
     label: "Em Observação",
     className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800",
-    icon: AlertCircle,
+    icon: TriangleAlert,
   },
     cancelado: {
     label: "Cancelado",

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { CarFront, Plus, Search, Eye, SquareUser } from "lucide-react";
+import { CarFront, Search, Eye, SquareUser, FileSpreadsheet } from "lucide-react";
 import {
     Card,
     CardContent,
@@ -13,13 +13,16 @@ import { InputWithIcon } from "@/components/InputWithIcon";
 import { List, Pagination } from "antd";
 import { useServiceService, type Service } from "@/services/ServiceService";
 import ServiceDrawer from "@/components/service/ServiceDrawer";
+import { ImportModal } from "@/components/ImportModal";
+import { toast } from "sonner";
 
 const PAGE_SIZE = 20;
 
 export default function Services() {
-    const { data: services, isLoading } = useServiceService();
+    const { data: services, isLoading, bulkImport } = useServiceService();
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+    const [importModalOpen, setImportModalOpen] = useState(false);
     
     // Estados do Drawer
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -46,17 +49,49 @@ export default function Services() {
         return filtered.slice(start, start + PAGE_SIZE);
     }, [filtered, effectivePage]);
 
-    // Handler para abrir o drawer
     const handleOpenDetails = (service: Service) => {
         setSelectedService(service);
         setDrawerOpen(true);
     };
 
-    // Handler para fechar o drawer
     const handleCloseDrawer = () => {
         setDrawerOpen(false);
-        // Opcional: limpar o serviço selecionado após a animação de fechamento
         setTimeout(() => setSelectedService(null), 300);
+    };
+
+    const handleImport = async (data: Record<string, any>[]) => {
+        try {
+            // Transformar dados do Excel em payload válido
+            const services = data.map((row) => ({
+                plate: row.Placa || undefined,
+                vin: row.Chassi,
+                model: row.Modelo,
+                serviceType: row.TipoServico || "installation",
+                client: row.ClienteId,
+                product: row.EquipamentoId || undefined,
+                deviceId: row.IDDispositivo,
+                technician: row.Tecnico,
+                provider: row.Prestador || undefined,
+                installationLocation: row.LocalInstalacao,
+                serviceAddress: row.Endereco,
+                odometer: row.Odometro ? Number(row.Odometro) : undefined,
+                blockingEnabled: row.Bloqueio?.toLowerCase() === "sim" || row.Bloqueio === true,
+                protocolNumber: row.NumeroProtocolo || undefined,
+                secondaryDevice: row.DispositivoSecundario || undefined,
+                validatedBy: row.ValidadoPor || "Importação",
+                validationNotes: row.Observacoes || undefined,
+                // Novos campos
+                validatedAt: row.DataValidacao || undefined,
+                status: row.Status || "concluido",
+            }));
+
+            await bulkImport.mutateAsync(services);
+            toast.success(`${services.length} serviços importados com sucesso!`);
+            setImportModalOpen(false);
+        } catch (error: any) {
+            toast.error(error?.response?.data?.error || "Erro ao importar serviços");
+            console.error("Erro no import:", error);
+        }
     };
 
     return (
@@ -73,8 +108,13 @@ export default function Services() {
                                 Visualize e administre seus serviços
                             </CardDescription>
                         </div>
-                        <Button className="ml-auto" size="sm">
-                            Importar Serviços <Plus />
+                        <Button 
+                            className="ml-auto" 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setImportModalOpen(true)}
+                        >
+                            Importar Serviços <FileSpreadsheet />
                         </Button>
                     </div>
                 </CardHeader>
@@ -157,6 +197,37 @@ export default function Services() {
                     )}
                 </CardContent>
             </Card>
+
+            {/* Import Modal */}
+            <ImportModal
+                open={importModalOpen}
+                onOpenChange={setImportModalOpen}
+                title="Importar Serviços"
+                templateUrl="/templates/servicos.xlsx"
+                templateName="template-servicos.xlsx"
+                onImport={handleImport}
+                columnMapping={{
+                    Chassi: "Chassi",
+                    Placa: "Placa",
+                    Modelo: "Modelo",
+                    Cliente: "Cliente",
+                    Equipamento: "Equipamento",
+                    TipoServico: "TipoServico",
+                    IDDispositivo: "IDDispositivo",
+                    Tecnico: "Tecnico",
+                    Prestador: "Prestador",
+                    LocalInstalacao: "LocalInstalacao",
+                    Endereco: "Endereco",
+                    Odometro: "Odometro",
+                    Bloqueio: "Bloqueio",
+                    NumeroProtocolo: "NumeroProtocolo",
+                    DispositivoSecundario: "DispositivoSecundario",
+                    ValidadoPor: "ValidadoPor",
+                    Observacoes: "Observacoes",
+                    DataValidacao: "DataValidacao",
+                    Status: "Status",
+                }}
+            />
 
             {/* Service Drawer */}
             <ServiceDrawer
