@@ -12,8 +12,8 @@ import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/Login";
 import Reports from "./pages/Reports";
-import Validation
- from "./pages/Validation";
+import Validation from "./pages/Validation";
+import Services from "./pages/Services";
 import { AuthProvider } from "@/context/Authcontext";
 import { AntdThemeProvider } from "@/providers/AntdThemeProvider";
 
@@ -103,9 +103,20 @@ const App = () => (
                   <Route
               path="/validation"
               element={
-                <PrivateRoute roles={[Roles.ADMIN]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION]}>
                   <Layout>
                     <Validation />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+
+                 <Route
+              path="/services"
+              element={
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION]}>
+                  <Layout>
+                    <Services />
                   </Layout>
                 </PrivateRoute>
               }

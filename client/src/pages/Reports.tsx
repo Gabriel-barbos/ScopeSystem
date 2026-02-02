@@ -32,12 +32,13 @@ import { EvolutionChart } from "@/components/charts/EvolutionChart";
 import { ReportDailyChart, type PeriodType } from "@/components/charts/ReportDailyChart";
 import { getDateRangeFromPeriod } from "@/utils/dateUtils";
 
-// Configuração de estatísticas - pode ser movido para um arquivo separado
+
 const statsConfig = {
   agendamentos: [
+     { key: "concluidos", title: "Concluídos", icon: CheckCircle, color: "#52c41a" },
     { key: "pendentes", title: "Pendentes", icon: Clock, color: "#faad14" },
     { key: "cancelados", title: "Cancelados", icon: XCircle, color: "#ff4d4f" },
-    { key: "concluidos", title: "Concluídos", icon: CheckCircle, color: "#52c41a" },
+   
   ],
   servicos: [
     { key: "instalacoes", title: "Instalações", icon: Wrench, color: "#1890ff" },
@@ -78,7 +79,7 @@ function useReportParams(dateRange: DateRange | undefined, clientId: string | nu
   }, [dateRange, clientId]);
 }
 
-// Hook para params do ReportDaily
+// Hook ReportDaily
 function useReportDailyParams(period: PeriodType, clientId: string | null) {
   return useMemo(() => {
     const { startDate, endDate } = getDateRangeFromPeriod(period);

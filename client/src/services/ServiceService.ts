@@ -32,6 +32,7 @@ export interface Service {
   product?: { _id: string; name: string };
   client: { _id: string; name: string; image?: string[] };
   deviceId: string;
+  provider: string;
   technician: string;
   installationLocation: string;
   serviceAddress: string;
@@ -99,9 +100,17 @@ export function useServiceService() {
     },
   });
 
+    const updateService = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<Service> }) =>
+      serviceApi.update(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+    },
+  });
   return {
     ...services,
     createFromValidation,
     deleteService,
+    updateService
   };
 }

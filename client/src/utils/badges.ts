@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
-export type StatusType = "criado" | "agendado" | "atrasado" | "concluido" | "cancelado";
+export type StatusType = "criado" | "agendado" | "atrasado" | "concluido" | "cancelado" | "observacao";
 export type ServiceType = "maintenance" | "installation" | "removal";
 
 interface BadgeConfig {
@@ -37,6 +37,11 @@ export const statusConfig: Record<StatusType, BadgeConfig> = {
   atrasado: {
     label: "Atrasado",
     className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800",
+    icon: AlertCircle,
+  },
+   observacao: {
+    label: "Em Observação",
+    className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800",
     icon: AlertCircle,
   },
     cancelado: {
