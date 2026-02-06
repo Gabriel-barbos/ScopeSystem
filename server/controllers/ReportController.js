@@ -34,9 +34,9 @@ function addClientFilter(match, clientId) {
 }
 
 
-class ReportController {
-
   // GET - retorna todos os dados agregados de uma vez
+  class ReportController {
+
   getReportData = async (req, res) => {
     try {
       const { startDate, endDate, clientId } = req.query;
@@ -53,12 +53,12 @@ class ReportController {
         servicesByClient,
         reportDaily,
       ] = await Promise.all([
-        this.#servicesByType(matchWithClient),
+        this.#servicesByType(matchWithClient),        // ✅ CORRIGIDO
         this.#schedulesByStatus(matchWithClient),
         this.#pendingByClient(dateFilter, clientId),
         this.#pendingByProvider(dateFilter, clientId),
-        this.#evolutionByMonth(),
-        this.#evolutionByDay(),
+        this.#evolutionByMonth(),                     // ✅ CORRIGIDO
+        this.#evolutionByDay(),                       // ✅ CORRIGIDO
         this.#servicesByClient(),
         this.#reportDaily(startDate, endDate),
       ]);
@@ -80,26 +80,21 @@ class ReportController {
   }
 
 
-  // Contador de servicos por tipo (instalacao, manutencao, desinstalacao)
-async #servicesByType(match) {
-  const result = await Schedule.aggregate([
-    { 
-      $match: { 
-        ...match, 
-        status: "concluido" 
-      } 
-    },
-    { $group: { _id: "$serviceType", count: { $sum: 1 } } },
-  ]);
+  // ✅ CORRIGIDO - Agora usa Service ao invés de Schedule
+  async #servicesByType(match) {
+    const result = await Service.aggregate([
+      { $match: match },
+      { $group: { _id: "$serviceType", count: { $sum: 1 } } },
+    ]);
 
-  return {
-    instalacoes: result.find((r) => r._id === "installation")?.count ?? 0,
-    manutencoes: result.find((r) => r._id === "maintenance")?.count ?? 0,
-    desinstalacoes: result.find((r) => r._id === "removal")?.count ?? 0,
-  };
-}
-  // Contador de agendamentos por status
-  // pendente = criado + agendado
+    return {
+      instalacoes: result.find((r) => r._id === "installation")?.count ?? 0,
+      manutencoes: result.find((r) => r._id === "maintenance")?.count ?? 0,
+      desinstalacoes: result.find((r) => r._id === "removal")?.count ?? 0,
+    };
+  }
+
+  // ✅ Permanece Schedule (métricas de agendamento)
   async #schedulesByStatus(match) {
     const result = await Schedule.aggregate([
       { $match: match },
@@ -116,7 +111,7 @@ async #servicesByType(match) {
     };
   }
 
-  // Agendamentos pendentes (criado + agendado) agrupados por cliente e tipo de servico
+  // ✅ Permanece Schedule (agendamentos pendentes)
   async #pendingByClient(dateFilter, clientId) {
     const match = {
       ...dateFilter,
@@ -146,7 +141,6 @@ async #servicesByType(match) {
       { $sort: { count: -1 } },
     ]);
 
-    // Reagrupa por cliente com um objeto de tipos
     const map = new Map();
     result.forEach(({ _id, count }) => {
       if (!map.has(_id.client)) map.set(_id.client, {});
@@ -162,7 +156,7 @@ async #servicesByType(match) {
     }));
   }
 
-  // Agendamentos pendentes agrupados por provider (prestador)
+  // ✅ Permanece Schedule (agendamentos pendentes por prestador)
   async #pendingByProvider(dateFilter, clientId) {
     const match = {
       ...dateFilter,
@@ -182,93 +176,89 @@ async #servicesByType(match) {
     return result.map(({ _id, count }) => ({ provider: _id, pending: count }));
   }
 
-  // Evolucao por mes - total de servicos realizados por mes, quebrado por tipo
-  // Nao afetado pelos filtros globais
- async #evolutionByMonth() {
-  const result = await Schedule.aggregate([
-    { 
-      $match: { 
-        status: "concluido" 
-      } 
-    },
-    {
-      $group: {
-        _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" }, serviceType: "$serviceType" },
-        count: { $sum: 1 },
-      },
-    },
-    { $sort: { "_id.year": 1, "_id.month": 1 } },
-  ]);
-
-  // Reagrupa por ano-mes
-  const map = new Map();
-  result.forEach(({ _id, count }) => {
-    const key = `${_id.year}-${String(_id.month).padStart(2, "0")}`;
-    if (!map.has(key)) map.set(key, { installation: 0, maintenance: 0, removal: 0 });
-    map.get(key)[_id.serviceType] = count;
-  });
-
-  return Array.from(map.entries()).map(([month, types]) => ({
-    month,
-    installation: types.installation,
-    maintenance: types.maintenance,
-    removal: types.removal,
-    total: types.installation + types.maintenance + types.removal,
-  }));
-}
-
-  // Evolucao por dia dentro de cada mes - detalhamento diario
-  // Nao afetado pelos filtros globais
-  async #evolutionByDay() {
-  const result = await Schedule.aggregate([
-    { 
-      $match: { 
-        status: "concluido" 
-      } 
-    },
-    {
-      $group: {
-        _id: {
-          year: { $year: "$createdAt" },
-          month: { $month: "$createdAt" },
-          day: { $dayOfMonth: "$createdAt" },
-          serviceType: "$serviceType",
+  // ✅ CORRIGIDO - Usa Service e data de criação do serviço
+  async #evolutionByMonth() {
+    const result = await Service.aggregate([
+      {
+        $group: {
+          _id: { 
+            year: { $year: "$createdAt" }, 
+            month: { $month: "$createdAt" }, 
+            serviceType: "$serviceType" 
+          },
+          count: { $sum: 1 },
         },
-        count: { $sum: 1 },
       },
-    },
-    { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } },
-  ]);
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+    ]);
 
-  // Reagrupa por mes e depois por dia
-  const monthMap = new Map();
-  result.forEach(({ _id, count }) => {
-    const monthKey = `${_id.year}-${String(_id.month).padStart(2, "0")}`;
-    const dayKey = String(_id.day).padStart(2, "0");
+    // Reagrupa por ano-mês
+    const map = new Map();
+    result.forEach(({ _id, count }) => {
+      const key = `${_id.year}-${String(_id.month).padStart(2, "0")}`;
+      if (!map.has(key)) {
+        map.set(key, { installation: 0, maintenance: 0, removal: 0 });
+      }
+      map.get(key)[_id.serviceType] = count;
+    });
 
-    if (!monthMap.has(monthKey)) monthMap.set(monthKey, new Map());
-    const dayMap = monthMap.get(monthKey);
-
-    if (!dayMap.has(dayKey)) dayMap.set(dayKey, { installation: 0, maintenance: 0, removal: 0 });
-    dayMap.get(dayKey)[_id.serviceType] = count;
-  });
-
-  // Transforma em array estruturado
-  const months = {};
-  monthMap.forEach((dayMap, month) => {
-    months[month] = Array.from(dayMap.entries()).map(([day, types]) => ({
-      day: `${month}-${day}`,
+    return Array.from(map.entries()).map(([month, types]) => ({
+      month,
       installation: types.installation,
       maintenance: types.maintenance,
       removal: types.removal,
       total: types.installation + types.maintenance + types.removal,
     }));
-  });
+  }
 
-  return months;
-}
+  // ✅ CORRIGIDO - Usa Service e data de criação do serviço
+  async #evolutionByDay() {
+    const result = await Service.aggregate([
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+            day: { $dayOfMonth: "$createdAt" },
+            serviceType: "$serviceType",
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } },
+    ]);
 
-  // Servicos realizados por cliente - nao afetado pelos filtros
+    // Reagrupa por mês e depois por dia
+    const monthMap = new Map();
+    result.forEach(({ _id, count }) => {
+      const monthKey = `${_id.year}-${String(_id.month).padStart(2, "0")}`;
+      const dayKey = String(_id.day).padStart(2, "0");
+
+      if (!monthMap.has(monthKey)) monthMap.set(monthKey, new Map());
+      const dayMap = monthMap.get(monthKey);
+
+      if (!dayMap.has(dayKey)) {
+        dayMap.set(dayKey, { installation: 0, maintenance: 0, removal: 0 });
+      }
+      dayMap.get(dayKey)[_id.serviceType] = count;
+    });
+
+    // Transforma em array estruturado
+    const months = {};
+    monthMap.forEach((dayMap, month) => {
+      months[month] = Array.from(dayMap.entries()).map(([day, types]) => ({
+        day: `${month}-${day}`,
+        installation: types.installation,
+        maintenance: types.maintenance,
+        removal: types.removal,
+        total: types.installation + types.maintenance + types.removal,
+      }));
+    });
+
+    return months;
+  }
+
+  // ✅ Permanece Service (correto)
   async #servicesByClient() {
     const result = await Service.aggregate([
       {
@@ -287,9 +277,8 @@ async #servicesByType(match) {
     return result.map(({ _id, count }) => ({ client: _id, total: count }));
   }
 
-  // Report diario - servicos por cliente dentro de um periodo, padrao = dia atual
+  // ✅ Permanece Service (correto)
   async #reportDaily(startDate, endDate) {
-    // Se nao tiver filtro de data, usa o dia atual
     let start, end;
     if (startDate && endDate) {
       start = new Date(startDate);
@@ -320,12 +309,13 @@ async #servicesByType(match) {
       { $sort: { "_id.client": 1 } },
     ]);
 
-    // Reagrupa por cliente
     const map = new Map();
     let totalInstallation = 0, totalMaintenance = 0, totalRemoval = 0;
 
     result.forEach(({ _id, count }) => {
-      if (!map.has(_id.client)) map.set(_id.client, { installation: 0, maintenance: 0, removal: 0 });
+      if (!map.has(_id.client)) {
+        map.set(_id.client, { installation: 0, maintenance: 0, removal: 0 });
+      }
       map.get(_id.client)[_id.serviceType] = count;
 
       if (_id.serviceType === "installation") totalInstallation += count;
@@ -433,7 +423,7 @@ async #servicesByType(match) {
 
     const headers = [
       "Chassi", "Placa", "Modelo", "Cliente", "Equipamento",
-      "Tipo de Servico", "ID Dispositivo", "Tecnico", "Prestador",
+      "Tipo de Servico", "ID Dispositivo","status", "Tecnico", "Prestador",
       "Local de Instalacao", "Endereco", "Odometro (km)", "Bloqueio",
       "No Protocolo", "Dispositivo Secundario", "Validado por",
       "Data de Validacao", "Criado por", "Data de Criacao",
@@ -455,6 +445,7 @@ async #servicesByType(match) {
         s.product?.name || "",
         serviceTypeMap[s.serviceType] || s.serviceType,
         s.deviceId || "",
+        s.status || "",
         s.technician || "",
         s.provider || "",
         s.installationLocation || "",

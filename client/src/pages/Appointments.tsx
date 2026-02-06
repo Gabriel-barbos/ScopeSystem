@@ -46,6 +46,7 @@ export default function Appointments() {
         scheduledDate: row.Data || undefined,
         notes: row.Observacoes || undefined,
         provider: row.Prestador || undefined,
+        NumeroPedido : "NumeroPedido",
         // Regras de negócio adicionais
         status: row.Data ? "agendado" : "criado",
         createdBy: user?.name || "Sistema",
@@ -159,6 +160,7 @@ export default function Appointments() {
             TipoServico: "TipoServico",
             Data: "Data",
             Prestador: "Prestador",
+            NumeroPedido : "NumeroPedido",
             Observacoes: "Observacoes",
           }}
         />

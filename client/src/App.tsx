@@ -16,9 +16,11 @@ import Validation from "./pages/Validation";
 import Services from "./pages/Services";
 import { AuthProvider } from "@/context/Authcontext";
 import { AntdThemeProvider } from "@/providers/AntdThemeProvider";
-
 import PrivateRoute from "@/components/PrivateRoute";
 import { Roles } from "@/utils/roles";
+import  Removal  from "./pages/Removal";
+
+
 
 const queryClient = new QueryClient();
 
@@ -76,7 +78,19 @@ const App = () => (
                   </Layout>
                 </PrivateRoute>
               }
+            />  
+
+               <Route
+              path="/removal"
+              element={
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION]}>
+                  <Layout>
+                    <Removal />
+                  </Layout>
+                </PrivateRoute>
+              }
             />
+
 
             <Route
               path="/users"
@@ -92,7 +106,7 @@ const App = () => (
                 <Route
               path="/reports"
               element={
-                <PrivateRoute roles={[Roles.ADMIN]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT]}>
                   <Layout>
                     <Reports />
                   </Layout>
@@ -114,7 +128,7 @@ const App = () => (
                  <Route
               path="/services"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION, Roles.SCHEDULING]}>
                   <Layout>
                     <Services />
                   </Layout>

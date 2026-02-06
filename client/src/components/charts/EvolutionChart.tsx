@@ -26,8 +26,11 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, TrendingUp, TrendingDown, Minus, CalendarDays, BarChart3 } from "lucide-react";
+import { ChevronLeft, CalendarDays, BarChart3 } from "lucide-react";
 import type { EvolutionEntry, DayEntry } from "@/services/ReportService";
+
+
+const SHOW_REMOVAL_SERIES = false;
 
 // Configuração de cores para os tipos de serviço
 const chartConfig = {
@@ -45,14 +48,14 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-// Traduz "2025-01" → "Jan 25"
+
 function formatMonth(m: string) {
   const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   const [year, month] = m.split("-");
   return `${months[Number(month) - 1]} ${year.slice(2)}`;
 }
 
-// Traduz "2025-01" → "Janeiro de 2025"
+
 function formatMonthFull(m: string) {
   const months = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -62,11 +65,27 @@ function formatMonthFull(m: string) {
   return `${months[Number(month) - 1]} de ${year}`;
 }
 
-// Traduz "2025-01-05" → "05 Jan"
+
 function formatDayShort(d: string) {
   const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   const [year, month, day] = d.split("-");
   return `${day} ${months[Number(month) - 1]}`;
+}
+
+function formatDayFull(d: string) {
+  const weekdays = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
+  const months = [
+    "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
+  ];
+
+  const [year, month, day] = d.split("-").map(Number);
+
+  // Cria data local (sem conversão UTC)
+  const date = new Date(year, month - 1, day);
+  const weekday = weekdays[date.getDay()];
+
+  return `${weekday}, ${day} de ${months[month - 1]}`;
 }
 
 interface Props {
@@ -76,10 +95,12 @@ interface Props {
 
 export function EvolutionChart({ monthlyData, dailyData }: Props) {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+
+
   const [visibleSeries, setVisibleSeries] = useState({
     installation: true,
     maintenance: true,
-    removal: true,
+    removal: SHOW_REMOVAL_SERIES,
   });
 
   const isMonthView = selectedMonth === null;
@@ -109,31 +130,11 @@ export function EvolutionChart({ monthlyData, dailyData }: Props) {
     const totalRemoval = currentData.reduce((acc, d) => acc + (d.removal || 0), 0);
     const total = totalInstallation + totalMaintenance + totalRemoval;
 
-    // Calcular tendência (comparando primeira metade com segunda metade)
-    const midPoint = Math.floor(currentData.length / 2);
-    const firstHalf = currentData.slice(0, midPoint);
-    const secondHalf = currentData.slice(midPoint);
-
-    const firstHalfTotal = firstHalf.reduce(
-      (acc, d) => acc + (d.installation || 0) + (d.maintenance || 0) + (d.removal || 0),
-      0
-    );
-    const secondHalfTotal = secondHalf.reduce(
-      (acc, d) => acc + (d.installation || 0) + (d.maintenance || 0) + (d.removal || 0),
-      0
-    );
-
-    const trendPercentage = firstHalfTotal > 0
-      ? ((secondHalfTotal - firstHalfTotal) / firstHalfTotal) * 100
-      : 0;
-
     return {
       total,
       totalInstallation,
       totalMaintenance,
       totalRemoval,
-      trendPercentage,
-      avgPerPeriod: Math.round(total / currentData.length),
     };
   }, [currentData]);
 
@@ -153,7 +154,7 @@ export function EvolutionChart({ monthlyData, dailyData }: Props) {
     }
   };
 
-  // Toggle de séries visíveis
+
   const toggleSeries = (series: keyof typeof visibleSeries) => {
     setVisibleSeries((prev) => ({ ...prev, [series]: !prev[series] }));
   };
@@ -165,7 +166,7 @@ export function EvolutionChart({ monthlyData, dailyData }: Props) {
           <div className="grid flex-1 gap-1">
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              {isMonthView ? "Evolução Mensal de Instalações" : `Detalhamento — ${formatMonthFull(selectedMonth!)}`}
+              {isMonthView ? "Evolução Mensal de Serviços" : `Detalhamento — ${formatMonthFull(selectedMonth!)}`}
             </CardTitle>
             <CardDescription>
               {isMonthView
@@ -263,7 +264,6 @@ export function EvolutionChart({ monthlyData, dailyData }: Props) {
       </CardHeader>
 
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-       
         {/* Gráfico */}
         <ChartContainer
           config={chartConfig}
@@ -300,18 +300,20 @@ export function EvolutionChart({ monthlyData, dailyData }: Props) {
                   stopOpacity={0.1}
                 />
               </linearGradient>
-              <linearGradient id="fillRemoval" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-removal)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-removal)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
+              {SHOW_REMOVAL_SERIES && (
+                <linearGradient id="fillRemoval" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-removal)"
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-removal)"
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
+              )}
             </defs>
 
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -342,12 +344,7 @@ export function EvolutionChart({ monthlyData, dailyData }: Props) {
                       return formatMonthFull(payload[0].payload.originalMonth);
                     }
                     if (payload?.[0]?.payload?.originalDay) {
-                      const date = new Date(payload[0].payload.originalDay);
-                      return date.toLocaleDateString("pt-BR", {
-                        weekday: "long",
-                        day: "numeric",
-                        month: "long",
-                      });
+                      return formatDayFull(payload[0].payload.originalDay);
                     }
                     return value;
                   }}
@@ -387,7 +384,7 @@ export function EvolutionChart({ monthlyData, dailyData }: Props) {
               />
             )}
 
-            {visibleSeries.removal && (
+            {visibleSeries.removal && SHOW_REMOVAL_SERIES && (
               <Area
                 dataKey="removal"
                 type="monotone"
@@ -405,10 +402,9 @@ export function EvolutionChart({ monthlyData, dailyData }: Props) {
           </AreaChart>
         </ChartContainer>
 
-        {/* Dica de interação */}
         {isMonthView && (
           <p className="mt-3 text-center text-xs text-muted-foreground">
-           Clique em qualquer ponto do gráfico para ver o detalhamento diário do mês
+            Clique em qualquer ponto do gráfico para ver o detalhamento diário do mês
           </p>
         )}
       </CardContent>

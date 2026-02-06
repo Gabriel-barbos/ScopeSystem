@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "./ThemeToggle";
+import { JarvisButton } from "./JarvisButton";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
@@ -13,7 +14,7 @@ export function Header({ userName, userInitials, className }: HeaderProps) {
     <header className={cn("flex h-16 items-center border-b border-border bg-card px-6", className)}>
       <div className="flex items-center gap-3">
         <Avatar className="h-9 w-9">
-          <AvatarFallback className="bg-primary/30  text-primary text-sm font-semibold">
+          <AvatarFallback className="bg-primary/30 text-primary text-sm font-semibold">
             {userInitials}
           </AvatarFallback>
         </Avatar>
@@ -21,7 +22,9 @@ export function Header({ userName, userInitials, className }: HeaderProps) {
           Olá, <span className="font-bold">{userName}</span>
         </span>
       </div>
-      <div className="ml-auto">
+      
+      <div className="ml-auto flex items-center gap-4">
+        <JarvisButton href="https://super-jarvis-red.vercel.app/" />
         <ThemeToggle />
       </div>
     </header>

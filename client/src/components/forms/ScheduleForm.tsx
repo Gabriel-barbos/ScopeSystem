@@ -75,6 +75,7 @@ const FormSchema = z.object({
   provider: z.string().optional(),
   product: z.string().optional(),
   status: z.string().optional(),
+  orderNumber: z.string().optional(),
   createdBy: z.string().optional(),
 });
 
@@ -132,6 +133,7 @@ export default function ScheduleForm({
       product: "",
       status: "",
       createdBy: "",
+      orderNumber: "",
       provider: "",
     },
   });
@@ -166,6 +168,7 @@ export default function ScheduleForm({
         scheduledDate: schedule.scheduledDate,
         serviceType: schedule.serviceType,
         notes: schedule.notes,
+        orderNumber: schedule.orderNumber,
         client: schedule.client._id,
         product: schedule.product?._id,
         status: schedule.status,
@@ -190,6 +193,7 @@ export default function ScheduleForm({
         notes: data.notes,
         status: data.scheduledDate ? "agendado" : "criado",
         createdBy: user?.name || "",
+        orderNumber: data.orderNumber,
       };
 
       if (isEditing && scheduleId) {
@@ -223,13 +227,24 @@ export default function ScheduleForm({
    
       {/* Veículo */}
       <div className="space-y-1  ">
-        <div className="w-1/2">
-          <Label>Placa</Label>
-          <InputWithIcon
-            icon={<Hash className="h-4 w-4" />}
-            placeholder="Placa"
-            {...register("plate")}
-          />
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <Label>Placa</Label>
+            <InputWithIcon
+              icon={<Hash className="h-4 w-4" />}
+              placeholder="Placa"
+              {...register("plate")}
+            />
+          </div>
+
+          <div className="flex-1">
+            <Label>Número do pedido</Label>
+            <InputWithIcon
+              icon={<Hash className="h-4 w-4" />}
+              placeholder="Numero do pedido"
+              {...register("orderNumber")}
+            />
+          </div>
         </div>
 
         <div>

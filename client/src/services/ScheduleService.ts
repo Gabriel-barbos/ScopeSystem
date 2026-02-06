@@ -20,6 +20,7 @@ export interface Schedule {
   model?: string;
   scheduledDate?: string;
   serviceType: string;
+  orderNumber?: string;
   notes?: string;
   client: ClientRef;
   product?: ProductRef;
@@ -41,6 +42,7 @@ export interface SchedulePayload {
   product?: string;
   status?: "criado" | "agendado" | "concluido" | "atrasado" | "cancelado";
   createdBy?: string;
+  orderNumber?: string;
   provider?: string;
 }
 

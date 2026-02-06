@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
 import {
   Users as UsersIcon,
-  Calendar,
-  Headset,
-  Shield,
-  Wrench,
   UserPlus,
   Pen,
   Trash,
   UserPen,
 } from "lucide-react";
+
 import {
   Card,
   CardContent,
@@ -18,23 +15,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { List } from "antd";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
 import { UniversalDrawer } from "@/components/UniversalDrawer";
-import { UserForm } from "@/components/forms/UserForm"; 
+import { UserForm } from "@/components/forms/UserForm";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { getRoleLabel } from "@/utils/roleMapper";
-
 import { UserServiceInstance as UserService } from "@/services/UserService";
 
-const roleConfig: Record<string, { color: string; icon: React.ElementType }> = {
-  Administrador: { color: "bg-purple-500/15 text-purple-600", icon: Shield },
-  Suporte: { color: "bg-blue-500/15 text-blue-600", icon: Headset },
-  Agendamento: { color: "bg-amber-500/15 text-amber-600", icon: Calendar },
-  validação: { color: "bg-green-500/15 text-green-600", icon: Wrench },
-};
+import { getRoleConfig } from "@/utils/badges";
+
 
 function getInitials(name: string) {
   return name
@@ -46,20 +37,19 @@ function getInitials(name: string) {
 }
 
 function RoleBadge({ role }: { role: string }) {
-  const config = roleConfig[role] || {
-    color: "bg-green-500/15 text-green-600",
-    icon: Wrench,
-  };
-  const Icon = config.icon;
+  const roleBadge = getRoleConfig(role);
+  const Icon = roleBadge.icon;
+
   return (
-    <Badge
-      className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium ${config.color}`}
+    <span
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${roleBadge.className}`}
     >
       <Icon className="h-3.5 w-3.5" />
-      {role}
-    </Badge>
+      <span>{roleBadge.label}</span>
+    </span>
   );
 }
+
 
 export default function Users() {
   const [users, setUsers] = useState<any[]>([]);
@@ -73,13 +63,11 @@ export default function Users() {
     return unsubscribe;
   }, []);
 
-  // abrir drawer em modo criar
   function openCreate() {
     setEditingUserId(null);
     setIsDrawerOpen(true);
   }
 
-  // abrir drawer em modo editar para um usuário específico
   function openEdit(userId: string) {
     setEditingUserId(userId);
     setIsDrawerOpen(true);
@@ -90,11 +78,14 @@ export default function Users() {
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-            <UsersIcon className="h-6 w-6 text-primary" aria-hidden="true" />
+            <UsersIcon className="h-6 w-6 text-primary" />
           </div>
+
           <div>
             <CardTitle className="text-2xl">Usuários</CardTitle>
-            <CardDescription>Administrar usuários e permissões</CardDescription>
+            <CardDescription>
+              Administrar usuários e permissões
+            </CardDescription>
           </div>
 
           <Button className="ml-auto" size="sm" onClick={openCreate}>
@@ -105,7 +96,7 @@ export default function Users() {
             open={isDrawerOpen}
             onOpenChange={(open) => {
               setIsDrawerOpen(open);
-              if (!open) setEditingUserId(null); 
+              if (!open) setEditingUserId(null);
             }}
             title={editingUserId ? "Editar Usuário" : "Cadastrar Usuário"}
             icon={editingUserId ? <UserPen /> : <UserPlus />}
@@ -118,7 +109,7 @@ export default function Users() {
                 setEditingUserId(null);
               }}
               onSuccess={async () => {
-                await UserService.getAll(true);//refresh 
+                await UserService.getAll(true);
                 setIsDrawerOpen(false);
                 setEditingUserId(null);
               }}
@@ -144,7 +135,6 @@ export default function Users() {
                 </Button>,
                 <Button
                   key="delete"
-                  variant="default"
                   size="sm"
                   className="bg-transparent hover:bg-destructive/10 text-destructive border-red-600/30 border-2"
                   onClick={() => setDeleteUserId(user.id)}
@@ -167,7 +157,7 @@ export default function Users() {
 
               <List.Item.Meta
                 avatar={
-                  <Avatar className="h-10 w-10 left-2">
+                  <Avatar className="h-10 w-10">
                     <AvatarFallback className="bg-primary/30 text-primary text-sm font-semibold">
                       {getInitials(user.name)}
                     </AvatarFallback>
@@ -178,7 +168,7 @@ export default function Users() {
                     <span className="text-base font-medium text-foreground">
                       {user.name}
                     </span>
-                    <RoleBadge role={getRoleLabel(user.role)} />
+                <RoleBadge role={user.role} />
                   </div>
                 }
               />

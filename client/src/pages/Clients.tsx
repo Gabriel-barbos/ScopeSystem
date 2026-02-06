@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger, } from "@/components/ui/tabs"
 import { List } from "antd";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import RoleIf from "@/components/RoleIf";
+import { Roles } from "@/utils/roles";
 
 
 export default function Clients() {
@@ -65,9 +67,13 @@ export default function Clients() {
             <CardTitle className="text-2xl">Clientes</CardTitle>
             <CardDescription>Visualize e administre seus clientes</CardDescription>
           </div>
+
+          <RoleIf roles={[Roles.ADMIN]}>
           <Button className="ml-auto" size="sm" onClick={openCreate}>
             Cadastrar Cliente <Plus />
           </Button>
+          </RoleIf>
+       
 
           <UniversalDrawer
             open={isDrawerOpen}
@@ -118,6 +124,8 @@ export default function Clients() {
               renderItem={(client) => (
                 <List.Item key={client._id}
                   actions={[
+                   <RoleIf roles={[Roles.ADMIN]}>
+
                     <Button
                       key="edit"
                       variant="secondary"
@@ -125,7 +133,7 @@ export default function Clients() {
                       onClick={() => openEdit(client._id)}
                     >
                       <Pen />
-                    </Button>,
+                    </Button> 
                     <Button
                       key="delete"
                       variant="default"
@@ -134,7 +142,9 @@ export default function Clients() {
                       onClick={() => setDeleteClientId(client._id)}
                     >
                       <Trash />
-                    </Button>,
+                    </Button>
+                    </RoleIf>
+                    ,
                   ]}
                 >
                   <List.Item.Meta

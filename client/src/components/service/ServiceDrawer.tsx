@@ -40,6 +40,8 @@ import EditableField from "@/components/global/EditableField";
 import { getStatusConfig, getServiceConfig } from "@/utils/badges";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useServiceService, Service } from "@/services/ServiceService";
+import RoleIf from "../RoleIf";
+import { Roles } from "@/utils/roles";
 
 type ServiceDrawerProps = {
     open: boolean;
@@ -324,6 +326,9 @@ const handleSave = async () => {
                                     </>
                                 ) : (
                                     <>
+                                    <RoleIf roles={[Roles.ADMIN, Roles.SUPPORT]}>
+
+                                   
                                         <Button variant="outline" size="sm" onClick={handleEdit} className="gap-1.5">
                                             <Pencil className="h-4 w-4" /> Editar
                                         </Button>
@@ -335,6 +340,7 @@ const handleSave = async () => {
                                         >
                                             <Trash2 className="h-4 w-4" /> Excluir
                                         </Button>
+                                         </RoleIf>
                                     </>
                                 )}
                             </div>
