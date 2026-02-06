@@ -66,7 +66,7 @@ function ProductDetailsModal({ product, open, onOpenChange }: { product: any; op
 
         <div className="space-y-4">
           {product.image?.[0] && (
-            <div className="w-full h-48 rounded-lg overflow-hidden bg-muted">
+            <div className="w-full  rounded-lg overflow-hidden bg-muted">
               <img
                 src={product.image[0]}
                 alt={product.name}
