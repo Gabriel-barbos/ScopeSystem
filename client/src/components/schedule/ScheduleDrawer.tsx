@@ -639,6 +639,7 @@ const ScheduleDrawer = ({
                 })
                 : "Não informado"}
             </span>
+            <span>Número do pedido: #{schedule.orderNumber}</span>
           </div>
         </SheetFooter>
       </SheetContent>

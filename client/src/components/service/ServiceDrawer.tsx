@@ -31,6 +31,7 @@ import {
     BookUser,
     LocateFixed,
     Calendar,
+    
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -79,7 +80,7 @@ type FieldDef = {
 };
 
 const COL_LEFT: FieldDef[] = [
-    { icon: Monitor, label: "Device ID", field: "deviceId" },
+    { icon: SatelliteDish, label: "ID do dispositivo", field: "deviceId" },
     { icon: Hash, label: "Chassi", field: "vin" },
     { icon: Car, label: "Modelo", field: "model" },
     { icon: KeySquare, label: "Placa", field: "plate", format: (v) => v || "Não informada" },

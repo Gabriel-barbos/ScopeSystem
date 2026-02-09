@@ -61,7 +61,7 @@ const App = () => (
             <Route
               path="/products"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING]}>
                   <Layout >
                     <Products />
                   </Layout>
@@ -72,7 +72,7 @@ const App = () => (
             <Route
               path="/clients"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING]}>
                   <Layout>
                     <Clients />
                   </Layout>
@@ -106,7 +106,7 @@ const App = () => (
                 <Route
               path="/reports"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.BILLING]}>
                   <Layout>
                     <Reports />
                   </Layout>
@@ -128,7 +128,7 @@ const App = () => (
                  <Route
               path="/services"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION, Roles.SCHEDULING]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION, Roles.SCHEDULING, Roles.BILLING]}>
                   <Layout>
                     <Services />
                   </Layout>

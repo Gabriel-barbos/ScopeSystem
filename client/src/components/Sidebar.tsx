@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from "@/context/Authcontext";
 import { UserCard } from './UserCard';
 import { getRoleLabel } from "@/utils/roleMapper";
-
+import logo from "@/assets/logo.jpg";
 import { Roles, canAccess, Role } from "@/utils/roles"
 
 const getInitials = (name: string = "") => {
@@ -40,25 +40,38 @@ export function Sidebar() {
     }`}>
       
       {/* Logo */}
-      <div className="flex h-16 items-center justify-between border-b border-sidebar-border/50 px-4 relative">
-        {!isCollapsed && (
-          <h1 className="text-xl font-bold bg-gradient-to-r from-sidebar-foreground to-sidebar-foreground/70 bg-clip-text text-transparent">
-            Scope technology
-          </h1>
-        )}
-        {isCollapsed && (
-          <span className="text-xl font-bold text-sidebar-foreground mx-auto">SC</span>
-        )}
+    <div className="relative flex h-20 items-center justify-center border-b border-sidebar-border/50 px-3">
+  {!isCollapsed && (
+    <div className="flex h-full w-full items-center justify-center">
+      <img
+        src={logo}
+        alt="Scope System Logo"
+        className="max-h-16 w-auto object-contain"
+      />
+    </div>
+  )}
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="h-8 w-8 rounded-lg hover:bg-sidebar-accent/50 transition-all absolute -right-4 top-4 bg-sidebar-background border border-sidebar-border/50 shadow-md z-10"
-        >
-          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </Button>
-      </div>
+  {isCollapsed && (
+    <img
+      src={logo}
+      alt="Scope Logo"
+      className="h-10 w-10 object-contain"
+    />
+  )}
+
+  <Button
+    variant="ghost"
+    size="icon"
+    onClick={() => setIsCollapsed(!isCollapsed)}
+    className="absolute -right-4 top-6 h-8 w-8 rounded-lg bg-sidebar-background border border-sidebar-border/50 shadow-md hover:bg-sidebar-accent/50 transition-all z-10"
+  >
+    {isCollapsed ? (
+      <ChevronRight className="h-4 w-4" />
+    ) : (
+      <ChevronLeft className="h-4 w-4" />
+    )}
+  </Button>
+</div>
 
       {/* NAVIGATION */}
       <nav className="flex-1 space-y-1.5 px-3 py-6" aria-label="Main navigation">

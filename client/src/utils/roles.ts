@@ -3,7 +3,7 @@ export const Roles = {
   VALIDATION: "validation",
   SUPPORT: "support",
   SCHEDULING: "scheduling",
-  
+  BILLING: "billing",
 } as const;
 
 export type Role = typeof Roles[keyof typeof Roles];
