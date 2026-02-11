@@ -3,6 +3,7 @@ export const roleLabels: Record<string, string> = {
   validation: "Validação",
   support: "Suporte",
   scheduling: "Agendamento",
+  billing: "Financeiro",
 };
 
 export function getRoleLabel(role: string = ""): string {

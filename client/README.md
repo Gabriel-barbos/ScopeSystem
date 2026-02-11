@@ -1,7 +1,4 @@
-badgee
+navbar financeiro errado
+avatar card -0 missing field s
 
-admin
-validação
-agendamento
-financeiro
-suporte
+import service biloling tirar

@@ -15,7 +15,8 @@ import { useServiceService, type Service } from "@/services/ServiceService";
 import ServiceDrawer from "@/components/service/ServiceDrawer";
 import { ImportModal } from "@/components/ImportModal";
 import { toast } from "sonner";
-
+import RoleIf from "@/components/RoleIf";
+import { Roles } from "@/utils/roles";
 const PAGE_SIZE = 20;
 
 export default function Services() {
@@ -108,6 +109,7 @@ export default function Services() {
                                 Visualize e administre seus serviços
                             </CardDescription>
                         </div>
+                      <RoleIf roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION]}>
                         <Button 
                             className="ml-auto" 
                             variant="outline" 
@@ -116,6 +118,7 @@ export default function Services() {
                         >
                             Importar Serviços <FileSpreadsheet />
                         </Button>
+                     </RoleIf>
                     </div>
                 </CardHeader>
 

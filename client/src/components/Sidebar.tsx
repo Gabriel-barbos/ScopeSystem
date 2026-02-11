@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Calendar, Package, CarFront ,Cpu, Store,ChartArea,SearchCheck, Users, LogOut, ChevronLeft, ChevronRight,BadgeMinus  } from 'lucide-react';
+import { Calendar, Package, CarFront ,Cpu, Store,ChartArea,SearchCheck,UserSearch, Users, LogOut, ChevronLeft, ChevronRight,BadgeMinus  } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from "@/context/Authcontext";
 import { UserCard } from './UserCard';
@@ -20,12 +20,12 @@ const getInitials = (name: string = "") => {
 const navigation = [
   { name: 'Agendamentos', href: '/appointments', icon: Calendar, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION] },
   { name: 'Validação', href: '/validation', icon: SearchCheck, roles: [Roles.ADMIN, Roles.VALIDATION] },
-  { name: 'Serviços', href: '/services', icon: CarFront, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION] },
-  { name: 'Relatórios', href: '/reports', icon: ChartArea, roles: [Roles.ADMIN, Roles.SUPPORT] },
-  { name: 'Produtos', href: '/products', icon: Cpu, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION] },
-  { name: 'Clientes', href: '/clients', icon: Store , roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION] },
+  { name: 'Serviços', href: '/services', icon: CarFront, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING] },
+  { name: 'Relatórios', href: '/reports', icon: ChartArea, roles: [Roles.ADMIN, Roles.SUPPORT,Roles.BILLING] },
+  { name: 'Produtos', href: '/products', icon: Cpu, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING] },
+  { name: 'Clientes', href: '/clients', icon: Store , roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING] },
   { name: 'Usuários', href: '/users', icon: Users, roles: [Roles.ADMIN] },
-  
+  { name: 'Técnicos', href: '/technicians', icon: UserSearch, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.BILLING, Roles.BILLING] }
 ];
 
   // { name: 'Remoção', href: '/removal', icon: BadgeMinus, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT]},
