@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { CarFront, Search, Eye, SquareUser, FileSpreadsheet } from "lucide-react";
 import {
     Card,
@@ -17,38 +17,46 @@ import { ImportModal } from "@/components/ImportModal";
 import { toast } from "sonner";
 import RoleIf from "@/components/RoleIf";
 import { Roles } from "@/utils/roles";
-const PAGE_SIZE = 20;
+
+const PAGE_SIZE = 50;
+
+function useDebounce<T>(value: T, delay: number): T {
+    const [debounced, setDebounced] = useState(value);
+
+    useCallback(() => {
+        const timer = setTimeout(() => setDebounced(value), delay);
+        return () => clearTimeout(timer);
+    }, [value, delay])();
+
+    return debounced;
+}
 
 export default function Services() {
-    const { data: services, isLoading, bulkImport } = useServiceService();
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [importModalOpen, setImportModalOpen] = useState(false);
-    
-    // Estados do Drawer
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedService, setSelectedService] = useState<Service | null>(null);
 
-    const filtered = useMemo(() => {
-        const list = services ?? [];
-        if (!search.trim()) return list;
+    const debouncedSearch = useDebounce(search, 400);
 
-        const query = search.toLowerCase();
-        return list.filter(
-            (s) =>
-                s.vin.toLowerCase().includes(query) ||
-                s.plate?.toLowerCase().includes(query) ||
-                s.deviceId.toLowerCase().includes(query)
-        );
-    }, [services, search]);
+    const { data, isLoading, isFetching, bulkImport } = useServiceService({
+        page: currentPage,
+        limit: PAGE_SIZE,
+        search: debouncedSearch || undefined,
+    });
 
-    const effectivePage =
-        filtered.length <= (currentPage - 1) * PAGE_SIZE ? 1 : currentPage;
+    const services = data?.data ?? [];
+    const pagination = data?.pagination;
 
-    const paginated = useMemo(() => {
-        const start = (effectivePage - 1) * PAGE_SIZE;
-        return filtered.slice(start, start + PAGE_SIZE);
-    }, [filtered, effectivePage]);
+    const handleSearch = (value: string) => {
+        setSearch(value);
+        setCurrentPage(1); // volta p/ página 1 ao buscar
+    };
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
 
     const handleOpenDetails = (service: Service) => {
         setSelectedService(service);
@@ -62,7 +70,6 @@ export default function Services() {
 
     const handleImport = async (data: Record<string, any>[]) => {
         try {
-            // Transformar dados do Excel em payload válido
             const services = data.map((row) => ({
                 plate: row.Placa || undefined,
                 vin: row.Chassi,
@@ -81,7 +88,6 @@ export default function Services() {
                 secondaryDevice: row.DispositivoSecundario || undefined,
                 validatedBy: row.ValidadoPor || "Importação",
                 validationNotes: row.Observacoes || undefined,
-                // Novos campos
                 validatedAt: row.DataValidacao || undefined,
                 status: row.Status || "concluido",
             }));
@@ -109,16 +115,16 @@ export default function Services() {
                                 Visualize e administre seus serviços
                             </CardDescription>
                         </div>
-                      <RoleIf roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION]}>
-                        <Button 
-                            className="ml-auto" 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setImportModalOpen(true)}
-                        >
-                            Importar Serviços <FileSpreadsheet />
-                        </Button>
-                     </RoleIf>
+                        <RoleIf roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION]}>
+                            <Button
+                                className="ml-auto"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setImportModalOpen(true)}
+                            >
+                                Importar Serviços <FileSpreadsheet />
+                            </Button>
+                        </RoleIf>
                     </div>
                 </CardHeader>
 
@@ -131,20 +137,20 @@ export default function Services() {
                             id="search"
                             placeholder="Digite o chassi, placa ou device ID"
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(e) => handleSearch(e.target.value)}
                         />
                     </div>
 
                     <List
                         className="mt-6"
-                        dataSource={paginated}
-                        loading={isLoading}
+                        dataSource={services}
+                        loading={isLoading || isFetching}
                         renderItem={(service) => (
                             <List.Item
                                 actions={[
-                                    <Button 
-                                        key="details" 
-                                        variant="secondary" 
+                                    <Button
+                                        key="details"
+                                        variant="secondary"
                                         size="sm"
                                         onClick={() => handleOpenDetails(service)}
                                     >
@@ -156,7 +162,7 @@ export default function Services() {
                                 <List.Item.Meta
                                     avatar={
                                         <div className="mx-2 h-14 w-14 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-                                            {service.client.image?.[0] ? (
+                                            {service.client?.image?.[0] ? (
                                                 <img
                                                     src={service.client.image[0]}
                                                     alt={service.client.name}
@@ -187,21 +193,21 @@ export default function Services() {
                         )}
                     />
 
-                    {filtered.length > PAGE_SIZE && (
+                    {pagination && pagination.total > PAGE_SIZE && (
                         <div className="mt-4 flex justify-center">
                             <Pagination
-                                current={effectivePage}
+                                current={pagination.page}
                                 pageSize={PAGE_SIZE}
-                                total={filtered.length}
-                                onChange={setCurrentPage}
+                                total={pagination.total}
+                                onChange={handlePageChange}
                                 showSizeChanger={false}
+                                showTotal={(total) => `${total} serviços`}
                             />
                         </div>
                     )}
                 </CardContent>
             </Card>
 
-            {/* Import Modal */}
             <ImportModal
                 open={importModalOpen}
                 onOpenChange={setImportModalOpen}
@@ -232,7 +238,6 @@ export default function Services() {
                 }}
             />
 
-            {/* Service Drawer */}
             <ServiceDrawer
                 open={drawerOpen}
                 onClose={handleCloseDrawer}

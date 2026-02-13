@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import API from "@/api/axios";
 
-// Formato backend 
 export interface ValidationPayload {
   deviceId: string;
   technician: string;
@@ -14,7 +13,6 @@ export interface ValidationPayload {
   secondaryDevice?: string;
 }
 
-// Payload completo para o endpoint
 export interface CreateFromValidationPayload {
   scheduleId: string;
   validationData: ValidationPayload;
@@ -43,19 +41,41 @@ export interface Service {
   secondaryDevice?: string;
   validatedAt: string;
   schedule?: string;
-  source: "validation" | "import";
+  source: "validation" | "import" | "legacy";
   createdAt?: string;
   updatedAt?: string;
 }
 
-// Payload para importação em lote
+export interface ServicePagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface ServiceListResponse {
+  data: Service[];
+  pagination: ServicePagination;
+}
+
+export interface ServiceFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  serviceType?: string;
+  client?: string;
+}
+
 export interface BulkImportServicePayload {
   plate?: string;
   vin: string;
   model: string;
   serviceType: string;
-  client: string; // Nome ou ID do cliente
-  product?: string; // Nome ou ID do produto
+  client: string;
+  product?: string;
   deviceId: string;
   technician: string;
   provider?: string;
@@ -67,13 +87,21 @@ export interface BulkImportServicePayload {
   validationNotes?: string;
   secondaryDevice?: string;
   validatedBy?: string;
-  validatedAt?: string | Date; // Data de validação
-  status?: string; // Status do serviço
+  validatedAt?: string | Date;
+  status?: string;
 }
 
 export const serviceApi = {
-  getAll: async (): Promise<Service[]> => {
-    const { data } = await API.get("/services");
+  getAll: async (filters: ServiceFilters = {}): Promise<ServiceListResponse> => {
+    const params = new URLSearchParams();
+    if (filters.page)        params.set("page",        String(filters.page));
+    if (filters.limit)       params.set("limit",       String(filters.limit));
+    if (filters.search)      params.set("search",      filters.search);
+    if (filters.status)      params.set("status",      filters.status);
+    if (filters.serviceType) params.set("serviceType", filters.serviceType);
+    if (filters.client)      params.set("client",      filters.client);
+
+    const { data } = await API.get(`/services?${params.toString()}`);
     return data;
   },
 
@@ -87,7 +115,9 @@ export const serviceApi = {
     return data;
   },
 
-  bulkImport: async (services: BulkImportServicePayload[]): Promise<{ success: boolean; count: number; message: string }> => {
+  bulkImport: async (
+    services: BulkImportServicePayload[]
+  ): Promise<{ success: boolean; count: number; message: string }> => {
     const { data } = await API.post("/services/bulk-import", { services });
     return data;
   },
@@ -102,16 +132,16 @@ export const serviceApi = {
   },
 };
 
-export function useServiceService() {
+export function useServiceService(filters: ServiceFilters = {}) {
   const queryClient = useQueryClient();
 
   const services = useQuery({
-    queryKey: ["services"],
-    queryFn: serviceApi.getAll,
+    queryKey: ["services", filters],
+    queryFn: () => serviceApi.getAll(filters),
     staleTime: 1000 * 60 * 5,
+    placeholderData: (prev) => prev,
   });
 
-  // Validação - invalida services e schedules
   const createFromValidation = useMutation({
     mutationFn: serviceApi.createFromValidation,
     onSuccess: () => {
@@ -120,7 +150,6 @@ export function useServiceService() {
     },
   });
 
-  // Importação em lote
   const bulkImport = useMutation({
     mutationFn: serviceApi.bulkImport,
     onSuccess: () => {
