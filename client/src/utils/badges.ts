@@ -116,6 +116,31 @@ export const serviceConfig: Record<string, BadgeConfig> = {
       "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700",
     icon: ClipboardList,
   },
+    //legacy
+    manutenção: {
+    label: "Manutenção",
+    className:
+      "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200 dark:border-orange-800",
+    icon: Settings,
+  },
+  Instalação: {
+    label: "Instalação",
+    className:
+      "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
+    icon: Wrench,
+  },
+  Remoção: {
+    label: "Remoção",
+    className:
+      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800",
+    icon: CircleX,
+  },
+  Outro: {
+    label: "Outro",
+    className:
+      "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700",
+    icon: ClipboardList,
+  },
 };
 
 

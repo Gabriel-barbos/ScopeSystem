@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import API from "@/api/axios";
 
+// ─── Tipos Base ────────────────────────────────────────────────
+
 interface ClientRef {
   _id: string;
   name: string;
@@ -47,22 +49,47 @@ export interface SchedulePayload {
 }
 
 export interface BulkUpdatePayload {
-  vin: string;                    
+  vin: string;
   status?: string;
-  client?: string;                
+  client?: string;
   scheduledDate?: any;
   model?: string;
   plate?: string;
   serviceType?: string;
-  product?: string;               
+  product?: string;
   notes?: string;
   provider?: string;
   createdBy?: string;
 }
 
+// ─── Tipo da Resposta Paginada ─────────────────────────────────
+
+export interface Pagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: Pagination;
+}
+
+// ─── API ───────────────────────────────────────────────────────
+
 export const scheduleApi = {
-  getAll: async (): Promise<Schedule[]> => {
-    const { data } = await API.get("/schedules");
+  // ✅ Agora aceita parâmetros de paginação e retorna PaginatedResponse
+  getAll: async (params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<Schedule>> => {
+    const { data } = await API.get("/schedules", {
+      params: {
+        page: params?.page ?? 1,
+        limit: params?.limit ?? 1000, // limite alto para trazer tudo por padrão
+      },
+    });
     return data;
   },
 
@@ -76,14 +103,21 @@ export const scheduleApi = {
     return data;
   },
 
-  bulkCreate: async (schedules: SchedulePayload[]): Promise<{ success: boolean; count: number; message: string }> => {
+  bulkCreate: async (
+    schedules: SchedulePayload[]
+  ): Promise<{ success: boolean; count: number; message: string }> => {
     const { data } = await API.post("/schedules/bulk", { schedules });
     return data;
   },
 
-  bulkUpdate: async (schedules: BulkUpdatePayload[]): Promise<{
-    errors: any; success: boolean; count: number; message: string 
-}> => {
+  bulkUpdate: async (
+    schedules: BulkUpdatePayload[]
+  ): Promise<{
+    errors: any;
+    success: boolean;
+    count: number;
+    message: string;
+  }> => {
     const { data } = await API.put("/schedules/bulk", { schedules });
     return data;
   },
@@ -98,12 +132,17 @@ export const scheduleApi = {
   },
 };
 
-export function useScheduleService() {
+// ─── Hook ──────────────────────────────────────────────────────
+
+export function useScheduleService(params?: {
+  page?: number;
+  limit?: number;
+}) {
   const queryClient = useQueryClient();
 
   const schedules = useQuery({
-    queryKey: ["schedules"],
-    queryFn: scheduleApi.getAll,
+    queryKey: ["schedules", params?.page, params?.limit],
+    queryFn: () => scheduleApi.getAll(params),
     staleTime: 1000 * 60 * 5,
   });
 
@@ -129,7 +168,7 @@ export function useScheduleService() {
   });
 
   const updateSchedule = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: SchedulePayload }) => 
+    mutationFn: ({ id, payload }: { id: string; payload: SchedulePayload }) =>
       scheduleApi.update(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schedules"] });
@@ -147,7 +186,7 @@ export function useScheduleService() {
     ...schedules,
     createSchedule,
     bulkCreateSchedules,
-    bulkUpdateSchedules, 
+    bulkUpdateSchedules,
     updateSchedule,
     deleteSchedule,
   };

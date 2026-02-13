@@ -1,0 +1,67 @@
+/* ── Striped rows ─────────────────────────────────── */
+.schedule-table .ant-table-tbody > tr:nth-child(even) > td {
+  background-color: hsl(var(--muted) / 0.3);
+}
+
+/* ── Row hover ────────────────────────────────────── */
+.schedule-table .ant-table-tbody > tr:hover > td {
+  background-color: hsl(var(--primary) / 0.04) !important;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+/* ── Sticky header ────────────────────────────────── */
+.schedule-table .ant-table-thead > tr > th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: hsl(var(--card)) !important;
+  border-bottom: 2px solid hsl(var(--border));
+}
+
+/* ── Scrollable body ──────────────────────────────── */
+.schedule-table .ant-table-body {
+  max-height: calc(100vh - 320px);
+  overflow-y: auto;
+}
+
+/* ── Row active (clicada) ─────────────────────────── */
+.schedule-table .ant-table-tbody > tr:active > td {
+  background-color: hsl(var(--primary) / 0.08) !important;
+}
+
+/* ── Toolbar ──────────────────────────────────────── */
+.schedule-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.schedule-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.schedule-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 640px) {
+  .schedule-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .schedule-toolbar-right {
+    justify-content: space-between;
+  }
+}
