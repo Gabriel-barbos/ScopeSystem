@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { CarFront, Search, Eye, SquareUser, FileSpreadsheet } from "lucide-react";
 import {
     Card,
@@ -23,19 +23,19 @@ const PAGE_SIZE = 50;
 function useDebounce<T>(value: T, delay: number): T {
     const [debounced, setDebounced] = useState(value);
 
-    useCallback(() => {
+    useEffect(() => {
         const timer = setTimeout(() => setDebounced(value), delay);
         return () => clearTimeout(timer);
-    }, [value, delay])();
+    }, [value, delay]);
 
     return debounced;
 }
 
 export default function Services() {
-    const [search, setSearch] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch]                   = useState("");
+    const [currentPage, setCurrentPage]         = useState(1);
     const [importModalOpen, setImportModalOpen] = useState(false);
-    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [drawerOpen, setDrawerOpen]           = useState(false);
     const [selectedService, setSelectedService] = useState<Service | null>(null);
 
     const debouncedSearch = useDebounce(search, 400);
@@ -46,16 +46,12 @@ export default function Services() {
         search: debouncedSearch || undefined,
     });
 
-    const services = data?.data ?? [];
+    const services   = data?.data ?? [];
     const pagination = data?.pagination;
 
     const handleSearch = (value: string) => {
         setSearch(value);
-        setCurrentPage(1); // volta p/ página 1 ao buscar
-    };
-
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
+        setCurrentPage(1);
     };
 
     const handleOpenDetails = (service: Service) => {
@@ -199,7 +195,7 @@ export default function Services() {
                                 current={pagination.page}
                                 pageSize={PAGE_SIZE}
                                 total={pagination.total}
-                                onChange={handlePageChange}
+                                onChange={setCurrentPage}
                                 showSizeChanger={false}
                                 showTotal={(total) => `${total} serviços`}
                             />
