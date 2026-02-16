@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import API from "@/api/axios";
+import { DateRange } from "react-day-picker";
+import { format } from "date-fns";
 
-
+// ─── Interfaces (mantém tudo igual) ─────────────────────
 export interface ServicesByType {
   instalacoes: number;
   manutencoes: number;
@@ -77,31 +79,63 @@ export interface ReportData {
   reportDaily: ReportDaily;
 }
 
-
 interface ReportParams {
   startDate?: string;
   endDate?: string;
   clientId?: string;
 }
 
+export interface ExportPayload {
+  type: "services" | "schedules";
+  includeOldData?: boolean;
+  dateFrom?: string | null;
+  dateTo?: string | null;
+}
+
+function dateRangeToStrings(dateRange?: DateRange) {
+  if (!dateRange?.from) return { dateFrom: null, dateTo: null };
+  return {
+    dateFrom: format(dateRange.from, "yyyy-MM-dd"),
+    dateTo: dateRange.to
+      ? format(dateRange.to, "yyyy-MM-dd")
+      : format(dateRange.from, "yyyy-MM-dd"),
+  };
+}
+
 export const reportApi = {
   getData: async (params: ReportParams): Promise<ReportData> => {
-    console.log("Fazendo requisição com params:", params); // DEBUG
     const { data } = await API.get("/reports", { params });
-    console.log(" Resposta recebida:", data); // DEBUG
     return data;
   },
 
-  export: async (type: "schedules" | "services") => {
-    const response = await API.get("/reports/export", {
-      params: { type },
+  export: async (
+    type: "schedules" | "services",
+    dateRange?: DateRange,
+    includeOldData?: boolean
+  ) => {
+    const { dateFrom, dateTo } = dateRangeToStrings(dateRange);
+
+    const payload: ExportPayload = {
+      type,
+      includeOldData: type === "services" ? (includeOldData ?? false) : false,
+      dateFrom,
+      dateTo,
+    };
+
+    const response = await API.post("/reports/export", payload, {
       responseType: "blob",
     });
+
+    // Monta nome do arquivo
+    const timestamp = format(new Date(), "yyyy-MM-dd");
+    const suffix = includeOldData ? "-com-legado" : "";
+    const periodSuffix = dateFrom ? `-${dateFrom}-a-${dateTo}` : "";
+    const filename = `${type}-report${suffix}${periodSuffix}-${timestamp}.xlsx`;
 
     const url = URL.createObjectURL(response.data);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${type}-report.xlsx`;
+    link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
   },
@@ -111,7 +145,7 @@ export function useReportService(params: ReportParams = {}) {
   return useQuery({
     queryKey: ["reports", params],
     queryFn: () => reportApi.getData(params),
-    staleTime: 0, 
+    staleTime: 0,
     refetchOnWindowFocus: false,
   });
 }

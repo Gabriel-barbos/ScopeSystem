@@ -25,19 +25,21 @@ const navigation = [
   { name: 'Produtos', href: '/products', icon: Cpu, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING] },
   { name: 'Clientes', href: '/clients', icon: Store , roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING] },
   { name: 'Usuários', href: '/users', icon: Users, roles: [Roles.ADMIN] },
-  { name: 'Técnicos', href: '/technicians', icon: UserSearch, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.BILLING, Roles.BILLING] }
 ];
 
-  // { name: 'Remoção', href: '/removal', icon: BadgeMinus, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT]},
+  // { name: 'Remoção', href: '/removal', icon: BadgeMinus, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT]},   { name: 'Técnicos', href: '/technicians', icon: UserSearch, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.BILLING, Roles.BILLING] }
+
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user, logout } = useAuth();
 
   return (
-    <aside className={`flex h-screen flex-col border-r border-sidebar-border/50 bg-sidebar-background shadow-lg transition-all duration-300 ease-in-out ${
-      isCollapsed ? 'w-20' : 'w-64'
-    }`}>
+  <aside
+  className={`flex h-dvh flex-col border-r border-sidebar-border/50 bg-sidebar-background shadow-lg transition-all duration-300 ease-in-out ${
+    isCollapsed ? 'w-20' : 'w-64'
+  }`}
+>
       
       {/* Logo */}
     <div className="relative flex h-20 items-center justify-center border-b border-sidebar-border/50 px-3">
@@ -74,9 +76,11 @@ export function Sidebar() {
 </div>
 
       {/* NAVIGATION */}
-      <nav className="flex-1 space-y-1.5 px-3 py-6" aria-label="Main navigation">
-
-        {navigation
+<nav
+  className="flex-1 overflow-y-auto space-y-1.5 px-3 py-6 sidebar-scroll"
+  aria-label="Main navigation"
+>
+          {navigation
           .filter(item => canAccess(user?.role, item.roles)) 
           .map((item) => (
             <NavLink

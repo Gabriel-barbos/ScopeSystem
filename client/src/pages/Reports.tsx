@@ -111,16 +111,30 @@ function Reports() {
     setReportPeriod(period);
   }, []);
 
-  const handleExport = useCallback(async (type: "schedules" | "services") => {
-    try {
-      await reportApi.export(type);
-      toast.success(
-        `Exportação de ${type === "schedules" ? "agendamentos" : "serviços"} iniciada!`
-      );
-    } catch {
-      toast.error("Erro ao exportar dados.");
-    }
-  }, []);
+   const handleExportSchedules = useCallback(
+    async (exportDateRange?: DateRange) => {
+      try {
+        await reportApi.export("schedules", exportDateRange);
+        toast.success("Exportação de agendamentos iniciada!");
+      } catch {
+        toast.error("Erro ao exportar agendamentos.");
+      }
+    },
+    []
+  );
+
+    const handleExportServices = useCallback(
+    async (exportDateRange?: DateRange, includeOldData?: boolean) => {
+      try {
+        await reportApi.export("services", exportDateRange, includeOldData);
+        toast.success("Exportação de serviços iniciada!");
+      } catch {
+        toast.error("Erro ao exportar serviços.");
+      }
+    },
+    []
+  );
+
 
   if (isLoading) {
     return (
@@ -149,8 +163,8 @@ function Reports() {
             <ReportsDateRangeFilter value={dateRange} onChange={setDateRange} />
             <ClientFilter value={clientId} onChange={setClientId} />
             <ExportButton
-              onExportSchedules={() => handleExport("schedules")}
-              onExportServices={() => handleExport("services")}
+          onExportSchedules={handleExportSchedules}
+              onExportServices={handleExportServices}
             />
           </div>
         </div>

@@ -132,7 +132,7 @@ const ScheduleTable: React.FC = () => {
     return schedules.filter((s) => matchesGlobalSearch(s, globalSearch));
   }, [schedules, globalSearch]);
 
-  // ── Opções de filtros ──
+  //Opções de filtros 
   const clientOptions = useMemo(() => {
     if (!schedules.length) return [];
     const map = new Map<string, string>();
@@ -154,7 +154,7 @@ const ScheduleTable: React.FC = () => {
     }));
   }, [schedules]);
 
-  // ── Contador de filtros ativos ──
+  // Contador de filtros ativos
   const [tableFilters, setTableFilters] = useState<Record<string, any>>({});
 
   const activeFilterCount = useMemo(() => {
@@ -165,7 +165,7 @@ const ScheduleTable: React.FC = () => {
     return count;
   }, [tableFilters, globalSearch]);
 
-  // ── Handlers ──
+  // Handler
   const handleSearch = useCallback(
     (selectedKeys: string[], confirm: () => void, dataIndex: DataIndex) => {
       confirm();
@@ -199,7 +199,7 @@ const ScheduleTable: React.FC = () => {
     []
   );
 
-  // ── Column Search Props Factory ──
+  // ── Column Search Props Factory 
   const getColumnSearchProps = useCallback(
     (dataIndex: DataIndex, getValue: (record: Schedule) => string): ColumnType<Schedule> => ({
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
@@ -300,7 +300,6 @@ const ScheduleTable: React.FC = () => {
     []
   );
 
-  // ── Columns (memoizadas) ──
   const columns: ColumnsType<Schedule> = useMemo(
     () => [
       {
@@ -520,7 +519,6 @@ const ScheduleTable: React.FC = () => {
         </div>
 
         <div className="schedule-toolbar-right">
-          {/* Contador de resultados */}
           <span className="text-sm text-muted-foreground whitespace-nowrap">
             {filteredSchedules.length}
             {pagination?.total
@@ -529,7 +527,6 @@ const ScheduleTable: React.FC = () => {
             agendamento{filteredSchedules.length !== 1 ? "s" : ""}
           </span>
 
-          {/* Indicador de última atualização */}
           <AntTooltip title={`Última atualização: ${lastUpdated.toLocaleTimeString("pt-BR")}`}>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Clock className="h-3 w-3" />
@@ -537,7 +534,6 @@ const ScheduleTable: React.FC = () => {
             </span>
           </AntTooltip>
 
-          {/* Botão de refresh */}
           <AntTooltip title="Atualizar dados">
             <Button
               type="text"
@@ -554,7 +550,6 @@ const ScheduleTable: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Tabela ── */}
       <Table
         className="schedule-table"
         rowKey="_id"
@@ -585,7 +580,6 @@ const ScheduleTable: React.FC = () => {
         }}
       />
 
-      {/* ── Drawer ── */}
       <ScheduleDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}

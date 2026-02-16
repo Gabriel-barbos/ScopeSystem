@@ -26,6 +26,8 @@ export interface Service {
   scheduledDate?: string;
   serviceType: string;
   notes?: string;
+  status: string;
+  validatedBy: string;
   createdBy?: string;
   product?: { _id: string; name: string };
   client: { _id: string; name: string; image?: string[] };

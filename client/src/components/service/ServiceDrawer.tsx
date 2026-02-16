@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
     Sheet,
     SheetContent,
@@ -9,6 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
     Pencil,
     Trash2,
@@ -22,16 +28,13 @@ import {
     UserCog,
     MapPin,
     Gauge,
-    Shield,
-    Monitor,
-    CalendarCheck,
-    Router ,
+    Router,
     FileText,
-    ShieldMinus ,
+    ShieldMinus,
     BookUser,
     LocateFixed,
     Calendar,
-    
+    CalendarCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -50,33 +53,26 @@ type ServiceDrawerProps = {
     service: Service | null;
 };
 
-//formatar data
 const formatDate = (date?: string | null, opts?: Intl.DateTimeFormatOptions) =>
     date
         ? new Date(date).toLocaleDateString("pt-BR", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            ...opts,
-        })
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              ...opts,
+          })
         : "Não informado";
 
 const formatDateTime = (date?: string | null) =>
     formatDate(date, { hour: "2-digit", minute: "2-digit" });
 
-const SERVICE_TYPE_LABELS: Record<string, string> = {
-    installation: "Instalação",
-    maintenance: "Manutenção",
-    removal: "Remoção",
-};
-
-//cada item é um field
 type FieldDef = {
     icon: React.ComponentType<{ className?: string }>;
     label: string;
     field: keyof Service;
     format?: (value: any, service: Service) => string;
-    editable?: boolean; 
+    editable?: boolean;
+    truncate?: boolean;
 };
 
 const COL_LEFT: FieldDef[] = [
@@ -103,8 +99,8 @@ const COL_CENTER_LEFT: FieldDef[] = [
     },
     { icon: BookUser, label: "Técnico", field: "technician" },
     { icon: UserCog, label: "Prestador", field: "provider", format: (v) => v || "Não informado" },
-    { icon: LocateFixed, label: "Local de Instalação", field: "installationLocation" },
-    { icon: MapPin, label: "Endereço do Serviço", field: "serviceAddress" },
+    { icon: LocateFixed, label: "Local de Instalação", field: "installationLocation", truncate: true },
+    { icon: MapPin, label: "Endereço do Serviço", field: "serviceAddress", truncate: true },
 ];
 
 const COL_CENTER_RIGHT: FieldDef[] = [
@@ -119,7 +115,7 @@ const COL_CENTER_RIGHT: FieldDef[] = [
         label: "Bloqueio",
         field: "blockingEnabled",
         format: (v) => (v ? "Habilitado" : "Desabilitado"),
-        editable: false, // badge especial — tratado separado
+        editable: false,
     },
     {
         icon: Router,
@@ -132,10 +128,53 @@ const COL_CENTER_RIGHT: FieldDef[] = [
         label: "Notas de Validação",
         field: "validationNotes",
         format: (v) => v || "Não informado",
+        truncate: true,
     },
 ];
 
-//rendeniza a coluna
+const getSourceBadge = (source?: string) => {
+    switch (source) {
+        case "validation":
+            return { label: "Validado", variant: "secondary" as const };
+        case "legacy":
+            return { label: "Legado", variant: "outline" as const };
+        default:
+            return { label: "Importado", variant: "secondary" as const };
+    }
+};
+
+/** Campo com texto truncado e tooltip para exibir o valor completo */
+function TruncatedInfoField({
+    icon: Icon,
+    label,
+    value,
+}: {
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+    value: string;
+}) {
+    return (
+        <TooltipProvider delayDuration={200}>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="flex items-center gap-3 cursor-default max-w-[260px]">
+                        <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="min-w-0">
+                            <span className="text-sm text-muted-foreground block">{label}</span>
+                            <p className="font-medium text-sm truncate">{value}</p>
+                        </div>
+                    </div>
+                </TooltipTrigger>
+                {value && value !== "Não informado" && (
+                    <TooltipContent side="bottom" className="max-w-[360px] whitespace-normal">
+                        <p className="text-sm">{value}</p>
+                    </TooltipContent>
+                )}
+            </Tooltip>
+        </TooltipProvider>
+    );
+}
+
 function FieldColumn({
     fields,
     service,
@@ -160,10 +199,7 @@ function FieldColumn({
                             <def.icon className="h-4 w-4 text-muted-foreground shrink-0" />
                             <div className="min-w-0">
                                 <span className="text-sm text-muted-foreground block">{def.label}</span>
-                                <Badge
-                                    variant={raw ? "default" : "secondary"}
-                                    className="mt-0.5"
-                                >
+                                <Badge variant={raw ? "default" : "secondary"} className="mt-0.5">
                                     {raw ? "Habilitado" : "Desabilitado"}
                                 </Badge>
                             </div>
@@ -171,7 +207,7 @@ function FieldColumn({
                     );
                 }
 
-                // Modo edição — apenas campos marcados como editáveis
+                // Modo edição
                 if (isEditing && def.editable !== false) {
                     return (
                         <EditableField
@@ -181,6 +217,18 @@ function FieldColumn({
                             value={String(raw ?? "")}
                             onChange={(value) => onUpdate(def.field, value)}
                             placeholder={def.label}
+                        />
+                    );
+                }
+
+                // Campo truncado com tooltip
+                if (def.truncate) {
+                    return (
+                        <TruncatedInfoField
+                            key={def.field}
+                            icon={def.icon}
+                            label={def.label}
+                            value={display}
                         />
                     );
                 }
@@ -199,7 +247,6 @@ const ServiceDrawer = ({ open, onClose, service }: ServiceDrawerProps) => {
     const { deleteService, updateService } = useServiceService();
     const queryClient = useQueryClient();
 
-    // Resetar estado de edição quando o drawer fecha ou o serviço muda
     useEffect(() => {
         setIsEditing(false);
         setEdited(null);
@@ -207,11 +254,12 @@ const ServiceDrawer = ({ open, onClose, service }: ServiceDrawerProps) => {
 
     if (!service) return null;
 
-    // Fonte de dados ativa: editado (modo edição) ou original
     const current = edited ?? service;
+    const isLegacy = current.source === "legacy";
 
     const statusBadge = getStatusConfig(current.status);
     const serviceBadge = getServiceConfig(current.serviceType);
+    const sourceBadge = getSourceBadge(current.source);
     const StatusIcon = statusBadge.icon;
     const ServiceIcon = serviceBadge.icon;
 
@@ -229,40 +277,40 @@ const ServiceDrawer = ({ open, onClose, service }: ServiceDrawerProps) => {
         if (edited) setEdited({ ...edited, [field]: value });
     };
 
-const handleSave = async () => {
-    if (!edited) return;
+    const handleSave = async () => {
+        if (!edited) return;
 
-    try {
-        // Monta o payload apenas com os campos editáveis
-        const payload: Partial<Service> = {
-            deviceId: edited.deviceId,
-            vin: edited.vin,
-            model: edited.model,
-            plate: edited.plate,
-            technician: edited.technician,
-            provider: edited.provider,
-            installationLocation: edited.installationLocation,
-            serviceAddress: edited.serviceAddress,
-            odometer: edited.odometer,
-            secondaryDevice: edited.secondaryDevice,
-            validationNotes: edited.validationNotes,
-            notes: edited.notes,
-        };
+        try {
+            const payload: Partial<Service> = {
+                deviceId: edited.deviceId,
+                vin: edited.vin,
+                model: edited.model,
+                plate: edited.plate,
+                technician: edited.technician,
+                provider: edited.provider,
+                installationLocation: edited.installationLocation,
+                serviceAddress: edited.serviceAddress,
+                odometer: edited.odometer,
+                secondaryDevice: edited.secondaryDevice,
+                validationNotes: edited.validationNotes,
+                notes: edited.notes,
+            };
 
-        await updateService.mutateAsync({ 
-            id: edited._id, 
-            payload 
-        });
+            await updateService.mutateAsync({
+                id: edited._id,
+                payload,
+            });
 
-        toast.success("Serviço atualizado com sucesso!");
-        setIsEditing(false);
-        setEdited(null);
-        onClose();
-    } catch (error) {
-        toast.error("Erro ao atualizar serviço");
-        console.error(error);
-    }
-};
+            queryClient.invalidateQueries({ queryKey: ["services"] });
+            toast.success("Serviço atualizado com sucesso!");
+            setIsEditing(false);
+            setEdited(null);
+            onClose();
+        } catch (error) {
+            toast.error("Erro ao atualizar serviço");
+            console.error(error);
+        }
+    };
 
     const handleDelete = async () => {
         try {
@@ -271,8 +319,9 @@ const handleSave = async () => {
             toast.success("Serviço excluído com sucesso!");
             setOpenDeleteModal(false);
             onClose();
-        } catch {
+        } catch (error) {
             toast.error("Erro ao excluir serviço");
+            console.error(error);
         }
     };
 
@@ -280,7 +329,7 @@ const handleSave = async () => {
         <>
             <Sheet open={open} onOpenChange={onClose}>
                 <SheetContent side="bottom" className="min-h-[50vh] max-h-[72vh] h-auto flex flex-col">
-                    {/*header*/}
+                    {/* HEADER */}
                     <SheetHeader>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
@@ -314,7 +363,7 @@ const handleSave = async () => {
                                 </div>
                             </div>
 
-                            {/* Botões de ação */}
+                            {/* Botões de ação — ocultos para registros legacy */}
                             <div className="flex gap-2">
                                 {isEditing ? (
                                     <>
@@ -326,40 +375,36 @@ const handleSave = async () => {
                                         </Button>
                                     </>
                                 ) : (
-                                    <>
-                                    <RoleIf roles={[Roles.ADMIN, Roles.SUPPORT]}>
-
-                                   
-                                        <Button variant="outline" size="sm" onClick={handleEdit} className="gap-1.5">
-                                            <Pencil className="h-4 w-4" /> Editar
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setOpenDeleteModal(true)}
-                                            className="gap-1.5 text-destructive hover:text-destructive"
-                                        >
-                                            <Trash2 className="h-4 w-4" /> Excluir
-                                        </Button>
-                                         </RoleIf>
-                                    </>
+                                    !isLegacy && (
+                                        <RoleIf roles={[Roles.ADMIN, Roles.SUPPORT]}>
+                                            <Button variant="outline" size="sm" onClick={handleEdit} className="gap-1.5">
+                                                <Pencil className="h-4 w-4" /> Editar
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setOpenDeleteModal(true)}
+                                                className="gap-1.5 text-destructive hover:text-destructive"
+                                            >
+                                                <Trash2 className="h-4 w-4" /> Excluir
+                                            </Button>
+                                        </RoleIf>
+                                    )
                                 )}
                             </div>
                         </div>
                     </SheetHeader>
 
-                    {/*4 colunas */}
+                    {/* 4 COLUNAS */}
                     <div className="flex-1 flex justify-between py-6 overflow-y-auto">
-                        {/* Colunas 1-3 (esquerda) */}
                         <div className="flex gap-12">
                             <FieldColumn fields={COL_LEFT} service={current} isEditing={isEditing} onUpdate={handleUpdate} />
                             <FieldColumn fields={COL_CENTER_LEFT} service={current} isEditing={isEditing} onUpdate={handleUpdate} />
                             <FieldColumn fields={COL_CENTER_RIGHT} service={current} isEditing={isEditing} onUpdate={handleUpdate} />
                         </div>
 
-                        {/* Coluna  (direita) */}
+                        {/* Coluna direita */}
                         <div className="w-[360px] flex flex-col gap-4">
-                            {/* Validado por */}
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8">
                                     <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
@@ -372,11 +417,9 @@ const handleSave = async () => {
                                 </div>
                             </div>
 
-                            {/* Datas */}
                             <InfoField icon={CalendarCheck} label="Validado em" value={formatDate(current.validatedAt)} />
                             <InfoField icon={Calendar} label="Data agendada" value={formatDate(current.scheduledDate)} />
 
-                            {/* Observações (notes) */}
                             <div className="flex-1 flex flex-col min-h-0">
                                 <span className="text-sm text-muted-foreground mb-2 block">Observações</span>
                                 <Textarea
@@ -390,10 +433,9 @@ const handleSave = async () => {
                         </div>
                     </div>
 
-                    {/*- FOOTER */}
+                    {/* FOOTER */}
                     <SheetFooter className="border-t pt-3">
                         <div className="w-full flex items-center justify-between text-xs text-muted-foreground">
-                            {/* Lado esquerdo: criado por + timestamps */}
                             <div className="flex items-center gap-4">
                                 <span>Criado por {current.createdBy || "Sistema"}</span>
                                 <span className="text-muted-foreground/50">•</span>
@@ -402,11 +444,10 @@ const handleSave = async () => {
                                 <span>Modificado em {formatDateTime(current.updatedAt)}</span>
                             </div>
 
-                            {/* Lado direito: source + protocolo */}
                             <div className="flex items-center gap-3">
                                 <span>Protocolo: {current.protocolNumber || "—"}</span>
-                                <Badge variant="secondary" className="text-xs">
-                                    {current.source === "validation" ? "Validado" : "Importado"}
+                                <Badge variant={sourceBadge.variant} className="text-xs">
+                                    {sourceBadge.label}
                                 </Badge>
                             </div>
                         </div>
@@ -414,7 +455,6 @@ const handleSave = async () => {
                 </SheetContent>
             </Sheet>
 
-            {/* Modal de confirmação de exclusão */}
             <ConfirmModal
                 open={openDeleteModal}
                 onOpenChange={(o) => !o && setOpenDeleteModal(false)}
