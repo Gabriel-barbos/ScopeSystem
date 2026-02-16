@@ -37,7 +37,7 @@ import {
 
 import ScheduleDrawer from "./ScheduleDrawer";
 import ScheduleEmptyState from "./ScheduleEmptyState";
-import "./ScheduleTable.styles.css";
+import "./scheduleTable.styles.css";
 
 
 type DataIndex = "vin" | "serviceType" | "status" | "createdBy";
