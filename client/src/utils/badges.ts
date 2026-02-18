@@ -13,19 +13,21 @@ import {
   Shield,
   Headset,
   Wallet,
+  MapPinX
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
 
 
-// Status
 export type StatusType =
   | "criado"
   | "agendado"
   | "atrasado"
   | "concluido"
   | "cancelado"
-  | "observacao";
+  | "observacao"
+  | "waiting_address"      
+  | "waiting_responsible"; 
 
 // Serviços
 export type ServiceType = "maintenance" | "installation" | "removal";
@@ -88,6 +90,19 @@ export const statusConfig: Record<StatusType, BadgeConfig> = {
       "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800",
     icon: CheckCircle,
   },
+  waiting_address: {
+    label: "Aguardando Endereço",
+    className:
+      "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 border-violet-200 dark:border-violet-800",
+    icon: MapPinX, 
+  },
+  waiting_responsible: {
+    label: "Aguardando Responsável",
+    className:
+      "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 border-sky-200 dark:border-sky-800",
+    icon: UserSearch,
+  },
+
 };
 
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Calendar, Package, CarFront ,Cpu, Store,ChartArea,SearchCheck,UserSearch, Users, LogOut, ChevronLeft, ChevronRight,BadgeMinus  } from 'lucide-react';
+import { Calendar, Package, CarFront ,Cpu, Store,ChartArea,SearchCheck,MailPlus , Users, LogOut, ChevronLeft, ChevronRight,BadgeMinus  } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from "@/context/Authcontext";
 import { UserCard } from './UserCard';
@@ -21,6 +21,7 @@ const navigation = [
   { name: 'Agendamentos', href: '/appointments', icon: Calendar, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION] },
   { name: 'Validação', href: '/validation', icon: SearchCheck, roles: [Roles.ADMIN, Roles.VALIDATION] },
   { name: 'Serviços', href: '/services', icon: CarFront, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING] },
+  { name: 'Solicitações de Manutenção', href: '/maintenance-requests', icon: MailPlus, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT] },
   { name: 'Relatórios', href: '/reports', icon: ChartArea, roles: [Roles.ADMIN, Roles.SUPPORT,Roles.BILLING] },
   { name: 'Produtos', href: '/products', icon: Cpu, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING] },
   { name: 'Clientes', href: '/clients', icon: Store , roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING] },

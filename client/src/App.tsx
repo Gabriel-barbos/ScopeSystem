@@ -15,6 +15,7 @@ import Reports from "./pages/Reports";
 import Validation from "./pages/Validation";
 import Services from "./pages/Services";
 import Technicians from "./pages/Technicians";
+import MaintenenceRequests from "./pages/MaintenenceRequests";
 import { AuthProvider } from "@/context/Authcontext";
 import { AntdThemeProvider } from "@/providers/AntdThemeProvider";
 import PrivateRoute from "@/components/PrivateRoute";
@@ -142,6 +143,16 @@ const App = () => (
                 <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION, Roles.SCHEDULING, Roles.BILLING]}>
                   <Layout>
                     <Technicians />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+                   <Route
+              path="/maintenance-requests"
+              element={
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT,  Roles.SCHEDULING]}>
+                  <Layout>
+                    <MaintenenceRequests />
                   </Layout>
                 </PrivateRoute>
               }
