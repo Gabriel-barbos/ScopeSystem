@@ -232,6 +232,8 @@ export default function MaintenanceActionModal({
 
   // Criar agendamentos
   const handleCreateSchedules = async () => {
+      console.log("user completo:", JSON.stringify(user));
+
     const validationErrors = validateForScheduleCreation();
 
     if (validationErrors.length > 0) {
@@ -262,6 +264,7 @@ export default function MaintenanceActionModal({
 
       // Depois cria os schedules
 const result = await createSchedules.mutateAsync({
+  
   id: request._id,
   createdBy: user?.name,
 });

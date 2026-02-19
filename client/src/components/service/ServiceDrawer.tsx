@@ -417,7 +417,7 @@ const ServiceDrawer = ({ open, onClose, service }: ServiceDrawerProps) => {
                                 </div>
                             </div>
 
-                            <InfoField icon={CalendarCheck} label="Validado em" value={formatDate(current.validatedAt)} />
+                            <InfoField icon={CalendarCheck} label="Instalado em" value={formatDate(current.validatedAt)} />
                             <InfoField icon={Calendar} label="Data agendada" value={formatDate(current.scheduledDate)} />
 
                             <div className="flex-1 flex flex-col min-h-0">
