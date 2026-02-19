@@ -3,7 +3,7 @@ import API from "@/api/axios";
 
 export interface Vehicle {
   plate?: string;
-  vin?: string; // chassi
+  vin?: string;
   serviceAddress?: string;
   responsible?: string;
   responsiblePhone?: string;
@@ -75,16 +75,13 @@ export const maintenanceRequestApi = {
     return data;
   },
 
-    createSchedules: async (
-    id: string, 
-    createdBy?: string
-  ): Promise<{ schedulesCreated: number }> => {
-    const { data } = await API.post(`/maintenance/${id}/create-schedules`, {
-      createdBy
-    });
-    return data;
-  },
-
+createSchedules: async (
+  id: string,
+  createdBy?: string
+): Promise<{ schedulesCreated: number }> => {
+  const { data } = await API.post(`/maintenance/${id}/create-schedules`, { createdBy });
+  return data;
+},
 
   delete: async (id: string): Promise<void> => {
     await API.delete(`/maintenance/${id}`);
@@ -117,13 +114,14 @@ export function useMaintenanceRequestService(params?: {
     },
   });
 
-  const createSchedules = useMutation({
-    mutationFn: (id: string) => maintenanceRequestApi.createSchedules(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["maintenanceRequests"] });
-      queryClient.invalidateQueries({ queryKey: ["schedules"] }); // invalida schedules também
-    },
-  });
+const createSchedules = useMutation({
+  mutationFn: ({ id, createdBy }: { id: string; createdBy?: string }) =>
+    maintenanceRequestApi.createSchedules(id, createdBy),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["maintenanceRequests"] });
+    queryClient.invalidateQueries({ queryKey: ["schedules"] });
+  },
+});
 
   const deleteMaintenanceRequest = useMutation({
     mutationFn: maintenanceRequestApi.delete,

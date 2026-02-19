@@ -58,7 +58,7 @@ export default function MaintenanceActionModal({
   const [clientId, setClientId] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState<VehicleForm[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
-    const { user } = useAuth();
+  const { user } = useAuth();
   const { updateMaintenanceRequest, createSchedules } = useMaintenanceRequestService();
 
   // Inicializa o form quando o request muda
@@ -261,8 +261,10 @@ export default function MaintenanceActionModal({
       });
 
       // Depois cria os schedules
-      const result = await createSchedules.mutateAsync(request._id);
-
+const result = await createSchedules.mutateAsync({
+  id: request._id,
+  createdBy: user?.name,
+});
       toast.success(
         `${result.schedulesCreated} agendamento(s) criado(s) com sucesso!`
       );
