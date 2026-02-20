@@ -79,7 +79,7 @@ export interface PaginatedResponse<T> {
 // ─── API ───────────────────────────────────────────────────────
 
 export const scheduleApi = {
-  // ✅ Agora aceita parâmetros de paginação e retorna PaginatedResponse
+
   getAll: async (params?: {
     page?: number;
     limit?: number;
@@ -146,44 +146,38 @@ export function useScheduleService(params?: {
     staleTime: 1000 * 60 * 5,
   });
 
+  const scheduleList = schedules.data?.data ?? [];
+  const pagination = schedules.data?.pagination;
+
   const createSchedule = useMutation({
     mutationFn: scheduleApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["schedules"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["schedules"] }),
   });
 
   const bulkCreateSchedules = useMutation({
     mutationFn: scheduleApi.bulkCreate,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["schedules"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["schedules"] }),
   });
 
   const bulkUpdateSchedules = useMutation({
     mutationFn: scheduleApi.bulkUpdate,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["schedules"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["schedules"] }),
   });
 
   const updateSchedule = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: SchedulePayload }) =>
       scheduleApi.update(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["schedules"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["schedules"] }),
   });
 
   const deleteSchedule = useMutation({
     mutationFn: scheduleApi.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["schedules"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["schedules"] }),
   });
-
-  return {
+ return {
     ...schedules,
+    scheduleList,   
+    pagination,    
     createSchedule,
     bulkCreateSchedules,
     bulkUpdateSchedules,

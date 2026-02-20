@@ -35,7 +35,7 @@ function mapFormToPayload(formData: ValidationFormData) {
 }
 
 function Validation() {
-  const { data: schedules = [], isLoading } = useScheduleService();
+const { scheduleList, isLoading } = useScheduleService();
   const { createFromValidation } = useServiceService();
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -75,7 +75,7 @@ function Validation() {
 
         <CardContent className="space-y-6" style={{ height: "auto", minHeight: 0 }}>
           <ScheduleAutocomplete
-            schedules={schedules}
+            schedules={scheduleList}
             isLoading={isLoading}
             onSelect={setSelectedSchedule}
             selectedSchedule={selectedSchedule}

@@ -1,9 +1,40 @@
 import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import API from "@/api/axios";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
 
-// ─── Interfaces (mantém tudo igual) ─────────────────────
+// Instância dedicada para exports — sem timeout (arquivos grandes)
+const EXPORT_API = axios.create({
+  baseURL: API.defaults.baseURL,
+  timeout: 0,
+});
+
+EXPORT_API.interceptors.request.use((config) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch (e) {
+    // silent
+  }
+  return config;
+});
+
+EXPORT_API.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    }
+    return Promise.reject(error);
+  }
+);
+
+// ─── Interfaces ───────────────────────────────────────────
+
 export interface ServicesByType {
   instalacoes: number;
   manutencoes: number;
@@ -92,6 +123,8 @@ export interface ExportPayload {
   dateTo?: string | null;
 }
 
+// ─── Helpers ─────────────────────────────────────────────
+
 function dateRangeToStrings(dateRange?: DateRange) {
   if (!dateRange?.from) return { dateFrom: null, dateTo: null };
   return {
@@ -101,6 +134,8 @@ function dateRangeToStrings(dateRange?: DateRange) {
       : format(dateRange.from, "yyyy-MM-dd"),
   };
 }
+
+// ─── API ─────────────────────────────────────────────────
 
 export const reportApi = {
   getData: async (params: ReportParams): Promise<ReportData> => {
@@ -122,11 +157,10 @@ export const reportApi = {
       dateTo,
     };
 
-    const response = await API.post("/reports/export", payload, {
+    const response = await EXPORT_API.post("/reports/export", payload, {
       responseType: "blob",
     });
 
-    // Monta nome do arquivo
     const timestamp = format(new Date(), "yyyy-MM-dd");
     const suffix = includeOldData ? "-com-legado" : "";
     const periodSuffix = dateFrom ? `-${dateFrom}-a-${dateTo}` : "";
@@ -140,6 +174,8 @@ export const reportApi = {
     URL.revokeObjectURL(url);
   },
 };
+
+// ─── Hook ─────────────────────────────────────────────────
 
 export function useReportService(params: ReportParams = {}) {
   return useQuery({
