@@ -35,7 +35,6 @@ export default function Appointments() {
 
   const handleImport = async (data: Record<string, any>[]) => {
     try {
-      // Transformar dados do Excel em payload válido
       const schedules: SchedulePayload[] = data.map((row) => ({
         plate: row.Placa || undefined,
         vin: row.Chassi,
@@ -46,13 +45,12 @@ export default function Appointments() {
         scheduledDate: row.Data || undefined,
         notes: row.Observacoes || undefined,
         provider: row.Prestador || undefined,
-        NumeroPedido : "NumeroPedido",
-        // Regras de negócio adicionais
+        vehicleGroup: row.VehicleGroup || undefined,
+        NumeroPedido: "NumeroPedido",
         status: row.Data ? "agendado" : "criado",
         createdBy: user?.name || "Sistema",
       }));
 
-      // Enviar para o backend
       await bulkCreateSchedules.mutateAsync(schedules);
 
       toast.success(`${schedules.length} agendamentos importados com sucesso!`);
@@ -63,13 +61,12 @@ export default function Appointments() {
     }
   };
 
-    const handleBulkUpdate = async (data: Record<string, any>[]) => {
+  const handleBulkUpdate = async (data: Record<string, any>[]) => {
     try {
       const result = await bulkUpdateSchedules.mutateAsync(data)
-      
+
       toast.success(result.message)
-      
-      //  erros parciais
+
       if (result.errors && result.errors.length > 0) {
         toast.warning("Alguns registros apresentaram erros", {
           description: result.errors.slice(0, 3).join(", ")
@@ -79,13 +76,12 @@ export default function Appointments() {
       toast.error("Erro ao modificar agendamentos", {
         description: error.response?.data?.error || error.message
       })
-      
-      //
+
       if (error.response?.data?.details) {
         console.error("Detalhes dos erros:", error.response.data.details)
       }
-      
-      throw error 
+
+      throw error
     }
   }
   return (
@@ -160,18 +156,19 @@ export default function Appointments() {
             TipoServico: "TipoServico",
             Data: "Data",
             Prestador: "Prestador",
-            NumeroPedido : "NumeroPedido",
+            NumeroPedido: "NumeroPedido",
+            VehicleGroup: "VehicleGroup",
             Observacoes: "Observacoes",
           }}
         />
 
-          <EditScheduleModal
-        open={editModalOpen}
-        onOpenChange={setEditModalOpen}
-        templateUrl="/templates/Edit_agendamentos.xlsx"
-        templateName="template-edicao-agendamentos.xlsx"
-        onUpdate={handleBulkUpdate}
-      />
+        <EditScheduleModal
+          open={editModalOpen}
+          onOpenChange={setEditModalOpen}
+          templateUrl="/templates/Edit_agendamentos.xlsx"
+          templateName="template-edicao-agendamentos.xlsx"
+          onUpdate={handleBulkUpdate}
+        />
         <ScheduleTable />
       </CardContent>
     </Card>

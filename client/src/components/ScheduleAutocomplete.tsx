@@ -34,14 +34,12 @@ export function ScheduleAutocomplete({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
-  // Sincronizar valor do input com agendamento selecionado
   useEffect(() => {
     if (selectedSchedule) {
       setSearchValue(selectedSchedule.plate || selectedSchedule.vin);
     }
   }, [selectedSchedule]);
 
-  // Debounce para abrir o popover apenas após parar de digitar
   useEffect(() => {
     if (searchValue.trim().length > 0 && !selectedSchedule) {
       const timer = setTimeout(() => {
@@ -167,7 +165,6 @@ const filteredSchedules = useMemo(() => {
                     className="cursor-pointer px-4 py-3 aria-selected:bg-accent"
                   >
                     <div className="flex flex-col gap-2 w-full">
-                      {/* Linha 1: Placa/Chassi e Modelo */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-foreground">
@@ -187,7 +184,6 @@ const filteredSchedules = useMemo(() => {
                         )}
                       </div>
 
-                      {/* Cliente e Tipo de Serviço */}
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <User className="h-3 w-3" />

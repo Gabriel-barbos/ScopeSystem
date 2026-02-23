@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import API from "@/api/axios";
 
-//type que vem do backend
 export interface Client {
   _id: string;
   name: string;
@@ -12,7 +11,6 @@ export interface Client {
   updatedAt?: string;
 }
 
-//type que enviamos para o backend
 export interface ClientPayload {
   name: string;
   description?: string;

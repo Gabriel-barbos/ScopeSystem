@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import API from "@/api/axios";
 
-//type que vem do backend
 export interface Product {
   _id: string;
   name: string;
@@ -14,7 +13,6 @@ export interface Product {
   updatedAt?: string;
 }
 
-//type que enviamos para o backend
 export interface ProductPayload {
   name: string;
   description?: string;
@@ -83,14 +81,12 @@ export interface ProductPayload {
 export function useProductService() {
   const queryClient = useQueryClient();
 
-  // salvar no cache 5 minutos
   const products = useQuery({
     queryKey: ["products"],
     queryFn: productApi.getAll,
     staleTime: 1000 * 60 * 5,
   });
 
-  // CREATE
   const createProduct = useMutation({
     mutationFn: productApi.create,
     onSuccess: () => {
@@ -98,7 +94,6 @@ export function useProductService() {
     },
   });
 
-  // UPDATE
   const updateProduct = useMutation({
     mutationFn: ({
       id,
@@ -112,7 +107,6 @@ export function useProductService() {
     },
   });
 
-  // DELETE
   const deleteProduct = useMutation({
     mutationFn: productApi.delete,
     onSuccess: () => {
@@ -121,10 +115,8 @@ export function useProductService() {
   });
 
   return {
-    // queries
     ...products,
 
-    // mutations
     createProduct,
     updateProduct,
     deleteProduct,

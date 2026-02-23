@@ -16,7 +16,6 @@ EXPORT_API.interceptors.request.use((config) => {
       config.headers.Authorization = `Bearer ${token}`;
     }
   } catch (e) {
-    // silent
   }
   return config;
 });
@@ -32,7 +31,6 @@ EXPORT_API.interceptors.response.use(
   }
 );
 
-//Interfaces
 
 export interface ServicesByType {
   instalacoes: number;
@@ -122,7 +120,6 @@ export interface ExportPayload {
   dateTo?: string | null;
 }
 
-// ─── Helpers ─────────────────────────────────────────────
 
 function dateRangeToStrings(dateRange?: DateRange) {
   if (!dateRange?.from) return { dateFrom: null, dateTo: null };
@@ -134,7 +131,6 @@ function dateRangeToStrings(dateRange?: DateRange) {
   };
 }
 
-// ─── API ─────────────────────────────────────────────────
 
 export const reportApi = {
   getData: async (params: ReportParams): Promise<ReportData> => {
@@ -174,7 +170,6 @@ export const reportApi = {
   },
 };
 
-// ─── Hook ─────────────────────────────────────────────────
 
 export function useReportService(params: ReportParams = {}) {
   return useQuery({

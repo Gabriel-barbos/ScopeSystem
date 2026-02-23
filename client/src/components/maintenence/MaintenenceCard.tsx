@@ -20,7 +20,6 @@ interface MaintenanceCardProps {
     onOpen?: (request: MaintenanceRequest) => void;
 }
 
-// Scheduling status → mapeia para seu sistema de status existente
 const schedulingMap: Record<string, { statusKey: string; label: string }> = {
   pending: { statusKey: "criado", label: "Criado" },
   waiting_address: { statusKey: "waiting_address", label: "Aguardando Endereço" },
@@ -29,7 +28,6 @@ const schedulingMap: Record<string, { statusKey: string; label: string }> = {
   cancelled: { statusKey: "cancelado", label: "Cancelado" },
 };
 
-// Ticket status do Zoho
 const ticketStatusColors: Record<string, string> = {
     Aberto: "bg-emerald-500",
     Fechado: "bg-muted-foreground/40",
@@ -78,16 +76,12 @@ export default function MaintenanceCard({ request, onOpen }: MaintenanceCardProp
 
     return (
         <div className="group relative flex bg-card text-card-foreground rounded-xl border border-border shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/20">
-            {/* Left accent strip — ticket style */}
             <div className="relative w-3 shrink-0 rounded-l-xl bg-primary/80">
-                {/* Perfurações */}
                 <div className="absolute -right-[5px] top-5 h-2.5 w-2.5 rounded-full bg-background border border-border" />
                 <div className="absolute -right-[5px] bottom-5 h-2.5 w-2.5 rounded-full bg-background border border-border" />
             </div>
 
-            {/* Content */}
             <div className="flex-1 min-w-0 px-4 py-3.5">
-                {/* Row 1 — Subject + badges + action */}
                 <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -121,10 +115,8 @@ export default function MaintenanceCard({ request, onOpen }: MaintenanceCardProp
         </Button>
                 </div>
 
-                {/* Divider — dashed ticket tearline */}
                 <div className="my-3 border-t border-dashed border-border" />
 
-                {/* Row 2 — Meta info + ver detalhes */}
                 <div className="flex items-end justify-between gap-4">
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
                         <span className="inline-flex items-center gap-1.5">
@@ -146,7 +138,6 @@ export default function MaintenanceCard({ request, onOpen }: MaintenanceCardProp
                     </button>
                 </div>
 
-                {/* Row 3 — Timestamp */}
                 <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-muted-foreground/90">
                     <Clock className="h-3 w-3" />
                     Solicitado em {formatDate(request.createdAt)} via
@@ -156,7 +147,6 @@ export default function MaintenanceCard({ request, onOpen }: MaintenanceCardProp
                 </div>
             </div>
 
-            {/* Right notch — ticket style */}
             <div className="relative w-2 shrink-0 rounded-r-xl bg-transparent">
                 <div className="absolute -left-[5px] top-1/2 -translate-y-1/2 h-6 w-2.5 rounded-l-full bg-background border-l border-y border-border" />
             </div>

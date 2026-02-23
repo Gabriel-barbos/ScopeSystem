@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { Service } from "@/services/ServiceService";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 export type FieldDef = {
     icon: React.ComponentType<{ className?: string }>;
@@ -27,7 +26,6 @@ export type FieldDef = {
     truncate?: boolean;
 };
 
-// ─── Formatters ───────────────────────────────────────────────────────────────
 
 export const formatDate = (
     date?: string | null,
@@ -45,7 +43,6 @@ export const formatDate = (
 export const formatDateTime = (date?: string | null) =>
     formatDate(date, { hour: "2-digit", minute: "2-digit" });
 
-// ─── Badge helpers ────────────────────────────────────────────────────────────
 
 export const getSourceBadge = (source?: string) => {
     switch (source) {
@@ -58,7 +55,6 @@ export const getSourceBadge = (source?: string) => {
     }
 };
 
-// ─── Column definitions ───────────────────────────────────────────────────────
 
 export const COL_LEFT: FieldDef[] = [
     { icon: SatelliteDish, label: "ID do dispositivo", field: "deviceId" },
@@ -143,9 +139,7 @@ export const COL_CENTER_RIGHT: FieldDef[] = [
     },
 ];
 
-// ─── All editable fields sent on save ─────────────────────────────────────────
-// Derived from the column definitions — only fields where editable !== false.
-// Avoids manually listing fields in handleSave.
+
 
 const ALL_COLUMNS = [...COL_LEFT, ...COL_CENTER_LEFT, ...COL_CENTER_RIGHT];
 
@@ -153,11 +147,9 @@ export const EDITABLE_FIELDS = ALL_COLUMNS.filter(
     (f) => f.editable !== false
 ).map((f) => f.field);
 
-// Extra fields not in columns but still editable
 export const EXTRA_EDITABLE_FIELDS: (keyof Service)[] = ["notes"];
 
-// ─── Copy-all helper ──────────────────────────────────────────────────────────
-// Builds a TSV string (paste-ready in Excel/Sheets) from all visible fields.
+
 
 export function buildTSV(service: Service, notes: string): string {
     const allFields = [...COL_LEFT, ...COL_CENTER_LEFT, ...COL_CENTER_RIGHT];

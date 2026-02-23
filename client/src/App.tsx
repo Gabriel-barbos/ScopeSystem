@@ -41,7 +41,7 @@ const App = () => (
             <Route
               path="/appointments"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING,]}>
                   <Layout>
                     <Appointments />
                   </Layout>
@@ -165,7 +165,6 @@ const App = () => (
         </BrowserRouter>
            </AntdThemeProvider>
       </AuthProvider>
-      <ShadcnToaster /> {/* Para Login */}
       <Toaster position="bottom-right" richColors /> {/* Sonner para o resto */}
     </TooltipProvider>
   </QueryClientProvider>

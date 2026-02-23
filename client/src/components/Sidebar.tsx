@@ -18,7 +18,7 @@ const getInitials = (name: string = "") => {
 
 // Lista de navegação com permissões
 const navigation = [
-  { name: 'Agendamentos', href: '/appointments', icon: Calendar, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION] },
+  { name: 'Agendamentos', href: '/appointments', icon: Calendar, roles: [Roles.ADMIN, Roles.SCHEDULING, ] },
   { name: 'Validação', href: '/validation', icon: SearchCheck, roles: [Roles.ADMIN, Roles.VALIDATION] },
   { name: 'Serviços', href: '/services', icon: CarFront, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING] },
   { name: 'Solicitações de Manutenção', href: '/maintenance-requests', icon: MailPlus, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT] },
@@ -76,7 +76,6 @@ export function Sidebar() {
   </Button>
 </div>
 
-      {/* NAVIGATION */}
 <nav
   className="flex-1 overflow-y-auto space-y-1.5 px-3 py-6 sidebar-scroll"
   aria-label="Main navigation"
@@ -114,7 +113,6 @@ export function Sidebar() {
           ))}
       </nav>
 
-      {/* FOOTER */}
       <div className="border-t border-sidebar-border/50 p-4 space-y-3">
         <UserCard 
           name={user?.name || "User"} 

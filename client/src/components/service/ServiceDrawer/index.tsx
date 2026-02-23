@@ -135,7 +135,6 @@ function FieldColumn({
                     );
                 }
 
-                // All fields use FieldValue — truncation + tooltip is universal
                 return (
                     <FieldValue
                         key={def.field}
@@ -273,7 +272,7 @@ const ServiceDrawer = ({ open, onClose, service }: ServiceDrawerProps) => {
                                     </>
                                 ) : (
                                     !isLegacy && (
-                                        <RoleIf roles={[Roles.ADMIN, Roles.SUPPORT]}>
+                                        <RoleIf roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION, Roles.SCHEDULING]}>
                                             <Button
                                                 variant="outline"
                                                 size="sm"

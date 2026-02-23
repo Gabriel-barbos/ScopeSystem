@@ -72,7 +72,6 @@ export interface BulkUpdatePayload {
   vehicleGroup?: string;
 }
 
-// ─── Tipo da Resposta Paginada ─────────────────────────────────
 
 export interface Pagination {
   total: number;
@@ -86,7 +85,6 @@ export interface PaginatedResponse<T> {
   pagination: Pagination;
 }
 
-// ─── API ───────────────────────────────────────────────────────
 
 export const scheduleApi = {
 
@@ -97,7 +95,7 @@ export const scheduleApi = {
     const { data } = await API.get("/schedules", {
       params: {
         page: params?.page ?? 1,
-        limit: params?.limit ?? 1000, // limite alto para trazer tudo por padrão
+        limit: params?.limit ?? 1000, 
       },
     });
     return data;
@@ -142,7 +140,6 @@ export const scheduleApi = {
   },
 };
 
-// ─── Hook ──────────────────────────────────────────────────────
 
 export function useScheduleService(params?: {
   page?: number;

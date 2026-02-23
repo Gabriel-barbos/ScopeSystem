@@ -29,11 +29,8 @@ export function useCreateUser() {
   return useMutation({
     mutationFn: (payload: CreateUserDTO) => userService.create(payload),
     onSuccess: (created) => {
-      // invalidar ou atualizar cache
       queryClient.invalidateQueries(USERS_KEY);
-      // opcionalmente: append to cache for immediate UI consistency
-      // const current = queryClient.getQueryData<User[]>(USERS_KEY) || [];
-      // queryClient.setQueryData(USERS_KEY, [...current, created]);
+ 
     },
   });
 }
@@ -58,9 +55,7 @@ export function useDeleteUser() {
     mutationFn: (id: string) => userService.remove(id),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries(USERS_KEY);
-      // optional: optimistic removal from cache
-      // const current = queryClient.getQueryData<User[]>(USERS_KEY) || [];
-      // queryClient.setQueryData(USERS_KEY, current.filter(u => u.id !== id));
+
     },
   });
 }

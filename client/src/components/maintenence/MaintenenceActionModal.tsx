@@ -61,7 +61,6 @@ export default function MaintenanceActionModal({
   const { user } = useAuth();
   const { updateMaintenanceRequest, createSchedules } = useMaintenanceRequestService();
 
-  // Inicializa o form quando o request muda
   useEffect(() => {
     if (request) {
       setSubject(request.subject || "");
@@ -153,7 +152,6 @@ export default function MaintenanceActionModal({
     setVehicles(vehicles.map((v) => (v.id === id ? { ...v, [field]: value } : v)));
   };
 
-  // Validação
   const validateForScheduleCreation = (): string[] => {
     const validationErrors: string[] = [];
 
@@ -183,7 +181,6 @@ export default function MaintenanceActionModal({
     return validationErrors;
   };
 
-  // Determina automaticamente o status baseado nos dados preenchidos
   const determineStatus = (): string => {
     const hasAddress = vehicles.every((v) => v.endereco);
     const hasResponsible = vehicles.every((v) => v.responsavel && v.telResponsavel);
@@ -199,7 +196,6 @@ export default function MaintenanceActionModal({
     }
   };
 
-  // Editar solicitação (atualiza request)
   const handleUpdateRequest = async () => {
     try {
       const vehiclesData: Vehicle[] = vehicles.map((v) => ({
@@ -230,7 +226,6 @@ export default function MaintenanceActionModal({
     }
   };
 
-  // Criar agendamentos
   const handleCreateSchedules = async () => {
       console.log("user completo:", JSON.stringify(user));
 
@@ -244,7 +239,6 @@ export default function MaintenanceActionModal({
     setErrors([]);
 
     try {
-      // Primeiro atualiza o request com os dados
       const vehiclesData: Vehicle[] = vehicles.map((v) => ({
         plate: v.placa || undefined,
         vin: v.chassi || undefined,
@@ -262,7 +256,6 @@ export default function MaintenanceActionModal({
         },
       });
 
-      // Depois cria os schedules
 const result = await createSchedules.mutateAsync({
   
   id: request._id,
@@ -294,7 +287,7 @@ const result = await createSchedules.mutateAsync({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto -mx-6 px-6 space-y-6">
-          {/* Erros de validação */}
+
           {errors.length > 0 && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -310,7 +303,6 @@ const result = await createSchedules.mutateAsync({
             </Alert>
           )}
 
-          {/* Header Info - Subject & Status */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="subject">Assunto</Label>
@@ -341,7 +333,7 @@ const result = await createSchedules.mutateAsync({
 
           <div className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-muted/50 border border-border">
             <div className="space-y-1">
-              <span className="text-xs text-muted-foreground">Categoria</span>
+              <span className="text-xs text-muted-foreground">Cliente</span>
               <p className="text-sm font-medium">{request.category}</p>
             </div>
             <div className="space-y-1">
@@ -352,7 +344,6 @@ const result = await createSchedules.mutateAsync({
             </div>
           </div>
 
-          {/* Vehicle Forms */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Veículos</h3>
@@ -476,7 +467,7 @@ const result = await createSchedules.mutateAsync({
             ))}
           </div>
 
-          {/* Email Details - Expandable */}
+
           <div className="border border-border rounded-lg overflow-hidden">
             <button
               type="button"

@@ -13,7 +13,7 @@ import { List } from "antd";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import RoleIf from "@/components/RoleIf";
 import { Roles } from "@/utils/roles";
-// Badge customizado por categoria
+
 function CategoryBadge({ category }: { category?: string }) {
   if (!category) return null;
 

@@ -28,7 +28,6 @@ export default function Clients() {
 
 
   
-//search and filtered clients
   const filteredClients = (clients ?? [])
     .filter((client) =>
       client.name.toLowerCase().includes(search.toLowerCase())
@@ -38,7 +37,6 @@ export default function Clients() {
       return client.type === activeTab;
     });
 
-  // abrir drawer em modo criar
   function openCreate() {
     setEditingClientId(null);
     setIsDrawerOpen(true);

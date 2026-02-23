@@ -20,7 +20,6 @@ export type User = {
   role: string;
 };
 
-// Normaliza id pra não dar ruim
 const normalizeUser = (u: any): User => ({
   id: u.id ?? u._id,
   name: u.name,
