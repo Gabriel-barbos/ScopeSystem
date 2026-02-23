@@ -56,14 +56,12 @@ const filteredSchedules = useMemo(() => {
   const search = searchValue.toLowerCase().trim();
 
   return schedules
-    .filter(
-      (schedule) => schedule.serviceType !== "removal"
-    )
+    .filter((schedule) => schedule.serviceType !== "removal")
     .filter(
       (schedule) =>
-        schedule.vin.toLowerCase().includes(search) ||
+        schedule.vin?.toLowerCase().includes(search) ||
         schedule.plate?.toLowerCase().includes(search) ||
-        schedule.client.name.toLowerCase().includes(search)
+        schedule.client?.name?.toLowerCase().includes(search)
     );
 }, [schedules, searchValue]);
 

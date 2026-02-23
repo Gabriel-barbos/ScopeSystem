@@ -6,10 +6,9 @@ import { Mail, Lock, ArrowRight, CheckCircle2, XCircle, Loader2 } from 'lucide-r
 import { Label } from '@/components/ui/label';
 import { useAuth } from "@/context/Authcontext";
 import { useNavigate } from "react-router-dom";
-import { toast } from "@/components/ui/use-toast";
 import { useTheme } from "next-themes";
 import logo from '@/assets/logo.jpg';
-import { Toaster } from "@/components/ui/toaster";
+import { message } from "antd";
 
 type ButtonState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -172,6 +171,8 @@ const LoginPage = () => {
   const [btnState, setBtnState] = useState<ButtonState>('idle');
   const [mounted, setMounted]   = useState(false);
 
+  const [messageApi, contextHolder] = message.useMessage();
+
   useEffect(() => {
     document.documentElement.classList.remove('dark');
     setTheme('light');
@@ -187,16 +188,16 @@ const LoginPage = () => {
     try {
       await login(email, password);
       setBtnState('success');
-      toast({ title: 'Login realizado com sucesso!', description: 'Bem-vindo de volta!' });
-      setTimeout(() => navigate('/appointments'), 1000);
+      messageApi.success('Login realizado com sucesso! ufa!');
+      setTimeout(() => navigate('/services'), 1000);
     } catch (err: any) {
       setBtnState('error');
       const status = err?.response?.status;
-      let message = 'Ocorreu um erro inesperado.';
-      if (status === 401)                     message = 'Usuário ou senha inválidos.';
-      else if (status === 500)                message = 'Erro no servidor. Tente novamente.';
-      else if (err?.response?.data?.message)  message = err.response.data.message;
-      toast({ variant: 'destructive', title: 'Erro ao fazer login', description: message });
+      let msg = 'Ocorreu um erro inesperado.';
+      if (status === 401)                     msg = 'Usuário ou senha inválidos.';
+      else if (status === 500)                msg = 'Erro no servidor. Tente novamente.';
+      else if (err?.response?.data?.message)  msg = err.response.data.message;
+      messageApi.error(`Erro ao fazer login: ${msg}`);
       setTimeout(() => setBtnState('idle'), 2500);
     }
   };
@@ -206,8 +207,8 @@ const LoginPage = () => {
       display: 'flex', height: '100vh', width: '100%', overflow: 'hidden',
       fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
     }}>
+      {contextHolder}
 
-      {/* ── Left ── */}
       <div style={{ width: '60%', position: 'relative', overflow: 'hidden' }}>
         <BackgroundGradientAnimation>
           <div style={{ margin: '2.5rem', marginTop: '5rem' }}>
@@ -219,20 +220,17 @@ const LoginPage = () => {
         </BackgroundGradientAnimation>
       </div>
 
-      {/*  Right panel  */}
       <div style={{
         width: '40%',
         position: 'relative',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '2rem',
-        /* Uses design-system token: --background dark = hsl(215 30% 8%) */
         background: 'hsl(215, 30%, 8%)',
         overflow: 'hidden',
       }}>
 
         <DotGrid />
 
-        {/* Blue orbs — subtle, monochromatic */}
         <div style={{
           position: 'absolute', top: -100, right: -80,
           width: 360, height: 360, borderRadius: '50%',
@@ -248,12 +246,10 @@ const LoginPage = () => {
           animation: 'orbDrift 15s ease-in-out infinite alternate-reverse',
         }} />
 
-        {/* ── Card ── */}
         <div style={{
           position: 'relative', zIndex: 10,
           width: '100%', maxWidth: 400,
           borderRadius: 20,
-          /* card token: hsl(215 28% 12%) */
           background: 'hsl(215, 28%, 12%)',
           border: '1px solid hsl(215, 20%, 20%)',
           padding: '36px 32px 32px',
@@ -263,7 +259,6 @@ const LoginPage = () => {
           transition: 'opacity 0.55s cubic-bezier(.22,1,.36,1), transform 0.55s cubic-bezier(.22,1,.36,1)',
         }}>
 
-          {/* Animated blue border highlight */}
           <div style={{
             position: 'absolute', inset: -1, borderRadius: 21,
             background: 'conic-gradient(from var(--sa, 0deg), transparent 72%, hsl(217,95%,60%) 84%, hsl(214,95%,75%) 91%, transparent 100%)',
@@ -275,7 +270,6 @@ const LoginPage = () => {
             pointerEvents: 'none',
           }} />
 
-          {/* ── Logo slot ── */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
             <div style={{
               background: 'hsl(217, 95%, 50%)',
@@ -321,7 +315,6 @@ const LoginPage = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Label htmlFor="password" style={labelStyle}>Senha</Label>
-             
               </div>
               <InputWithIcon
                 id="password"
@@ -343,7 +336,6 @@ const LoginPage = () => {
 
             <LoginButton state={btnState} />
           </form>
-          <Toaster position="bottom-left" />
 
         </div>
 
@@ -360,7 +352,6 @@ const LoginPage = () => {
             100% { transform: translate(14px, 22px); }
           }
 
-          /* Input dark styling — overrides shadcn defaults */
           .login-input {
             background: hsl(215, 28%, 9%) !important;
             border: 1px solid hsl(215, 20%, 21%) !important;
@@ -376,21 +367,11 @@ const LoginPage = () => {
           .login-input input::placeholder { color: hsl(215,10%,35%) !important; }
         `}</style>
 
-        <style>{`
-  #toast-viewport-root,
-  [data-radix-toast-viewport] {
-    bottom: 1rem !important;
-    left: 1rem !important;
-    right: auto !important;
-    top: auto !important;
-  }
-`}</style>
       </div>
     </div>
   );
 };
 
-/* ─── Shared styles ─────────────────────────────────────────────────────── */
 const labelStyle: React.CSSProperties = {
   fontSize: 11,
   fontWeight: 600,

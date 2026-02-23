@@ -1,11 +1,10 @@
 import { useToast } from "@/hooks/use-toast";
-import { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast";
+import {
+  Toast, ToastClose, ToastDescription,
+  ToastProvider, ToastTitle, ToastViewport,
+} from "@/components/ui/toast";
 
-interface ToasterProps {
-  viewportClassName?: string;
-}
-
-export function Toaster({ viewportClassName }: ToasterProps) {
+export function ToasterBottomLeft() {
   const { toasts } = useToast();
 
   return (
@@ -20,7 +19,18 @@ export function Toaster({ viewportClassName }: ToasterProps) {
           <ToastClose />
         </Toast>
       ))}
-      <ToastViewport className={viewportClassName} />
+      <ToastViewport
+        style={{
+          position: 'fixed',
+          bottom: '1rem',
+          left: '1rem',
+          right: 'auto',
+          top: 'auto',
+          zIndex: 9999,
+          width: 420,
+          maxWidth: '100vw',
+        }}
+      />
     </ToastProvider>
   );
 }
