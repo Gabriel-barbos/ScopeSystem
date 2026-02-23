@@ -81,7 +81,7 @@ function formatDayFull(d: string) {
 
   const [year, month, day] = d.split("-").map(Number);
 
-  // Cria data local (sem conversão UTC)
+  // Cria data local 
   const date = new Date(year, month - 1, day);
   const weekday = weekdays[date.getDay()];
 

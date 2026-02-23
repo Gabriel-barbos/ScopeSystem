@@ -42,6 +42,11 @@ import {
   ChevronsUpDown,
   CalendarSearch,
   UserCog,
+  Folder,
+  MapPin,
+  Phone,
+  User,
+  ClipboardList,
 } from "lucide-react";
 import { getStatusConfig } from "@/utils/badges";
 import InfoField from "@/components/global/InfoField";
@@ -71,34 +76,36 @@ type Product = {
   name: string;
 };
 
-const ScheduleDrawer = ({
-  open,
-  onClose,
-  schedule,
-}: ScheduleDrawerProps) => {
+
+const isMaintenance = (serviceType: string) => serviceType === "maintenance";
+
+const formatServiceType = (type: string) => {
+  const types: Record<string, string> = {
+    installation: "Instalação",
+    maintenance: "Manutenção",
+    removal: "Remoção",
+  };
+  return types[type] || type;
+};
+
+
+const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedSchedule, setEditedSchedule] = useState<Schedule | null>(null);
 
-  // Estados para os popovers
   const [openCalendar, setOpenCalendar] = useState(false);
   const [openClient, setOpenClient] = useState(false);
   const [openProduct, setOpenProduct] = useState(false);
 
-  // Estados para os dados relacionados
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
-
-  // Services
   const { updateSchedule, deleteSchedule } = useScheduleService();
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (isEditing && schedule) {
-      loadData();
-    }
+    if (isEditing && schedule) loadData();
   }, [isEditing, schedule]);
 
   if (!schedule) return null;
@@ -107,15 +114,6 @@ const ScheduleDrawer = ({
     isEditing ? editedSchedule?.status || schedule.status : schedule.status
   );
   const StatusIcon = statusBadge.icon;
-
-  const formatServiceType = (type: string) => {
-    const types: Record<string, string> = {
-      installation: "Instalação",
-      maintenance: "Manutenção",
-      removal: "Remoção",
-    };
-    return types[type] || type;
-  };
 
   const loadData = async () => {
     try {
@@ -145,62 +143,57 @@ const ScheduleDrawer = ({
 
   const handleSave = async () => {
     if (!editedSchedule) return;
-
     try {
       const payload: SchedulePayload = {
         plate: editedSchedule.plate,
         vin: editedSchedule.vin,
         model: editedSchedule.model,
         provider: editedSchedule.provider,
-        // Converter client para ID se for objeto
-        client: typeof editedSchedule.client === 'string'
-          ? editedSchedule.client
-          : editedSchedule.client._id,
+        vehicleGroup: editedSchedule.vehicleGroup,
+        client:
+          typeof editedSchedule.client === "string"
+            ? editedSchedule.client
+            : editedSchedule.client._id,
         serviceType: editedSchedule.serviceType,
-        // Converter product para ID se for objeto e existir
         product: editedSchedule.product
-          ? (typeof editedSchedule.product === 'string'
+          ? typeof editedSchedule.product === "string"
             ? editedSchedule.product
-            : editedSchedule.product._id)
+            : editedSchedule.product._id
           : undefined,
         scheduledDate: editedSchedule.scheduledDate,
         notes: editedSchedule.notes,
         status: editedSchedule.status,
         createdBy: editedSchedule.createdBy,
+        // Campos exclusivos de manutenção
+        serviceAddress: editedSchedule.serviceAddress,
+        responsible: editedSchedule.responsible,
+        responsiblePhone: editedSchedule.responsiblePhone,
+        situation: editedSchedule.situation,
       };
 
-      await updateSchedule.mutateAsync({
-        id: editedSchedule._id,
-        payload,
-      });
+      await updateSchedule.mutateAsync({ id: editedSchedule._id, payload });
 
       toast.success("Agendamento atualizado com sucesso!");
-
       queryClient.invalidateQueries({ queryKey: ["schedules"] });
       queryClient.invalidateQueries({ queryKey: ["schedule", editedSchedule._id] });
 
-      // Resetar estado de edição
       setIsEditing(false);
       setEditedSchedule(null);
       setOpenCalendar(false);
       setOpenClient(false);
       setOpenProduct(false);
-
-      // Fechar o drawer
       onClose();
     } catch (error) {
       console.error("Erro ao atualizar:", error);
       toast.error("Erro ao atualizar agendamento");
     }
   };
+
   const handleDelete = async () => {
     try {
       await deleteSchedule.mutateAsync(schedule._id);
-
       toast.success("Agendamento excluído com sucesso!");
-
       queryClient.invalidateQueries({ queryKey: ["schedules"] });
-
       setOpenDeleteModal(false);
       onClose();
     } catch (error) {
@@ -209,26 +202,30 @@ const ScheduleDrawer = ({
     }
   };
 
-
-  const updateField = <K extends keyof Schedule>(
-    field: K,
-    value: Schedule[K]
-  ) => {
-    if (editedSchedule) {
-      setEditedSchedule({ ...editedSchedule, [field]: value });
-    }
+  const updateField = <K extends keyof Schedule>(field: K, value: Schedule[K]) => {
+    if (editedSchedule) setEditedSchedule({ ...editedSchedule, [field]: value });
   };
 
   const currentData = isEditing ? editedSchedule : schedule;
   if (!currentData) return null;
 
   const selectedClient = clients.find(
-    (c) => c._id === (typeof currentData.client === 'string' ? currentData.client : currentData.client._id)
+    (c) =>
+      c._id ===
+      (typeof currentData.client === "string"
+        ? currentData.client
+        : currentData.client._id)
   );
 
   const selectedProduct = products.find(
-    (p) => p._id === (typeof currentData.product === 'string' ? currentData.product : currentData.product?._id)
+    (p) =>
+      p._id ===
+      (typeof currentData.product === "string"
+        ? currentData.product
+        : currentData.product?._id)
   );
+
+  const showMaintenanceFields = isMaintenance(currentData.serviceType);
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
@@ -269,12 +266,7 @@ const ScheduleDrawer = ({
             <div className="flex gap-2">
               {isEditing ? (
                 <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCancel}
-                    className="gap-2"
-                  >
+                  <Button variant="outline" size="sm" onClick={handleCancel} className="gap-2">
                     <X className="h-4 w-4" />
                     Cancelar
                   </Button>
@@ -290,12 +282,7 @@ const ScheduleDrawer = ({
                 </>
               ) : (
                 <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleEdit}
-                    className="gap-2"
-                  >
+                  <Button variant="outline" size="sm" onClick={handleEdit} className="gap-2">
                     <Pencil className="h-4 w-4" />
                     Editar
                   </Button>
@@ -317,44 +304,22 @@ const ScheduleDrawer = ({
 
         <div className="flex-1 flex justify-between py-6">
           <div className="flex gap-12">
-            {/* Coluna 1: Dados do Veículo */}
             <div className="space-y-4">
               {isEditing ? (
                 <>
-                  <EditableField
-                    icon={KeySquare}
-                    label="Placa"
-                    value={currentData.plate || ""}
-                    onChange={(value) => updateField("plate", value)}
-                    placeholder="AAA-0000"
-                  />
-                  <EditableField
-                    icon={Hash}
-                    label="Chassi"
-                    value={currentData.vin}
-                    onChange={(value) => updateField("vin", value)}
-                  />
-                  <EditableField
-                    icon={Car}
-                    label="Modelo"
-                    value={currentData.model}
-                    onChange={(value) => updateField("model", value)}
-                  />
+                  <EditableField icon={KeySquare} label="Placa" value={currentData.plate || ""} onChange={(v) => updateField("plate", v)} placeholder="AAA-0000" />
+                  <EditableField icon={Hash} label="Chassi" value={currentData.vin} onChange={(v) => updateField("vin", v)} />
+                  <EditableField icon={Car} label="Modelo" value={currentData.model} onChange={(v) => updateField("model", v)} />
                 </>
               ) : (
                 <>
-                  <InfoField
-                    icon={KeySquare}
-                    label="Placa"
-                    value={currentData.plate || "Não informada"}
-                  />
+                  <InfoField icon={KeySquare} label="Placa" value={currentData.plate || "Não informada"} />
                   <InfoField icon={Hash} label="Chassi" value={currentData.vin} />
                   <InfoField icon={Car} label="Modelo" value={currentData.model} />
                 </>
               )}
             </div>
 
-            {/* Coluna 2: Cliente e Serviço */}
             <div className="space-y-4">
               {isEditing ? (
                 <div className="flex flex-col gap-2">
@@ -364,17 +329,12 @@ const ScheduleDrawer = ({
                   </label>
                   <Popover open={openClient} onOpenChange={setOpenClient}>
                     <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-[200px] justify-between"
-                      >
+                      <Button variant="outline" className="w-[200px] justify-between">
                         {selectedClient ? (
                           <div className="flex items-center gap-2">
                             <Avatar className="h-5 w-5">
                               <AvatarImage src={selectedClient.image?.[0]} />
-                              <AvatarFallback>
-                                {selectedClient.name[0]}
-                              </AvatarFallback>
+                              <AvatarFallback>{selectedClient.name[0]}</AvatarFallback>
                             </Avatar>
                             <span className="truncate">{selectedClient.name}</span>
                           </div>
@@ -391,21 +351,8 @@ const ScheduleDrawer = ({
                           <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
                           <CommandGroup>
                             {clients.map((client) => (
-                              <CommandItem
-                                key={client._id}
-                                onSelect={() => {
-                                  updateField("client", client._id as any);
-                                  setOpenClient(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    selectedClient?._id === client._id
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
+                              <CommandItem key={client._id} onSelect={() => { updateField("client", client._id as any); setOpenClient(false); }}>
+                                <Check className={cn("mr-2 h-4 w-4", selectedClient?._id === client._id ? "opacity-100" : "opacity-0")} />
                                 <Avatar className="h-6 w-6 mr-2">
                                   <AvatarImage src={client.image?.[0]} />
                                   <AvatarFallback>{client.name[0]}</AvatarFallback>
@@ -420,24 +367,16 @@ const ScheduleDrawer = ({
                   </Popover>
                 </div>
               ) : (
-                <InfoField
-                  icon={ContactRound}
-                  label="Cliente"
-                  value={currentData.client.name}
-                />
+                <InfoField icon={ContactRound} label="Cliente" value={currentData.client.name} />
               )}
 
-              {/* Tipo de Serviço */}
               {isEditing ? (
                 <div className="flex flex-col gap-2">
                   <label className="text-sm text-muted-foreground flex items-center gap-2">
                     <Wrench className="h-4 w-4" />
                     Tipo de Serviço
                   </label>
-                  <Select
-                    value={currentData.serviceType}
-                    onValueChange={(value) => updateField("serviceType", value)}
-                  >
+                  <Select value={currentData.serviceType} onValueChange={(v) => updateField("serviceType", v)}>
                     <SelectTrigger className="w-[200px]">
                       <SelectValue />
                     </SelectTrigger>
@@ -449,14 +388,9 @@ const ScheduleDrawer = ({
                   </Select>
                 </div>
               ) : (
-                <InfoField
-                  icon={Wrench}
-                  label="Tipo de Serviço"
-                  value={formatServiceType(currentData.serviceType)}
-                />
+                <InfoField icon={Wrench} label="Tipo de Serviço" value={formatServiceType(currentData.serviceType)} />
               )}
 
-              {/* Produto */}
               {isEditing ? (
                 <div className="flex flex-col gap-2">
                   <label className="text-sm text-muted-foreground flex items-center gap-2">
@@ -465,10 +399,7 @@ const ScheduleDrawer = ({
                   </label>
                   <Popover open={openProduct} onOpenChange={setOpenProduct}>
                     <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-[200px] justify-between"
-                      >
+                      <Button variant="outline" className="w-[200px] justify-between">
                         {selectedProduct?.name || "Selecione o produto"}
                         <ChevronsUpDown className="h-4 w-4 opacity-50" />
                       </Button>
@@ -480,21 +411,8 @@ const ScheduleDrawer = ({
                           <CommandEmpty>Nenhum produto encontrado</CommandEmpty>
                           <CommandGroup>
                             {products.map((product) => (
-                              <CommandItem
-                                key={product._id}
-                                onSelect={() => {
-                                  updateField("product", product._id as any);
-                                  setOpenProduct(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    selectedProduct?._id === product._id
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
+                              <CommandItem key={product._id} onSelect={() => { updateField("product", product._id as any); setOpenProduct(false); }}>
+                                <Check className={cn("mr-2 h-4 w-4", selectedProduct?._id === product._id ? "opacity-100" : "opacity-0")} />
                                 {product.name}
                               </CommandItem>
                             ))}
@@ -505,43 +423,51 @@ const ScheduleDrawer = ({
                   </Popover>
                 </div>
               ) : (
-                <InfoField
-                  icon={SatelliteDish}
-                  label="Equipamento"
-                  value={currentData.product?.name || "Não informado"}
-                />
+                <InfoField icon={SatelliteDish} label="Equipamento" value={currentData.product?.name || "Não informado"} />
               )}
             </div>
 
-            {/* Coluna 3: Prestador */}
             <div className="space-y-4">
               {isEditing ? (
-                <EditableField
-                  icon={UserCog}
-                  label="Prestador"
-                  value={currentData.provider || ""}
-                  onChange={(value) => updateField("provider", value)}
-                  placeholder="Nome do prestador"
-                />
+                <>
+                  <EditableField icon={UserCog} label="Prestador" value={currentData.provider || ""} onChange={(v) => updateField("provider", v)} placeholder="Nome do prestador" />
+                  <EditableField icon={Folder} label="Grupo de Veículos" value={currentData.vehicleGroup || ""} onChange={(v) => updateField("vehicleGroup", v)} placeholder="Nome do grupo de veículos" />
+                </>
               ) : (
-                <InfoField
-                  icon={UserCog}
-                  label="Prestador"
-                  value={currentData.provider || "Não informado"}
-                />
+                <>
+                  <InfoField icon={UserCog} label="Prestador" value={currentData.provider || "Não informado"} />
+                  <InfoField icon={Folder} label="Grupo de Veículos" value={currentData.vehicleGroup || "Não informado"} />
+                </>
               )}
             </div>
+
+     
+            {showMaintenanceFields && (
+              <div className="space-y-4">
+                {isEditing ? (
+                  <>
+                    <EditableField icon={MapPin} label="Endereço do serviço" value={currentData.serviceAddress || ""} onChange={(v) => updateField("serviceAddress", v)} placeholder="Endereço completo" />
+                    <EditableField icon={User} label="Responsável" value={currentData.responsible || ""} onChange={(v) => updateField("responsible", v)} placeholder="Nome do responsável" />
+                    <EditableField icon={Phone} label="Telefone do responsável" value={currentData.responsiblePhone || ""} onChange={(v) => updateField("responsiblePhone", v)} placeholder="(00) 00000-0000" />
+                    <EditableField icon={ClipboardList} label="Situação" value={currentData.situation || ""} onChange={(v) => updateField("situation", v)} placeholder="Situação atual" />
+                  </>
+                ) : (
+                  <>
+                    <InfoField icon={MapPin} label="Endereço do serviço" value={currentData.serviceAddress || "Não informado"} />
+                    <InfoField icon={User} label="Responsável" value={currentData.responsible || "Não informado"} />
+                    <InfoField icon={Phone} label="Telefone do responsável" value={currentData.responsiblePhone || "Não informado"} />
+                    <InfoField icon={ClipboardList} label="Situação" value={currentData.situation || "Não informado"} />
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="w-[380px] flex flex-col gap-4">
-            {/* Status */}
             {isEditing && (
               <div className="flex flex-col gap-2">
                 <label className="text-sm text-muted-foreground">Status</label>
-                <Select
-                  value={currentData.status}
-                  onValueChange={(value) => updateField("status", value)}
-                >
+                <Select value={currentData.status} onValueChange={(v) => updateField("status", v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -556,7 +482,6 @@ const ScheduleDrawer = ({
               </div>
             )}
 
-            {/* Data */}
             {isEditing ? (
               <div className="flex flex-col gap-2">
                 <label className="text-sm text-muted-foreground flex items-center gap-2">
@@ -567,9 +492,7 @@ const ScheduleDrawer = ({
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="justify-between">
                       {currentData.scheduledDate
-                        ? new Date(currentData.scheduledDate).toLocaleDateString(
-                          "pt-BR"
-                        )
+                        ? new Date(currentData.scheduledDate).toLocaleDateString("pt-BR")
                         : "Selecionar data"}
                       <CalendarSearch className="h-4 w-4" />
                     </Button>
@@ -577,15 +500,9 @@ const ScheduleDrawer = ({
                   <PopoverContent className="p-0">
                     <Calendar
                       mode="single"
-                      selected={
-                        currentData.scheduledDate
-                          ? new Date(currentData.scheduledDate)
-                          : undefined
-                      }
+                      selected={currentData.scheduledDate ? new Date(currentData.scheduledDate) : undefined}
                       onSelect={(date) => {
-                        if (date) {
-                          updateField("scheduledDate", date.toISOString());
-                        }
+                        if (date) updateField("scheduledDate", date.toISOString());
                         setOpenCalendar(false);
                       }}
                     />
@@ -598,26 +515,19 @@ const ScheduleDrawer = ({
                 label="Data agendada"
                 value={
                   currentData.scheduledDate
-                    ? new Date(currentData.scheduledDate).toLocaleDateString(
-                      "pt-BR"
-                    )
+                    ? new Date(currentData.scheduledDate).toLocaleDateString("pt-BR")
                     : "Não informado"
                 }
               />
             )}
 
-            {/* Observações */}
             <div className="flex-1 flex flex-col min-h-0">
-              <span className="text-sm text-muted-foreground mb-2 block">
-                Observações
-              </span>
+              <span className="text-sm text-muted-foreground mb-2 block">Observações</span>
               <Textarea
                 value={currentData.notes || ""}
                 onChange={(e) => isEditing && updateField("notes", e.target.value)}
                 readOnly={!isEditing}
-                placeholder={
-                  isEditing ? "Adicione observações..." : "Sem observações"
-                }
+                placeholder={isEditing ? "Adicione observações..." : "Sem observações"}
                 className="h-150 resize-none"
               />
             </div>
@@ -631,18 +541,19 @@ const ScheduleDrawer = ({
               Última modificação em{" "}
               {schedule.updatedAt
                 ? new Date(schedule.updatedAt).toLocaleDateString("pt-BR", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
                 : "Não informado"}
             </span>
             <span>Número do pedido: #{schedule.orderNumber}</span>
           </div>
         </SheetFooter>
       </SheetContent>
+
       <ConfirmModal
         open={openDeleteModal}
         onOpenChange={(open) => !open && setOpenDeleteModal(false)}
@@ -651,9 +562,7 @@ const ScheduleDrawer = ({
         confirmText="Excluir"
         onConfirm={handleDelete}
       />
-
     </Sheet>
-
   );
 };
 

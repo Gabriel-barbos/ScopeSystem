@@ -97,7 +97,7 @@ export function ReportDailyChart({ data, isLoading = false, onPeriodChange }: Pr
   // Manipula mudança de período
   const handlePeriodChange = (value: PeriodType) => {
     setSelectedPeriod(value);
-    setShowAllClients(false); // Reset quando muda período
+    setShowAllClients(false); 
     onPeriodChange?.(value);
   };
 
@@ -355,7 +355,7 @@ function TotalCard({ label, value, color, className }: TotalCardProps) {
   );
 }
 
-// Componente auxiliar para linha de detalhe do cliente
+
 interface ClientDetailRowProps {
   client: {
     client: string;

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/chart";
 import type { PendingByProvider } from "@/services/ReportService";
 
-// Usando as cores do CSS que você já definiu
+// Usando as cores
 const CHART_COLORS = [
   "hsl(var(--chart-1))",
   "hsl(var(--chart-2))",
@@ -34,14 +34,14 @@ interface Props {
 }
 
 export function BarChartPendingTecnics({ data }: Props) {
-  // Transforma os dados para o formato do shadcn charts
+  // Transforma os dados para o formato do shadcn
   const chartData = data.map((d, index) => ({
     name: d.provider,
     pending: d.pending,
     fill: CHART_COLORS[index % CHART_COLORS.length],
   }));
 
-  //  chartConfig dinamico baseado nos dados
+  //  chartConfig
   const chartConfig = {
     pending: {
       label: "Pendências",

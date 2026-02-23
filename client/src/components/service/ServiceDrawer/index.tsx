@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import {
     Sheet,
     SheetContent,
@@ -8,6 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     Tooltip,
@@ -20,32 +20,32 @@ import {
     Trash2,
     X,
     Check,
-    Hash,
-    Car,
-    KeySquare,
-    SatelliteDish,
-    ContactRound,
-    UserCog,
-    MapPin,
-    Gauge,
-    Router,
-    FileText,
-    ShieldMinus,
-    BookUser,
-    LocateFixed,
-    Calendar,
     CalendarCheck,
+    Calendar,
+    ClipboardCopy,
+    ClipboardCheck,
+    Loader2,
 } from "lucide-react";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 
 import InfoField from "@/components/global/InfoField";
 import EditableField from "@/components/global/EditableField";
 import { getStatusConfig, getServiceConfig } from "@/utils/badges";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { useServiceService, Service } from "@/services/ServiceService";
-import RoleIf from "../RoleIf";
+import { Service } from "@/services/ServiceService";
+import RoleIf from "../../RoleIf";
 import { Roles } from "@/utils/roles";
+
+import { useServiceDrawer } from "./useServiceDrawer";
+import {
+    COL_LEFT,
+    COL_CENTER_LEFT,
+    COL_CENTER_RIGHT,
+    FieldDef,
+    formatDate,
+    formatDateTime,
+    getSourceBadge,
+} from "./fields";
+
 
 type ServiceDrawerProps = {
     open: boolean;
@@ -53,98 +53,9 @@ type ServiceDrawerProps = {
     service: Service | null;
 };
 
-const formatDate = (date?: string | null, opts?: Intl.DateTimeFormatOptions) =>
-    date
-        ? new Date(date).toLocaleDateString("pt-BR", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              ...opts,
-          })
-        : "Não informado";
 
-const formatDateTime = (date?: string | null) =>
-    formatDate(date, { hour: "2-digit", minute: "2-digit" });
 
-type FieldDef = {
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-    field: keyof Service;
-    format?: (value: any, service: Service) => string;
-    editable?: boolean;
-    truncate?: boolean;
-};
-
-const COL_LEFT: FieldDef[] = [
-    { icon: SatelliteDish, label: "ID do dispositivo", field: "deviceId" },
-    { icon: Hash, label: "Chassi", field: "vin" },
-    { icon: Car, label: "Modelo", field: "model" },
-    { icon: KeySquare, label: "Placa", field: "plate", format: (v) => v || "Não informada" },
-    {
-        icon: SatelliteDish,
-        label: "Equipamento",
-        field: "product",
-        format: (v) => v?.name || "Não informado",
-        editable: false,
-    },
-];
-
-const COL_CENTER_LEFT: FieldDef[] = [
-    {
-        icon: ContactRound,
-        label: "Cliente",
-        field: "client",
-        format: (v) => v?.name || "Não informado",
-        editable: false,
-    },
-    { icon: BookUser, label: "Técnico", field: "technician" },
-    { icon: UserCog, label: "Prestador", field: "provider", format: (v) => v || "Não informado" },
-    { icon: LocateFixed, label: "Local de Instalação", field: "installationLocation", truncate: true },
-    { icon: MapPin, label: "Endereço do Serviço", field: "serviceAddress", truncate: true },
-];
-
-const COL_CENTER_RIGHT: FieldDef[] = [
-    {
-        icon: Gauge,
-        label: "Odômetro (km)",
-        field: "odometer",
-        format: (v) => (v != null ? String(v) : "Não informado"),
-    },
-    {
-        icon: ShieldMinus,
-        label: "Bloqueio",
-        field: "blockingEnabled",
-        format: (v) => (v ? "Habilitado" : "Desabilitado"),
-        editable: false,
-    },
-    {
-        icon: Router,
-        label: "Dispositivo Secundário",
-        field: "secondaryDevice",
-        format: (v) => v || "Não informado",
-    },
-    {
-        icon: FileText,
-        label: "Notas de Validação",
-        field: "validationNotes",
-        format: (v) => v || "Não informado",
-        truncate: true,
-    },
-];
-
-const getSourceBadge = (source?: string) => {
-    switch (source) {
-        case "validation":
-            return { label: "Validado", variant: "secondary" as const };
-        case "legacy":
-            return { label: "Legado", variant: "outline" as const };
-        default:
-            return { label: "Importado", variant: "secondary" as const };
-    }
-};
-
-/** Campo com texto truncado e tooltip para exibir o valor completo */
-function TruncatedInfoField({
+function FieldValue({
     icon: Icon,
     label,
     value,
@@ -153,11 +64,13 @@ function TruncatedInfoField({
     label: string;
     value: string;
 }) {
+    const showTooltip = !!value && value !== "Não informado" && value !== "Não informada";
+
     return (
         <TooltipProvider delayDuration={200}>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <div className="flex items-center gap-3 cursor-default max-w-[260px]">
+                    <div className="flex items-center gap-3 cursor-default max-w-[220px]">
                         <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
                         <div className="min-w-0">
                             <span className="text-sm text-muted-foreground block">{label}</span>
@@ -165,7 +78,7 @@ function TruncatedInfoField({
                         </div>
                     </div>
                 </TooltipTrigger>
-                {value && value !== "Não informado" && (
+                {showTooltip && (
                     <TooltipContent side="bottom" className="max-w-[360px] whitespace-normal">
                         <p className="text-sm">{value}</p>
                     </TooltipContent>
@@ -174,6 +87,7 @@ function TruncatedInfoField({
         </TooltipProvider>
     );
 }
+
 
 function FieldColumn({
     fields,
@@ -190,9 +104,10 @@ function FieldColumn({
         <div className="space-y-4">
             {fields.map((def) => {
                 const raw = service[def.field];
-                const display = def.format ? def.format(raw, service) : String(raw ?? "Não informado");
+                const display = def.format
+                    ? def.format(raw, service)
+                    : String(raw ?? "Não informado");
 
-                // Badge especial para blockingEnabled
                 if (def.field === "blockingEnabled") {
                     return (
                         <div key={def.field} className="flex items-center gap-3">
@@ -207,7 +122,6 @@ function FieldColumn({
                     );
                 }
 
-                // Modo edição
                 if (isEditing && def.editable !== false) {
                     return (
                         <EditableField
@@ -221,115 +135,54 @@ function FieldColumn({
                     );
                 }
 
-                // Campo truncado com tooltip
-                if (def.truncate) {
-                    return (
-                        <TruncatedInfoField
-                            key={def.field}
-                            icon={def.icon}
-                            label={def.label}
-                            value={display}
-                        />
-                    );
-                }
-
-                return <InfoField key={def.field} icon={def.icon} label={def.label} value={display} />;
+                // All fields use FieldValue — truncation + tooltip is universal
+                return (
+                    <FieldValue
+                        key={def.field}
+                        icon={def.icon}
+                        label={def.label}
+                        value={display}
+                    />
+                );
             })}
         </div>
     );
 }
 
+
 const ServiceDrawer = ({ open, onClose, service }: ServiceDrawerProps) => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [edited, setEdited] = useState<Service | null>(null);
-    const [openDeleteModal, setOpenDeleteModal] = useState(false);
+    const {
+        current,
+        isEditing,
+        openDeleteModal,
+        copied,
+        isSaving,
+        isDeleting,
+        handleEdit,
+        handleCancel,
+        handleUpdate,
+        handleSave,
+        handleDelete,
+        handleCopyAll,
+        setOpenDeleteModal,
+    } = useServiceDrawer(service, onClose);
 
-    const { deleteService, updateService } = useServiceService();
-    const queryClient = useQueryClient();
+    if (!service || !current) return null;
 
-    useEffect(() => {
-        setIsEditing(false);
-        setEdited(null);
-    }, [service, open]);
-
-    if (!service) return null;
-
-    const current = edited ?? service;
     const isLegacy = current.source === "legacy";
-
     const statusBadge = getStatusConfig(current.status);
     const serviceBadge = getServiceConfig(current.serviceType);
     const sourceBadge = getSourceBadge(current.source);
     const StatusIcon = statusBadge.icon;
     const ServiceIcon = serviceBadge.icon;
 
-    const handleEdit = () => {
-        setEdited({ ...service });
-        setIsEditing(true);
-    };
-
-    const handleCancel = () => {
-        setEdited(null);
-        setIsEditing(false);
-    };
-
-    const handleUpdate = (field: keyof Service, value: any) => {
-        if (edited) setEdited({ ...edited, [field]: value });
-    };
-
-    const handleSave = async () => {
-        if (!edited) return;
-
-        try {
-            const payload: Partial<Service> = {
-                deviceId: edited.deviceId,
-                vin: edited.vin,
-                model: edited.model,
-                plate: edited.plate,
-                technician: edited.technician,
-                provider: edited.provider,
-                installationLocation: edited.installationLocation,
-                serviceAddress: edited.serviceAddress,
-                odometer: edited.odometer,
-                secondaryDevice: edited.secondaryDevice,
-                validationNotes: edited.validationNotes,
-                notes: edited.notes,
-            };
-
-            await updateService.mutateAsync({
-                id: edited._id,
-                payload,
-            });
-
-            queryClient.invalidateQueries({ queryKey: ["services"] });
-            toast.success("Serviço atualizado com sucesso!");
-            setIsEditing(false);
-            setEdited(null);
-            onClose();
-        } catch (error) {
-            toast.error("Erro ao atualizar serviço");
-            console.error(error);
-        }
-    };
-
-    const handleDelete = async () => {
-        try {
-            await deleteService.mutateAsync(service._id);
-            queryClient.invalidateQueries({ queryKey: ["services"] });
-            toast.success("Serviço excluído com sucesso!");
-            setOpenDeleteModal(false);
-            onClose();
-        } catch (error) {
-            toast.error("Erro ao excluir serviço");
-            console.error(error);
-        }
-    };
-
     return (
         <>
             <Sheet open={open} onOpenChange={onClose}>
-                <SheetContent side="bottom" className="min-h-[50vh] max-h-[72vh] h-auto flex flex-col">
-                    {/* HEADER */}
+                <SheetContent
+                    side="bottom"
+                    className="min-h-[50vh] max-h-[72vh] h-auto flex flex-col"
+                >
                     <SheetHeader>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
@@ -345,7 +198,19 @@ const ServiceDrawer = ({ open, onClose, service }: ServiceDrawerProps) => {
                                 </Avatar>
 
                                 <div className="flex flex-col gap-1">
-                                    <span className="text-lg font-semibold">{current.vin}</span>
+                                    <TooltipProvider delayDuration={200}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <span className="text-lg font-semibold truncate max-w-[240px] cursor-default">
+                                                    {current.vin}
+                                                </span>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="bottom">
+                                                <p>{current.vin}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+
                                     <div className="flex items-center gap-2">
                                         <span
                                             className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${serviceBadge.className}`}
@@ -359,34 +224,77 @@ const ServiceDrawer = ({ open, onClose, service }: ServiceDrawerProps) => {
                                             <StatusIcon className="h-3.5 w-3.5" />
                                             {statusBadge.label}
                                         </span>
+
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Botões de ação — ocultos para registros legacy */}
+                            {/* Action buttons */}
                             <div className="flex gap-2">
+                                  
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={handleCopyAll}
+                                                className="gap-1.5"
+                                            >
+                                                {copied ? (
+                                                    <ClipboardCheck className="h-4 w-4 text-green-500" />
+                                                ) : (
+                                                    <ClipboardCopy className="h-4 w-4" />
+                                                )}
+                                                {copied ? "Copiado!" : ""}
+                                            </Button>
+                                   
+
                                 {isEditing ? (
                                     <>
-                                        <Button variant="outline" size="sm" onClick={handleCancel} className="gap-1.5">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleCancel}
+                                            className="gap-1.5"
+                                        >
                                             <X className="h-4 w-4" /> Cancelar
                                         </Button>
-                                        <Button size="sm" onClick={handleSave} className="gap-1.5">
-                                            <Check className="h-4 w-4" /> Salvar
+                                        <Button
+                                            size="sm"
+                                            onClick={handleSave}
+                                            disabled={isSaving}
+                                            className="gap-1.5"
+                                        >
+                                            {isSaving ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Check className="h-4 w-4" />
+                                            )}
+                                            {isSaving ? "Salvando..." : "Salvar"}
                                         </Button>
                                     </>
                                 ) : (
                                     !isLegacy && (
                                         <RoleIf roles={[Roles.ADMIN, Roles.SUPPORT]}>
-                                            <Button variant="outline" size="sm" onClick={handleEdit} className="gap-1.5">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={handleEdit}
+                                                className="gap-1.5"
+                                            >
                                                 <Pencil className="h-4 w-4" /> Editar
                                             </Button>
                                             <Button
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => setOpenDeleteModal(true)}
+                                                disabled={isDeleting}
                                                 className="gap-1.5 text-destructive hover:text-destructive"
                                             >
-                                                <Trash2 className="h-4 w-4" /> Excluir
+                                                {isDeleting ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="h-4 w-4" />
+                                                )}
+                                                Excluir
                                             </Button>
                                         </RoleIf>
                                     )
@@ -395,15 +303,32 @@ const ServiceDrawer = ({ open, onClose, service }: ServiceDrawerProps) => {
                         </div>
                     </SheetHeader>
 
-                    {/* 4 COLUNAS */}
                     <div className="flex-1 flex justify-between py-6 overflow-y-auto">
-                        <div className="flex gap-12">
-                            <FieldColumn fields={COL_LEFT} service={current} isEditing={isEditing} onUpdate={handleUpdate} />
-                            <FieldColumn fields={COL_CENTER_LEFT} service={current} isEditing={isEditing} onUpdate={handleUpdate} />
-                            <FieldColumn fields={COL_CENTER_RIGHT} service={current} isEditing={isEditing} onUpdate={handleUpdate} />
+                        <div className="flex gap-8">
+                            <FieldColumn
+                                fields={COL_LEFT}
+                                service={current}
+                                isEditing={isEditing}
+                                onUpdate={handleUpdate}
+                            />
+                            <Separator orientation="vertical" className="h-auto" />
+                            <FieldColumn
+                                fields={COL_CENTER_LEFT}
+                                service={current}
+                                isEditing={isEditing}
+                                onUpdate={handleUpdate}
+                            />
+                            <Separator orientation="vertical" className="h-auto" />
+                            <FieldColumn
+                                fields={COL_CENTER_RIGHT}
+                                service={current}
+                                isEditing={isEditing}
+                                onUpdate={handleUpdate}
+                            />
                         </div>
 
-                        {/* Coluna direita */}
+                        <Separator orientation="vertical" className="h-auto mx-4" />
+
                         <div className="w-[360px] flex flex-col gap-4">
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8">
@@ -411,29 +336,43 @@ const ServiceDrawer = ({ open, onClose, service }: ServiceDrawerProps) => {
                                         {current.validatedBy?.[0]?.toUpperCase() ?? "?"}
                                     </AvatarFallback>
                                 </Avatar>
-                                <div className="min-w-0">
-                                    <span className="text-sm text-muted-foreground block">Validado por</span>
-                                    <p className="font-medium text-sm truncate">{current.validatedBy || "Não informado"}</p>
-                                </div>
+                                <FieldValue
+                                    icon={() => null}
+                                    label="Validado por"
+                                    value={current.validatedBy || "Não informado"}
+                                />
                             </div>
 
-                            <InfoField icon={CalendarCheck} label="Instalado em" value={formatDate(current.validatedAt)} />
-                            <InfoField icon={Calendar} label="Data agendada" value={formatDate(current.scheduledDate)} />
+                            <InfoField
+                                icon={CalendarCheck}
+                                label="Instalado em"
+                                value={formatDate(current.validatedAt)}
+                            />
+                            <InfoField
+                                icon={Calendar}
+                                label="Data agendada"
+                                value={formatDate(current.scheduledDate)}
+                            />
 
                             <div className="flex-1 flex flex-col min-h-0">
-                                <span className="text-sm text-muted-foreground mb-2 block">Observações</span>
+                                <span className="text-sm text-muted-foreground mb-2 block">
+                                    Observações
+                                </span>
                                 <Textarea
                                     value={current.notes || ""}
-                                    onChange={(e) => isEditing && handleUpdate("notes", e.target.value)}
+                                    onChange={(e) =>
+                                        isEditing && handleUpdate("notes", e.target.value)
+                                    }
                                     readOnly={!isEditing}
-                                    placeholder={isEditing ? "Adicione observações..." : "Sem observações"}
+                                    placeholder={
+                                        isEditing ? "Adicione observações..." : "Sem observações"
+                                    }
                                     className="flex-1 resize-none"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    {/* FOOTER */}
                     <SheetFooter className="border-t pt-3">
                         <div className="w-full flex items-center justify-between text-xs text-muted-foreground">
                             <div className="flex items-center gap-4">
@@ -443,13 +382,10 @@ const ServiceDrawer = ({ open, onClose, service }: ServiceDrawerProps) => {
                                 <span className="text-muted-foreground/50">•</span>
                                 <span>Modificado em {formatDateTime(current.updatedAt)}</span>
                             </div>
+                            <span> <Badge variant={sourceBadge.variant} className="text-xs mx-1">
+                                {sourceBadge.label}
+                            </Badge>Protocolo: {current.protocolNumber || "—"}</span>
 
-                            <div className="flex items-center gap-3">
-                                <span>Protocolo: {current.protocolNumber || "—"}</span>
-                                <Badge variant={sourceBadge.variant} className="text-xs">
-                                    {sourceBadge.label}
-                                </Badge>
-                            </div>
                         </div>
                     </SheetFooter>
                 </SheetContent>

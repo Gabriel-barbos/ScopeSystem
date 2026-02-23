@@ -18,18 +18,18 @@ import {
 } from "@/components/ui/chart";
 import type { PendingByClient } from "@/services/ReportService";
 
-// Paleta de cores moderna e vibrante
+// Paleta de cores
 const COLORS = [
   "hsl(221, 83%, 53%)",   // Azul vibrante (blue-600)
-  "hsl(262, 83%, 58%)",   // Violeta (violet-500)
-  "hsl(173, 80%, 40%)",   // Teal (teal-500)
-  "hsl(333, 71%, 51%)",   // Rosa (pink-500)
-  "hsl(25, 95%, 53%)",    // Laranja (orange-500)
-  "hsl(142, 71%, 45%)",   // Verde (green-500)
-  "hsl(47, 96%, 53%)",    // Amarelo (amber-400)
-  "hsl(199, 89%, 48%)",   // Cyan (cyan-500)
-  "hsl(280, 67%, 55%)",   // Púrpura
-  "hsl(350, 89%, 60%)",   // Vermelho coral
+  "hsl(262, 87%, 55%)",   // Violeta (violet-500)
+  "hsl(173, 39%, 71%)",   // Teal (teal-500)
+  "hsl(333, 100%, 80%)",   // Rosa (pink-500)
+  "hsl(25, 87%, 71%)",    // Laranja (orange-500)
+  "hsl(142, 53%, 63%)",   // Verde (green-500)
+  "hsl(47, 76%, 69%)",    // Amarelo (amber-400)
+  "hsl(199, 82%, 76%)",   // Cyan (cyan-500)
+  "hsl(281, 48%, 72%)",   // Púrpura
+  "hsl(350, 72%, 71%)",   // Vermelho coral
 ];
 
 interface Props {
@@ -37,7 +37,7 @@ interface Props {
 }
 
 export function PieChartPending({ data }: Props) {
-  // Transforma os dados para o formato do shadcn charts
+  // Transforma os dados
   const chartData = data.map((d, index) => ({
     client: d.client.toLowerCase().replace(/\s+/g, "-"),
     name: d.client,
@@ -45,7 +45,7 @@ export function PieChartPending({ data }: Props) {
     fill: `var(--color-${d.client.toLowerCase().replace(/\s+/g, "-")})`,
   }));
 
-  // Gera o chartConfig dinamicamente baseado nos dados
+  
   const chartConfig = {
     total: {
       label: "Total",

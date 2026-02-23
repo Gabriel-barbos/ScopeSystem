@@ -4,7 +4,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-// UI Components
 import { InputWithIcon } from "../InputWithIcon";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,6 @@ import {
 import { User, FileUser } from "lucide-react";
 import { LoadingOutlined, PlusOutlined } from "@ant-design/icons";
 
-// Ant Upload
 import { message, Upload } from "antd";
 import type { GetProp, UploadProps } from "antd";
 
@@ -37,7 +35,6 @@ const FormSchema = z.object({
   name: z.string().min(2, "Nome muito curto"),
   description: z.string().optional(),
   type: z.string().optional(),
-  // image não fica no schema pois é tratado separadamente
 });
 
 export type ClientFormValues = z.infer<typeof FormSchema>;
@@ -49,7 +46,6 @@ type Props = {
   onCancel: () => void;
 };
 
-//utils de upload de imagem
 const getBase64 = (img: FileType, callback: (url: string) => void) => {
   const reader = new FileReader();
   reader.addEventListener("load", () => callback(reader.result as string));
@@ -72,22 +68,20 @@ const beforeUpload = (file: FileType) => {
 export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
   const isEditing = Boolean(clientId);
 
-// Busca dados do cliente (só se estiver editando)
+// Busca dados do cliente 
  const { data: client, isLoading: loadingClient } = useQuery({
   queryKey: ["client", clientId],
   queryFn: () => clientApi.getById(clientId!),
-  enabled: !!clientId, // só roda se estiver editando
+  enabled: !!clientId, 
 });
 
 
-// Mutações (create, update, delete)
+//mutations 
 const { createClient, updateClient } = useClientService();
 
-//preview da imagem
-  const [imageUrl, setImageUrl] = useState<string>();
+const [imageUrl, setImageUrl] = useState<string>();
   
-  // Arquivo real para enviar ao backend
-  const [imageFile, setImageFile] = useState<File | null>(null);
+const [imageFile, setImageFile] = useState<File | null>(null);
 
   //react hook form
   const {
@@ -114,7 +108,6 @@ const { createClient, updateClient } = useClientService();
         type: client.type || "",
       });
 
-      // Se tiver imagem, mostra no preview
       if (client.image?.[0]) {
         setImageUrl(client.image[0]);
       }
@@ -129,7 +122,7 @@ const { createClient, updateClient } = useClientService();
       //Guarda o File real 
       setImageFile(file);
 
-      // 2. Cria preview visual (base64)
+      // 2. Cria preview visual
       getBase64(file, (url) => {
         setImageUrl(url);
       });
@@ -148,14 +141,13 @@ const { createClient, updateClient } = useClientService();
       };
 
       if (isEditing) {
-        // Atualiza cliente existente
         await updateClient.mutateAsync({
           id: clientId!,
           payload,
         });
         toast.success("Cliente atualizado com sucesso!");
       } else {
-        // Cria novo cliente
+
         await createClient.mutateAsync(payload);
         toast.success("Cliente criado com sucesso!");
       }

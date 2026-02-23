@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UniversalDrawer } from "@/components/UniversalDrawer";
 import { ImportModal } from "@/components/ImportModal";
 import ScheduleForm from "@/components/forms/ScheduleForm";
-import ScheduleTable from "@/components/schedule/ScheduleTable";
+import ScheduleTable from "@/components/schedule/ScheduleTable/ScheduleTable";
 import { useScheduleService } from "@/services/ScheduleService";
 import type { SchedulePayload } from "@/services/ScheduleService";
 import { useAuth } from "@/context/Authcontext";

@@ -4,7 +4,6 @@ import API from "@/api/axios";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
 
-// Instância dedicada para exports — sem timeout (arquivos grandes)
 const EXPORT_API = axios.create({
   baseURL: API.defaults.baseURL,
   timeout: 0,
@@ -33,7 +32,7 @@ EXPORT_API.interceptors.response.use(
   }
 );
 
-// ─── Interfaces ───────────────────────────────────────────
+//Interfaces
 
 export interface ServicesByType {
   instalacoes: number;

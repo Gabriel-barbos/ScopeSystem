@@ -12,7 +12,7 @@ import {
   CalendarSearch,
   Car,
   Hash,
-  Tag
+  Folder
 } from "lucide-react";
 import { LoadingOutlined } from "@ant-design/icons";
 
@@ -47,7 +47,6 @@ import { scheduleApi, useScheduleService } from "@/services/ScheduleService";
 import type { SchedulePayload } from "@/services/ScheduleService";
 import { clientApi } from "@/services/ClientService";
 import { Textarea } from "@/components/ui/textarea";
-import * as React from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { useAuth } from "@/context/Authcontext";
 
@@ -72,6 +71,7 @@ const FormSchema = z.object({
   serviceType: z.string().min(1, "Tipo de serviço é obrigatório"),
   notes: z.string().optional(),
   client: z.string().min(1, "Cliente é obrigatório"),
+  vehicleGroup: z.string().optional(),
   provider: z.string().optional(),
   product: z.string().optional(),
   status: z.string().optional(),
@@ -135,6 +135,7 @@ export default function ScheduleForm({
       createdBy: "",
       orderNumber: "",
       provider: "",
+      vehicleGroup: "",
     },
   });
 
@@ -174,6 +175,7 @@ export default function ScheduleForm({
         status: schedule.status,
         createdBy: schedule.createdBy,
         provider: schedule.provider,
+        vehicleGroup: schedule.vehicleGroup || "",
       });
     }
   }, [schedule, reset]);
@@ -194,6 +196,7 @@ export default function ScheduleForm({
         status: data.scheduledDate ? "agendado" : "criado",
         createdBy: user?.name || "",
         orderNumber: data.orderNumber,
+        vehicleGroup: data.vehicleGroup,
       };
 
       if (isEditing && scheduleId) {
@@ -420,6 +423,15 @@ export default function ScheduleForm({
           )}
         />
       </div>
+
+        <div>
+          <Label>Grupo de veiculos</Label>
+          <InputWithIcon
+            icon={<Folder className="h-4 w-4" />}
+            placeholder="Grupo de veiculos"
+            {...register("vehicleGroup")}
+          />
+        </div>
 
              <div>
           <Label>Prestador</Label>

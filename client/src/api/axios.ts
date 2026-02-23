@@ -13,7 +13,7 @@ API.interceptors.request.use((config) => {
       config.headers.Authorization = `Bearer ${token}`;
     }
   } catch (e) {
-    // silent
+  
   }
   return config;
 });
@@ -25,7 +25,6 @@ API.interceptors.response.use(
       // Token inválido ou expirado
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      // opcional: window.location.href = "/login";
     }
     return Promise.reject(error);
   }

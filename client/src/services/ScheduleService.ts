@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import API from "@/api/axios";
 
-// ─── Tipos Base ────────────────────────────────────────────────
 
 interface ClientRef {
   _id: string;
@@ -28,6 +27,11 @@ export interface Schedule {
   product?: ProductRef;
   status: "criado" | "agendado" | "concluido" | "atrasado" | "cancelado";
   provider?: string;
+  vehicleGroup?: string;
+  responsible?: string;
+  responsiblePhone?: string;
+  serviceAddress?: string;
+  situation?: string;
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -46,6 +50,11 @@ export interface SchedulePayload {
   createdBy?: string;
   orderNumber?: string;
   provider?: string;
+  responsible?: string;
+  responsiblePhone?: string;
+  serviceAddress?: string;
+  vehicleGroup?: string;
+  situation?: string;
 }
 
 export interface BulkUpdatePayload {
@@ -60,6 +69,7 @@ export interface BulkUpdatePayload {
   notes?: string;
   provider?: string;
   createdBy?: string;
+  vehicleGroup?: string;
 }
 
 // ─── Tipo da Resposta Paginada ─────────────────────────────────

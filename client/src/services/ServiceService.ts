@@ -11,6 +11,7 @@ export interface ValidationPayload {
   protocolNumber?: string;
   validationNotes?: string;
   secondaryDevice?: string;
+  vehicleGroup?: string;
 }
 
 export interface CreateFromValidationPayload {
@@ -42,6 +43,7 @@ export interface Service {
   validationNotes?: string;
   secondaryDevice?: string;
   validatedAt: string;
+  vehicleGroup?: string;
   schedule?: string;
   source: "validation" | "import" | "legacy";
   createdAt?: string;
