@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BackgroundGradientAnimation } from '../components/ui/background-gradient-animation';
 import { LayoutTextFlip } from '@/components/ui/layout-text-flip';
 import { InputWithIcon } from '@/components/InputWithIcon';
-import { Mail, Lock, ArrowRight, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Mail, Lock, ArrowRight, CheckCircle2, XCircle, Loader2,ShieldUser} from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useAuth } from "@/context/Authcontext";
 import { useNavigate } from "react-router-dom";
@@ -15,7 +15,7 @@ type ButtonState = 'idle' | 'loading' | 'success' | 'error';
 //login button with states
 const LoginButton = ({ state }: { state: ButtonState }) => {
   const config = {
-    idle:    { label: 'Entrar',           icon: <ArrowRight   size={16} />, cls: 'btn--idle'    },
+    idle:    { label: 'Entrar',           icon: <ShieldUser   size={16} />, cls: 'btn--idle'    },
     loading: { label: 'Autenticando...',  icon: <Loader2      size={16} />, cls: 'btn--loading' },
     success: { label: 'Bem-vindo!',       icon: <CheckCircle2 size={16} />, cls: 'btn--success' },
     error:   { label: 'Tente novamente',  icon: <XCircle      size={16} />, cls: 'btn--error'   },
