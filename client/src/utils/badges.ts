@@ -13,7 +13,9 @@ import {
   Shield,
   Headset,
   Wallet,
-  MapPinX
+  MapPinX,
+  UserStar,
+  ShoppingBag,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
@@ -37,14 +39,21 @@ export type BackendRole =
   | "validation"
   | "support"
   | "scheduling"
-  | "billing";
+  | "billing"
+  | "CX"
+  | "commercial";
+
+
 
 export type RoleType =
   | "Administrador"
   | "Validação"
   | "Suporte"
   | "Agendamento"
-  | "Financeiro";
+  | "Financeiro"
+  | "Comercial"
+  | "CX";
+  
 
 interface BadgeConfig {
   label: string;
@@ -190,6 +199,18 @@ export const roleConfig: Record<RoleType, BadgeConfig> = {
       "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200 dark:border-orange-800",
     icon: Wrench,
   },
+    CX: {
+    label: "CX",
+    className:
+      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800",
+    icon: UserStar,
+  },
+    Comercial: {
+    label: "Comercial",
+    className:
+      "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800",
+    icon: ShoppingBag,
+  },
 };
 
 
@@ -199,6 +220,8 @@ const roleAliasMap: Record<BackendRole, RoleType> = {
   scheduling: "Agendamento",
   validation: "Validação",
   billing: "Financeiro",
+  CX: "CX",
+  commercial: "Comercial",
 };
 
 

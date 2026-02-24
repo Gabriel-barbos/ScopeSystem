@@ -2,7 +2,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "./ThemeToggle";
 import { JarvisButton } from "./JarvisButton";
 import { cn } from "@/lib/utils";
-
+import RoleIf from "./RoleIf";
+import { Roles } from "@/utils/roles";
 interface HeaderProps {
   userName: string;
   userInitials: string;
@@ -24,7 +25,9 @@ export function Header({ userName, userInitials, className }: HeaderProps) {
       </div>
       
       <div className="ml-auto flex items-center gap-4">
-        <JarvisButton href="https://super-jarvis-red.vercel.app/" />
+        <RoleIf roles={[Roles.ADMIN, Roles.SUPPORT,  Roles.BILLING,  Roles.CX]}>
+                  <JarvisButton href="https://super-jarvis-red.vercel.app/" />
+        </RoleIf>
         <ThemeToggle />
       </div>
     </header>

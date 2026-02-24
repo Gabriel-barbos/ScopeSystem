@@ -66,7 +66,7 @@ export default function Clients() {
             <CardDescription>Visualize e administre seus clientes</CardDescription>
           </div>
 
-          <RoleIf roles={[Roles.ADMIN]}>
+          <RoleIf roles={[Roles.ADMIN, Roles.SUPPORT, Roles.COMMERCIAL, Roles.CX]}>
           <Button className="ml-auto" size="sm" onClick={openCreate}>
             Cadastrar Cliente <Plus />
           </Button>
@@ -122,7 +122,7 @@ export default function Clients() {
               renderItem={(client) => (
                 <List.Item key={client._id}
                   actions={[
-                   <RoleIf roles={[Roles.ADMIN]}>
+                   <RoleIf roles={[Roles.ADMIN, Roles.SUPPORT, Roles.COMMERCIAL, Roles.CX]}>
 
                     <Button
                       key="edit"

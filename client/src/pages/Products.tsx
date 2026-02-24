@@ -234,7 +234,7 @@ export default function Products() {
                       <MoreVertical />
                     </Button>,
 
-                          <RoleIf roles={[Roles.ADMIN]}>
+                          <RoleIf roles={[Roles.ADMIN, Roles.SUPPORT]}>
 
                        
                     <Button

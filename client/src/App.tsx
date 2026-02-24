@@ -53,7 +53,7 @@ const App = () => (
              <Route
               path="/home"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING,Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING,Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING, Roles.CX, Roles.COMMERCIAL]}>
                   <Layout>
                     <Home />
                   </Layout>
@@ -75,7 +75,7 @@ const App = () => (
             <Route
               path="/products"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING, Roles.CX, Roles.COMMERCIAL]}>
                   <Layout >
                     <Products />
                   </Layout>
@@ -86,7 +86,7 @@ const App = () => (
             <Route
               path="/clients"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING, Roles.CX, Roles.COMMERCIAL]}>
                   <Layout>
                     <Clients />
                   </Layout>
@@ -120,7 +120,7 @@ const App = () => (
                 <Route
               path="/reports"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.BILLING]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.BILLING,Roles.CX, Roles.COMMERCIAL]}>
                   <Layout>
                     <Reports />
                   </Layout>
@@ -142,7 +142,7 @@ const App = () => (
                  <Route
               path="/services"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION, Roles.SCHEDULING, Roles.BILLING]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION, Roles.SCHEDULING, Roles.BILLING, Roles.CX, Roles.COMMERCIAL]}>
                   <Layout>
                     <Services />
                   </Layout>
@@ -162,7 +162,7 @@ const App = () => (
                    <Route
               path="/maintenance-requests"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT,  Roles.SCHEDULING]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT,  Roles.SCHEDULING, Roles.CX]}>
                   <Layout>
                     <MaintenenceRequests />
                   </Layout>
