@@ -21,6 +21,7 @@ import { AntdThemeProvider } from "@/providers/AntdThemeProvider";
 import PrivateRoute from "@/components/PrivateRoute";
 import { Roles } from "@/utils/roles";
 import  Removal  from "./pages/Removal";
+import Home from "./pages/Home";
 
 
 
@@ -36,7 +37,7 @@ const App = () => (
      
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/appointments" replace />} />
+            <Route path="/" element={<Navigate to="/home" replace />} />
 
             <Route
               path="/appointments"
@@ -44,6 +45,17 @@ const App = () => (
                 <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING,]}>
                   <Layout>
                     <Appointments />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+
+             <Route
+              path="/home"
+              element={
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING,Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING]}>
+                  <Layout>
+                    <Home />
                   </Layout>
                 </PrivateRoute>
               }

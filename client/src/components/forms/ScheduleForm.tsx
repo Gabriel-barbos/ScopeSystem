@@ -351,7 +351,7 @@ export default function ScheduleForm({
       </div>
 
       {/* Produto */}
-      {serviceType === "installation" && (
+     
         <div className="space-y-1">
           <Label>Produto</Label>
           <Controller
@@ -391,7 +391,7 @@ export default function ScheduleForm({
             )}
           />
         </div>
-      )}
+     
 
       {/* Data */}
       <div className="space-y-1">
