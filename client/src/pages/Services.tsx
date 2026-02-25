@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { CarFront, Search, Eye, SquareUser, FileSpreadsheet, Copy, Check } from "lucide-react";
+import { CarFront, Search, Eye, SquareUser, FileSpreadsheet, Copy, Check, SearchX, AlertCircle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -68,9 +68,6 @@ function ServiceItem({ service, onOpen }: { service: Service; onOpen: (s: Servic
 
     return (
         <div className="flex items-center gap-4 px-4 py-3.5 rounded-xl border bg-card hover:bg-accent/30 hover:border-primary/20 transition-all duration-150 group">
-            {/* Service type badge */}
-           
-            {/* Avatar */}
             <div className="shrink-0 h-12 w-12 rounded-lg overflow-hidden bg-muted flex items-center justify-center ring-1 ring-border">
                 {service.client?.image?.[0] ? (
                     <img src={service.client.image[0]} alt={service.client.name} className="h-full w-full object-cover" />
@@ -79,25 +76,21 @@ function ServiceItem({ service, onOpen }: { service: Service; onOpen: (s: Servic
                 )}
             </div>
 
-            {/* Main info */}
             <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                     <CopyVin vin={service.vin} />
-                
-                     <div className="hidden sm:block shrink-0">
-                <ServiceBadge type={service.serviceType} config={svcConfig} />
-            </div>
-
+                    <div className="hidden sm:block shrink-0">
+                        <ServiceBadge type={service.serviceType} config={svcConfig} />
+                    </div>
                 </div>
-                    {service.plate && (
-                        <span className="px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-mono font-medium border ">
-                            {service.plate}
-                        </span>
-                    )}
+                {service.plate && (
+                    <span className="px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-mono font-medium border">
+                        {service.plate}
+                    </span>
+                )}
                 <span className="text-xs text-muted-foreground font-mono mx-2">{service.deviceId}</span>
             </div>
 
-            {/* Action */}
             <Button
                 variant="ghost"
                 size="sm"
@@ -111,30 +104,76 @@ function ServiceItem({ service, onOpen }: { service: Service; onOpen: (s: Servic
     );
 }
 
+function LoadingState() {
+    return (
+        <div className="flex flex-col items-center justify-center py-16 gap-4">
+            <Loader2 className="h-10 w-10 text-primary animate-spin" />
+            <div className="text-center space-y-1">
+                <p className="text-sm font-medium text-foreground">Carregando serviços...</p>
+                <p className="text-xs text-muted-foreground">Por favor, aguarde</p>
+            </div>
+        </div>
+    );
+}
+
+function EmptyState({ hasSearch }: { hasSearch: boolean }) {
+    return (
+        <div className="flex flex-col items-center justify-center py-16 gap-4">
+            <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                <SearchX className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div className="text-center space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                    {hasSearch ? "Nenhum serviço encontrado" : "Nenhum serviço cadastrado"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                    {hasSearch 
+                        ? "Tente ajustar sua busca ou limpar os filtros" 
+                        : "Comece importando ou cadastrando serviços"}
+                </p>
+            </div>
+        </div>
+    );
+}
+
+function ErrorState({ onRetry }: { onRetry: () => void }) {
+    return (
+        <div className="flex flex-col items-center justify-center py-16 gap-4">
+            <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertCircle className="h-8 w-8 text-destructive" />
+            </div>
+            <div className="text-center space-y-1">
+                <p className="text-sm font-medium text-foreground">Erro ao carregar serviços</p>
+                <p className="text-xs text-muted-foreground">Ocorreu um problema ao buscar os dados</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={onRetry}>
+                Tentar novamente
+            </Button>
+        </div>
+    );
+}
+
 export default function Services() {
-    const [search, setSearch]                   = useState("");
-    const [currentPage, setCurrentPage]         = useState(1);
+    const [search, setSearch] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
     const [importModalOpen, setImportModalOpen] = useState(false);
-    const [drawerOpen, setDrawerOpen]           = useState(false);
+    const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedService, setSelectedService] = useState<Service | null>(null);
 
     const debouncedSearch = useDebounce(search, 400);
 
-    // Bug fix: quando a busca muda, isFetching=true mas placeholderData mostra dados antigos.
-    // Usamos `isSearching` para ocultar a lista antiga durante nova busca, evitando falso "não encontrado".
     const [isSearching, setIsSearching] = useState(false);
     useEffect(() => { setIsSearching(true); }, [debouncedSearch]);
 
-    const { data, isLoading, isFetching, bulkImport } = useServiceService({
+    const { data, isLoading, isFetching, isError, refetch, bulkImport } = useServiceService({
         page: currentPage,
         limit: PAGE_SIZE,
         search: debouncedSearch || undefined,
     });
 
-    // Quando o fetch terminar, libera a lista
     useEffect(() => { if (!isFetching) setIsSearching(false); }, [isFetching]);
 
-    const services   = data?.data ?? [];
+    const services = data?.data ?? [];
     const pagination = data?.pagination;
 
     const handleSearch = (value: string) => {
@@ -184,6 +223,9 @@ export default function Services() {
     };
 
     const showLoading = isLoading || isSearching;
+    const showEmpty = !showLoading && !isError && services.length === 0;
+    const showError = !showLoading && isError;
+    const showList = !showLoading && !isError && services.length > 0;
 
     return (
         <>
@@ -218,39 +260,47 @@ export default function Services() {
                                 onChange={(e) => handleSearch(e.target.value)}
                             />
                         </div>
-                        {pagination && (
+                        {pagination && !showLoading && !isError && (
                             <span className="text-sm text-muted-foreground pb-0.5">
-                                {pagination.total} registros
+                                {pagination.total} {pagination.total === 1 ? 'registro' : 'registros'}
                             </span>
                         )}
                     </div>
 
-                    <List
-                        dataSource={showLoading ? [] : services}
-                        loading={showLoading}
-                        locale={{ emptyText: "Nenhum serviço encontrado" }}
-                        split={false}
-                        className="flex flex-col gap-2"
-                        renderItem={(service) => (
-                            <List.Item className="!p-0 !border-0 mb-2">
-                                <div className="w-full">
-                                    <ServiceItem service={service} onOpen={handleOpenDetails} />
-                                </div>
-                            </List.Item>
-                        )}
-                    />
+                    {showLoading && <LoadingState />}
+                    
+                    {showError && <ErrorState onRetry={() => refetch()} />}
+                    
+                    {showEmpty && <EmptyState hasSearch={!!debouncedSearch} />}
 
-                    {pagination && pagination.total > PAGE_SIZE && (
-                        <div className="mt-6 flex justify-center">
-                            <Pagination
-                                current={pagination.page}
-                                pageSize={PAGE_SIZE}
-                                total={pagination.total}
-                                onChange={setCurrentPage}
-                                showSizeChanger={false}
-                                showTotal={(total) => `${total} serviços`}
+                    {showList && (
+                        <>
+                            <List
+                                dataSource={services}
+                                split={false}
+                                className="flex flex-col gap-2"
+                                renderItem={(service) => (
+                                    <List.Item className="!p-0 !border-0 mb-2">
+                                        <div className="w-full">
+                                            <ServiceItem service={service} onOpen={handleOpenDetails} />
+                                        </div>
+                                    </List.Item>
+                                )}
                             />
-                        </div>
+
+                            {pagination && pagination.total > PAGE_SIZE && (
+                                <div className="mt-6 flex justify-center">
+                                    <Pagination
+                                        current={pagination.page}
+                                        pageSize={PAGE_SIZE}
+                                        total={pagination.total}
+                                        onChange={setCurrentPage}
+                                        showSizeChanger={false}
+                                        showTotal={(total) => `${total} ${total === 1 ? 'serviço' : 'serviços'}`}
+                                    />
+                                </div>
+                            )}
+                        </>
                     )}
                 </CardContent>
             </Card>

@@ -6,19 +6,19 @@ import PlatformCardGrid from "@/components/home/PlataformCardGrid";
 import { NoticeCard } from "@/components/home/NoticeCard";
 import type { RoleType } from "@/utils/badges";
 
-// Dados de exemplo — substitua pela sua fonte de dados real
+// Dados de exemplo
 const NOTICES: { id: number; title: string; description: string; createdAt: string; priority: "low" | "medium" | "high"; roles: RoleType[] }[] = [
   {
     id: 1,
     title: "Escala carnaval 2025",
-    description: "Kadu descansa, Estagio tbm coitado e Raul na Ação",
+    description: "Escala para o suporte nesse carnaval - Kadu = folga - Raul = normal - Estagio = folga",
     createdAt: "24 de fev. de 2025",
     priority: "high",
     roles: [, "Suporte"],
   },
   {
     id: 2,
-    title: "Ovo de pascoa Top",
+    title: "Ovo de pascoa ",
     description: "Todo mundo ganhará um ovo de pascoa top esse ano, fiquem ligados!",
     createdAt: "23 de fev. de 2025",
     priority: "medium",
@@ -27,7 +27,7 @@ const NOTICES: { id: number; title: string; description: string; createdAt: stri
   {
     id: 3,
     title: "Emitir Nota Fiscal — Fevereiro",
-    description: "Geral emitir NF e mandar no email do Celso mestre até dia 28/02.",
+    description: " emitir NF e mandar no email do Celso mestre até dia 28/02.",
     createdAt: "22 de fev. de 2025",
     priority: "low",
     roles: ["Agendamento", "Validação", "Suporte", "Financeiro", "Comercial"],
