@@ -1,16 +1,7 @@
 import { useState, useCallback } from "react";
 import {
-  Wrench,
-  MapPin,
-  User,
-  Gauge,
-  Hash,
-  Loader2,
-  Monitor,
-  CheckCircle2,
-  Shield,
-  MessageSquare,
-  Eye,
+  Wrench, MapPin, User, Gauge, Hash, Loader2, Monitor,
+  CheckCircle2, Shield, MessageSquare, Eye, ChevronsUpDown, Check, Package,
 } from "lucide-react";
 import { InputWithIcon } from "@/components/InputWithIcon";
 import { Button } from "@/components/ui/button";
@@ -18,14 +9,21 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandInput, CommandList, CommandGroup, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/Authcontext";
 
+export interface ProductRef {
+  _id: string;
+  name: string;
+}
+
 export interface ValidationFormData {
   equipmentId: string;
+  productId: string;
   installationLocation: string;
   technicianName: string;
-  address: string;
   hasSecondaryDevice: boolean;
   secondaryDeviceId?: string;
   odometer: string;
@@ -41,23 +39,9 @@ interface ValidationFormProps {
   onSubmit: (data: ValidationFormData) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
+  products: ProductRef[];
+  defaultProductId?: string;
 }
-
-const INITIAL_DATA: ValidationFormData = {
-  equipmentId: "",
-  installationLocation: "",
-  technicianName: "",
-  address: "",
-  hasSecondaryDevice: false,
-  secondaryDeviceId: "",
-  odometer: "",
-  blockingEnabled: true,
-  protocolNumber: "",
-  keepUnderObservation: false,
-  hasObservations: false,
-  observations: "",
-  validatedBy: "",
-};
 
 const Field = ({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) => (
   <div className="space-y-1">
@@ -68,39 +52,54 @@ const Field = ({ label, required, children }: { label: string; required?: boolea
   </div>
 );
 
-export function ValidationForm({ onSubmit, onCancel, isSubmitting = false }: ValidationFormProps) {
-  const [formData, setFormData] = useState(INITIAL_DATA);
-  const [equipmentIdError, setEquipmentIdError] = useState<string | null>(null);
+export function ValidationForm({
+  onSubmit,
+  onCancel,
+  isSubmitting = false,
+  products,
+  defaultProductId = "",
+}: ValidationFormProps) {
   const { user } = useAuth();
+  const [formData, setFormData] = useState<ValidationFormData>({
+    equipmentId: "",
+    productId: defaultProductId,
+    installationLocation: "",
+    technicianName: "",
+    hasSecondaryDevice: false,
+    secondaryDeviceId: "",
+    odometer: "",
+    blockingEnabled: true,
+    protocolNumber: "",
+    keepUnderObservation: false,
+    hasObservations: false,
+    observations: "",
+    validatedBy: "",
+  });
+  const [equipmentIdError, setEquipmentIdError] = useState<string | null>(null);
+  const [openProduct, setOpenProduct] = useState(false);
 
   const updateField = useCallback((field: keyof ValidationFormData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   }, []);
 
-  const validateEquipmentId = (value: string) => {
-    if (value.length !== 15) {
-      return "O ID do dispositivo deve conter exatamente 15 dígitos";
-    }
-    return null;
-  };
+  const validateEquipmentId = (value: string) =>
+    value.length !== 15 ? "O ID do dispositivo deve conter exatamente 15 dígitos" : null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     const error = validateEquipmentId(formData.equipmentId);
-    if (error) {
-      setEquipmentIdError(error);
-      return;
-    }
-
+    if (error) { setEquipmentIdError(error); return; }
     onSubmit({ ...formData, validatedBy: user?.name || "" });
   };
+
+  const selectedProductName = products.find((p) => p._id === formData.productId)?.name;
 
   return (
     <div className="rounded-xl border border-border/50 bg-gradient-to-b from-card to-card/80 shadow-sm overflow-hidden">
       <form onSubmit={handleSubmit} className="p-4 space-y-3">
-        {/* Grid principal de campos */}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3">
+
           {/* ID Equipamento */}
           <Field label="ID Equipamento" required>
             <InputWithIcon
@@ -116,9 +115,49 @@ export function ValidationForm({ onSubmit, onCancel, isSubmitting = false }: Val
               required
               className="h-9 text-sm"
             />
-            {equipmentIdError && (
-              <p className="text-xs text-destructive mt-1">{equipmentIdError}</p>
-            )}
+            {equipmentIdError && <p className="text-xs text-destructive mt-1">{equipmentIdError}</p>}
+          </Field>
+
+          {/* Equipamento — combobox pré-preenchido pelo produto do agendamento */}
+          <Field label="Equipamento">
+            <Popover open={openProduct} onOpenChange={setOpenProduct}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isSubmitting}
+                  className="w-full h-9 justify-between font-normal text-sm"
+                >
+                  <span className="flex items-center gap-2 truncate">
+                    <Package className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{selectedProductName ?? "Selecione o equipamento"}</span>
+                  </span>
+                  <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-0 w-72">
+                <Command>
+                  <CommandInput placeholder="Buscar equipamento..." />
+                  <CommandList>
+                    <CommandEmpty>Nenhum equipamento encontrado</CommandEmpty>
+                    <CommandGroup>
+                      {products.map((p) => (
+                        <CommandItem
+                          key={p._id}
+                          onSelect={() => {
+                            updateField("productId", p._id);
+                            setOpenProduct(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", formData.productId === p._id ? "opacity-100" : "opacity-0")} />
+                          {p.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </Field>
 
           {/* Local de Instalação */}
@@ -147,21 +186,6 @@ export function ValidationForm({ onSubmit, onCancel, isSubmitting = false }: Val
             />
           </Field>
 
-          {/* Endereço do Serviço */}
-          <div className="lg:col-span-2">
-            <Field label="Endereço do Serviço" required>
-              <InputWithIcon
-                icon={<MapPin className="h-3.5 w-3.5" />}
-                placeholder="Endereço completo"
-                value={formData.address}
-                onChange={(e) => updateField("address", e.target.value)}
-                disabled={isSubmitting}
-                required
-                className="h-9 text-sm"
-              />
-            </Field>
-          </div>
-
           {/* Odômetro */}
           <Field label="Odômetro (km)">
             <InputWithIcon
@@ -187,14 +211,12 @@ export function ValidationForm({ onSubmit, onCancel, isSubmitting = false }: Val
             />
           </Field>
 
-          {/* Switch de Bloqueio - ao lado do protocolo */}
+          {/* Bloqueio */}
           <div className="flex items-end pb-1">
             <div className="flex items-center justify-between w-full p-2.5 rounded-lg border bg-card">
               <div className="flex items-center gap-2">
                 <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-                <Label htmlFor="blocking" className="text-sm font-medium cursor-pointer">
-                  Bloqueio
-                </Label>
+                <Label htmlFor="blocking" className="text-sm font-medium cursor-pointer">Bloqueio</Label>
               </div>
               <Switch
                 id="blocking"
@@ -206,9 +228,8 @@ export function ValidationForm({ onSubmit, onCancel, isSubmitting = false }: Val
           </div>
         </div>
 
-        {/* Linha de Checkboxes */}
+        {/* Checkboxes */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-          {/* Checkbox Dispositivo Secundário */}
           <div className="flex items-center space-x-2 p-2.5 rounded-lg border bg-card">
             <Checkbox
               id="hasSecondary"
@@ -225,7 +246,6 @@ export function ValidationForm({ onSubmit, onCancel, isSubmitting = false }: Val
             </Label>
           </div>
 
-          {/* Checkbox Observações */}
           <div className="flex items-center space-x-2 p-2.5 rounded-lg border bg-card">
             <Checkbox
               id="hasObservations"
@@ -242,7 +262,6 @@ export function ValidationForm({ onSubmit, onCancel, isSubmitting = false }: Val
             </Label>
           </div>
 
-          {/* Checkbox Manter em Observação */}
           <div className="flex items-center space-x-2 p-2.5 rounded-lg border bg-card">
             <Checkbox
               id="keepObservation"
@@ -260,7 +279,6 @@ export function ValidationForm({ onSubmit, onCancel, isSubmitting = false }: Val
         {/* Campos condicionais */}
         {(formData.hasSecondaryDevice || formData.hasObservations) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-            {/* Input condicional: ID Dispositivo Secundário */}
             {formData.hasSecondaryDevice && (
               <div className="animate-in slide-in-from-top-2 duration-200">
                 <Field label="ID do Dispositivo Secundário" required>
@@ -277,12 +295,8 @@ export function ValidationForm({ onSubmit, onCancel, isSubmitting = false }: Val
               </div>
             )}
 
-            {/* Textarea condicional: Observações */}
             {formData.hasObservations && (
-              <div className={cn(
-                "animate-in slide-in-from-top-2 duration-200",
-                !formData.hasSecondaryDevice && "md:col-span-2"
-              )}>
+              <div className={cn("animate-in slide-in-from-top-2 duration-200", !formData.hasSecondaryDevice && "md:col-span-2")}>
                 <Field label="Observações de Validação">
                   <Textarea
                     placeholder="Descreva observações relevantes sobre a instalação..."
@@ -297,21 +311,16 @@ export function ValidationForm({ onSubmit, onCancel, isSubmitting = false }: Val
           </div>
         )}
 
-        {/* Botões de ação */}
+        {/* Ações */}
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={isSubmitting}>
             Cancelar
           </Button>
           <Button type="submit" size="sm" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Validando...
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="h-3.5 w-3.5" /> Validar
-              </>
-            )}
+            {isSubmitting
+              ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Validando...</>
+              : <><CheckCircle2 className="h-3.5 w-3.5" /> Validar</>
+            }
           </Button>
         </div>
       </form>

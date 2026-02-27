@@ -146,7 +146,7 @@ const ScheduleTable: React.FC = () => {
   isLoading={isLoading}
   pagination={pagination}
   hasFilters={filters.activeFilterCount > 0}
-  tableFilters={filters.tableFilters}   // <-- novo
+  tableFilters={filters.tableFilters}  
   onClearFilters={filters.clearAllFilters}
   onRowClick={handleRowClick}
   onTableChange={filters.handleTableChange}

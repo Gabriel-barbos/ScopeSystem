@@ -12,11 +12,16 @@ import {
   CalendarSearch,
   Car,
   Hash,
-  Folder
+  Folder,
+  MapPin,
+  Navigation,
+  User,
+  Phone,
+  StickyNote,
+  Wrench,
 } from "lucide-react";
 import { LoadingOutlined } from "@ant-design/icons";
 
-// UI Components
 import { InputWithIcon } from "../InputWithIcon";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -50,18 +55,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { useAuth } from "@/context/Authcontext";
 
-
-type Client = {
-  _id: string;
-  name: string;
-  image?: string;
-};
-
-type Product = {
-  _id: string;
-  name: string;
-};
-
+type Client = { _id: string; name: string; image?: string };
+type Product = { _id: string; name: string };
 
 const FormSchema = z.object({
   plate: z.string().optional(),
@@ -75,13 +70,15 @@ const FormSchema = z.object({
   provider: z.string().optional(),
   product: z.string().optional(),
   status: z.string().optional(),
+  condutor: z.string().optional(),
+  responsiblePhone: z.string().optional(),
+  serviceAddress: z.string().optional(),
+  serviceLocation: z.string().optional(),
   orderNumber: z.string().optional(),
   createdBy: z.string().optional(),
 });
 
 export type ScheduleFormValues = z.infer<typeof FormSchema>;
-
-
 
 type Props = {
   scheduleId?: string;
@@ -89,19 +86,21 @@ type Props = {
   onCancel: () => void;
 };
 
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 pb-1 border-b border-dashed">
+      {children}
+    </p>
+  );
+}
 
-export default function ScheduleForm({
-  scheduleId,
-  onSuccess,
-  onCancel,
-}: Props) {
+export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props) {
   const isEditing = Boolean(scheduleId);
   const { user } = useAuth();
 
   const [openCalendar, setOpenCalendar] = useState(false);
   const [openClient, setOpenClient] = useState(false);
   const [openProduct, setOpenProduct] = useState(false);
-
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
 
@@ -135,11 +134,16 @@ export default function ScheduleForm({
       createdBy: "",
       orderNumber: "",
       provider: "",
+      serviceAddress: "",
+      serviceLocation: "",
+      condutor: "",
+      responsiblePhone: "",
       vehicleGroup: "",
     },
   });
 
   const serviceType = watch("serviceType");
+  const isMaintenance = serviceType === "maintenance";
 
   useEffect(() => {
     async function loadData() {
@@ -148,17 +152,14 @@ export default function ScheduleForm({
           clientApi.getAll(),
           productApi.getAll(),
         ]);
-
         setClients(clientsRes.data ?? clientsRes);
         setProducts(productsRes.data ?? productsRes);
       } catch {
         toast.error("Erro ao carregar dados");
       }
     }
-
     loadData();
   }, []);
-
 
   useEffect(() => {
     if (schedule) {
@@ -176,10 +177,13 @@ export default function ScheduleForm({
         createdBy: schedule.createdBy,
         provider: schedule.provider,
         vehicleGroup: schedule.vehicleGroup || "",
+        serviceAddress: schedule.serviceAddress || "",
+        serviceLocation: schedule.serviceLocation || "",
+        condutor: schedule.condutor || "",
+        responsiblePhone: schedule.responsiblePhone || "",
       });
     }
   }, [schedule, reset]);
-
 
   async function onSubmit(data: ScheduleFormValues) {
     try {
@@ -197,6 +201,13 @@ export default function ScheduleForm({
         createdBy: user?.name || "",
         orderNumber: data.orderNumber,
         vehicleGroup: data.vehicleGroup,
+        serviceAddress: data.serviceAddress,
+        serviceLocation: data.serviceLocation,
+        // Manutenção apenas
+        ...(isMaintenance && {
+          condutor: data.condutor,
+          responsiblePhone: data.responsiblePhone,
+        }),
       };
 
       if (isEditing && scheduleId) {
@@ -213,7 +224,6 @@ export default function ScheduleForm({
     }
   }
 
-
   if (isEditing && isLoading) {
     return (
       <div className="flex justify-center items-center p-10">
@@ -223,135 +233,145 @@ export default function ScheduleForm({
     );
   }
 
-
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-   
-      {/* Veículo */}
-      <div className="space-y-1  ">
-        <div className="flex gap-4">
-          <div className="flex-1">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5 pb-4">
+
+      {/* ── Veículo ── */}
+      <div className="space-y-3">
+        <SectionLabel>Veículo</SectionLabel>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
             <Label>Placa</Label>
             <InputWithIcon
               icon={<Hash className="h-4 w-4" />}
-              placeholder="Placa"
+              placeholder="ABC-1234"
               {...register("plate")}
             />
           </div>
-
-          <div className="flex-1">
-            <Label>Número do pedido</Label>
+          <div className="space-y-1">
+            <Label>Nº do Pedido</Label>
             <InputWithIcon
               icon={<Hash className="h-4 w-4" />}
-              placeholder="Numero do pedido"
+              placeholder="Pedido"
               {...register("orderNumber")}
             />
           </div>
         </div>
 
-        <div>
+        <div className="space-y-1">
           <Label>Chassi *</Label>
           <InputWithIcon
             icon={<KeySquare className="h-4 w-4" />}
-            placeholder="VIN"
+            placeholder="17 caracteres"
             {...register("vin")}
           />
           {errors.vin && (
-            <p className="text-sm text-red-500">{errors.vin.message}</p>
+            <p className="text-xs text-red-500">{errors.vin.message}</p>
           )}
         </div>
 
-        <div>
-          <Label>Modelo</Label>
-          <InputWithIcon
-            icon={<Car className="h-4 w-4" />}
-            placeholder="Modelo"
-            {...register("model")}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label>Modelo</Label>
+            <InputWithIcon
+              icon={<Car className="h-4 w-4" />}
+              placeholder="Modelo"
+              {...register("model")}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label>Grupo de Veículos</Label>
+            <InputWithIcon
+              icon={<Folder className="h-4 w-4" />}
+              placeholder="Grupo"
+              {...register("vehicleGroup")}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Serviço ── */}
+      <div className="space-y-3">
+        <SectionLabel>Serviço</SectionLabel>
+
+        <div className="space-y-1">
+          <Label>Tipo de Serviço *</Label>
+          <Controller
+            name="serviceType"
+            control={control}
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} value={field.value}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="maintenance">Manutenção</SelectItem>
+                  <SelectItem value="installation">Instalação</SelectItem>
+                  <SelectItem value="removal">Remoção</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           />
+          {errors.serviceType && (
+            <p className="text-xs text-red-500">{errors.serviceType.message}</p>
+          )}
         </div>
-      </div>
 
-      {/* Tipo de Serviço */}
-      <div className="space-y-1">
-        <Label>Tipo do serviço</Label>
-        <Controller
-          name="serviceType"
-          control={control}
-          render={({ field }) => (
-            <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="maintenance">Manutenção</SelectItem>
-                <SelectItem value="installation">Instalação</SelectItem>
-                <SelectItem value="removal">Remoção</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="space-y-1">
+          <Label>Cliente *</Label>
+          <Controller
+            name="client"
+            control={control}
+            render={({ field }) => (
+              <Popover open={openClient} onOpenChange={setOpenClient}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between font-normal">
+                    {field.value
+                      ? clients.find((c) => c._id === field.value)?.name
+                      : "Selecione o cliente"}
+                    <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-72">
+                  <Command>
+                    <CommandInput placeholder="Buscar cliente..." />
+                    <CommandList>
+                      <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
+                      <CommandGroup>
+                        {clients.map((client) => (
+                          <CommandItem
+                            key={client._id}
+                            onSelect={() => {
+                              field.onChange(client._id);
+                              setOpenClient(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                field.value === client._id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <Avatar className="h-6 w-6 mr-2">
+                              <AvatarImage src={client.image} />
+                              <AvatarFallback>{client.name[0]}</AvatarFallback>
+                            </Avatar>
+                            {client.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            )}
+          />
+          {errors.client && (
+            <p className="text-xs text-red-500">{errors.client.message}</p>
           )}
-        />
-      </div>
+        </div>
 
-  
-      {/* Cliente */}
-      <div className="space-y-1">
-        <Label>Cliente</Label>
-        <Controller
-          name="client"
-          control={control}
-          render={({ field }) => (
-            <Popover open={openClient} onOpenChange={setOpenClient}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  {field.value
-                    ? clients.find((c) => c._id === field.value)?.name
-                    : "Selecione o cliente"}
-                  <ChevronsUpDown className="h-4 w-4 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="p-0">
-                <Command>
-                  <CommandInput placeholder="Buscar cliente..." />
-                  <CommandList>
-                    <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
-                    <CommandGroup>
-                      {clients.map((client) => (
-                        <CommandItem
-                          key={client._id}
-                          onSelect={() => {
-                            field.onChange(client._id);
-                            setOpenClient(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              field.value === client._id
-                                ? "opacity-100"
-                                : "opacity-0"
-                            )}
-                          />
-                          <Avatar className="h-6 w-6 mr-2">
-                            <AvatarImage src={client.image} />
-                            <AvatarFallback>
-                              {client.name[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          {client.name}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          )}
-        />
-      </div>
-
-      {/* Produto */}
-     
         <div className="space-y-1">
           <Label>Produto</Label>
           <Controller
@@ -360,14 +380,14 @@ export default function ScheduleForm({
             render={({ field }) => (
               <Popover open={openProduct} onOpenChange={setOpenProduct}>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between">
+                  <Button variant="outline" className="w-full justify-between font-normal">
                     {field.value
                       ? products.find((p) => p._id === field.value)?.name
                       : "Selecione o produto"}
                     <ChevronsUpDown className="h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="p-0">
+                <PopoverContent className="p-0 w-72">
                   <Command>
                     <CommandInput placeholder="Buscar produto..." />
                     <CommandList>
@@ -380,6 +400,12 @@ export default function ScheduleForm({
                               setOpenProduct(false);
                             }}
                           >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                field.value === product._id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
                             {product.name}
                           </CommandItem>
                         ))}
@@ -391,65 +417,116 @@ export default function ScheduleForm({
             )}
           />
         </div>
-     
 
-      {/* Data */}
-      <div className="space-y-1">
-        <Label>Data do Agendamento</Label>
-        <Controller
-          name="scheduledDate"
-          control={control}
-          render={({ field }) => (
-            <Popover open={openCalendar} onOpenChange={setOpenCalendar}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-between">
-                  {field.value
-                    ? new Date(field.value).toLocaleDateString("pt-BR")
-                    : "Selecionar data"}
-                  <CalendarSearch />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="p-0">
-                <Calendar
-                  mode="single"
-                  selected={field.value ? new Date(field.value) : undefined}
-                  onSelect={(date) => {
-                    field.onChange(date?.toISOString());
-                    setOpenCalendar(false);
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label>Prestador</Label>
+            <InputWithIcon
+              icon={<ShieldUser className="h-4 w-4" />}
+              placeholder="Prestador"
+              {...register("provider")}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label>Data do Agendamento</Label>
+            <Controller
+              name="scheduledDate"
+              control={control}
+              render={({ field }) => (
+                <Popover open={openCalendar} onOpenChange={setOpenCalendar}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between font-normal">
+                      {field.value
+                        ? new Date(field.value).toLocaleDateString("pt-BR")
+                        : "Selecionar"}
+                      <CalendarSearch className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0">
+                    <Calendar
+                      mode="single"
+                      selected={field.value ? new Date(field.value) : undefined}
+                      onSelect={(date) => {
+                        field.onChange(date?.toISOString());
+                        setOpenCalendar(false);
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
+            />
+          </div>
+        </div>
       </div>
 
-        <div>
-          <Label>Grupo de veiculos</Label>
+      {/* ── Local do Serviço (sempre visível) ── */}
+      <div className="space-y-3">
+        <SectionLabel>Local do Serviço</SectionLabel>
+
+        <div className="space-y-1">
+          <Label>Endereço</Label>
           <InputWithIcon
-            icon={<Folder className="h-4 w-4" />}
-            placeholder="Grupo de veiculos"
-            {...register("vehicleGroup")}
+            icon={<MapPin className="h-4 w-4" />}
+            placeholder="Rua, número, bairro..."
+            {...register("serviceAddress")}
           />
         </div>
 
-             <div>
-          <Label>Prestador</Label>
+        <div className="space-y-1">
+          <Label>Local do Serviço</Label>
           <InputWithIcon
-            icon={<ShieldUser className="h-4 w-4" />}
-            placeholder="Prestador"
-            {...register("provider")}
+            icon={<Navigation className="h-4 w-4" />}
+            placeholder="Portão lateral, galpão 2..."
+            {...register("serviceLocation")}
           />
         </div>
-
-      {/* Notas */}
-      <div>
-        <Label>Notas</Label>
-        <Textarea placeholder="Notas adicionais" {...register("notes")} />
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-2 pt-4">
+      {/* ── Manutenção (condicional) ── */}
+      {isMaintenance && (
+        <div className="space-y-3">
+          <SectionLabel>
+            <span className="flex items-center gap-1.5">
+              <Wrench className="h-3 w-3" />
+              Dados da Manutenção
+            </span>
+          </SectionLabel>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label>Condutor</Label>
+              <InputWithIcon
+                icon={<User className="h-4 w-4" />}
+                placeholder="Nome do condutor"
+                {...register("condutor")}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Tel. Responsável</Label>
+              <InputWithIcon
+                icon={<Phone className="h-4 w-4" />}
+                placeholder="(11) 99999-9999"
+                {...register("responsiblePhone")}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Observações ── */}
+      <div className="space-y-3">
+        <SectionLabel>Observações</SectionLabel>
+        <div className="space-y-1">
+          <Textarea
+            placeholder="Informações adicionais sobre o agendamento..."
+            className="resize-none min-h-[80px]"
+            {...register("notes")}
+          />
+        </div>
+      </div>
+
+      {/* ── Actions ── */}
+      <div className="flex gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           Cancelar
         </Button>

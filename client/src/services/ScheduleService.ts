@@ -31,6 +31,8 @@ export interface Schedule {
   responsible?: string;
   responsiblePhone?: string;
   serviceAddress?: string;
+  condutor?: string;
+  serviceLocation?: string;
   situation?: string;
   createdBy?: string;
   createdAt?: string;
@@ -52,7 +54,9 @@ export interface SchedulePayload {
   provider?: string;
   responsible?: string;
   responsiblePhone?: string;
+  condutor?: string;
   serviceAddress?: string;
+  serviceLocation?: string;
   vehicleGroup?: string;
   situation?: string;
 }

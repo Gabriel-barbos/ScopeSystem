@@ -57,7 +57,6 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
       dataIndex: DataIndex,
       getValue: (record: Schedule) => string
     ): ColumnType<Schedule> => ({
-      // 👇 torna o filtro controlado — quando tableFilters[dataIndex] for null/[], o ícone apaga
       filteredValue: tableFilters[dataIndex] ?? null,
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div className="p-2 w-60">
@@ -120,7 +119,6 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
       filterFn: (value: any, record: Schedule) => boolean,
       width = "w-64"
     ): Partial<ColumnType<Schedule>> => ({
-      // 👇 controlado também
       filteredValue: tableFilters[columnKey] ?? null,
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div className={`p-3 ${width}`}>
@@ -296,22 +294,22 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
         },
       },
       {
-        title: "Criado por",
-        dataIndex: "createdBy",
-        key: "createdBy",
-        ...getColumnSearchProps("createdBy", (r) => r.createdBy || ""),
-        render: (createdBy: string) => (
+        title: "Responsável",
+        dataIndex: "responsible",
+        key: "responsible",
+        ...getColumnSearchProps("responsible", (r) => r.responsible || ""),
+        render: (responsible: string) => (
           <div className="flex justify-center items-center">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Avatar className="h-10 w-10">
                   <AvatarFallback className="bg-primary/20 text-primary text-sm font-semibold">
-                    {getInitials(createdBy || "?")}
+                    {getInitials(responsible || "?")}
                   </AvatarFallback>
                 </Avatar>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{createdBy}</p>
+                <p>{responsible}</p>
               </TooltipContent>
             </Tooltip>
           </div>
