@@ -150,7 +150,7 @@ export default function Appointments() {
           columnMapping={{
             Placa: "Placa",
             Chassi: "Chassi",
-            Modelo: "Modelo",
+            Modelo: "Descricao",
             Cliente: "Cliente",
             Equipamento: "Equipamento",
             TipoServico: "TipoServico",

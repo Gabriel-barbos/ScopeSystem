@@ -7,6 +7,7 @@ import { UserCard } from './UserCard';
 import { getRoleLabel } from "@/utils/roleMapper";
 import logo from "@/assets/logo.jpg";
 import { Roles, canAccess, Role } from "@/utils/roles"
+import { ScopeLogo } from '@/components/ScopeLogo';
 
 const getInitials = (name: string = "") => {
   const parts = name.split(" ");

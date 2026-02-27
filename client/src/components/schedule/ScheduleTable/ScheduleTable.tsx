@@ -141,23 +141,24 @@ const ScheduleTable: React.FC = () => {
         </Tabs>
       </div>
 
-      <ScheduleTableCore
-        data={filters.filteredSchedules}
-        isLoading={isLoading}
-        pagination={pagination}
-        hasFilters={filters.activeFilterCount > 0}
-        onClearFilters={filters.clearAllFilters}
-        onRowClick={handleRowClick}
-        onTableChange={filters.handleTableChange}
-        searchText={filters.searchText}
-        searchedColumn={filters.searchedColumn}
-        searchInput={filters.searchInput}
-        onSearch={filters.handleSearch}
-        onReset={filters.handleReset}
-        clientOptions={filters.clientOptions}
-        serviceOptions={filters.serviceOptions}
-        hideServiceColumn={filters.activeTab !== "all"}
-      />
+  <ScheduleTableCore
+  data={filters.filteredSchedules}
+  isLoading={isLoading}
+  pagination={pagination}
+  hasFilters={filters.activeFilterCount > 0}
+  tableFilters={filters.tableFilters}   // <-- novo
+  onClearFilters={filters.clearAllFilters}
+  onRowClick={handleRowClick}
+  onTableChange={filters.handleTableChange}
+  searchText={filters.searchText}
+  searchedColumn={filters.searchedColumn}
+  searchInput={filters.searchInput}
+  onSearch={filters.handleSearch}
+  onReset={filters.handleReset}
+  clientOptions={filters.clientOptions}
+  serviceOptions={filters.serviceOptions}
+  hideServiceColumn={filters.activeTab !== "all"}
+/>
 
       <ScheduleDrawer
         open={drawerOpen}

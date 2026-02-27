@@ -40,7 +40,6 @@ export default function Home() {
   return (
     <div className="mx-auto flex flex-col gap-6">
 
-      {/* ── Avisos ── */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
@@ -60,7 +59,6 @@ export default function Home() {
 
         <CardContent>
           {hasNotices ? (
-            // Grid responsivo: 1 col mobile → 2 col md → 3 col lg
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {NOTICES.map((notice) => (
                 <NoticeCard key={notice.id} {...notice} />
@@ -86,7 +84,6 @@ export default function Home() {
         </CardContent>
       </Card>
 
-      {/* ── Links úteis ── */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">

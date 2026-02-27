@@ -4,9 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { Schedule } from "@/services/ScheduleService";
 import { getServiceConfig } from "@/utils/badges";
 
-
 export type TabKey = "all" | "installation" | "maintenance";
-
 export type DataIndex = "vin" | "serviceType" | "status" | "createdBy";
 
 const COMPLETED_STATUSES = ["concluido", "cancelado"];
@@ -16,7 +14,6 @@ const TAB_SERVICE_MAP: Record<TabKey, string | null> = {
   installation: "installation",
   maintenance: "maintenance",
 };
-
 
 export const getInitials = (name: string): string => {
   const parts = name.trim().split(" ");
@@ -36,17 +33,18 @@ export const formatTimeAgo = (date: Date): string => {
 
 const matchesGlobalSearch = (record: Schedule, search: string): boolean => {
   const term = search.toLowerCase();
-  return (
+  return !!(
     record.vin?.toLowerCase().includes(term) ||
     record.plate?.toLowerCase().includes(term) ||
     record.client?.name?.toLowerCase().includes(term) ||
     record.model?.toLowerCase().includes(term) ||
     record.orderNumber?.toLowerCase().includes(term) ||
-    record.createdBy?.toLowerCase().includes(term) ||
-    false
+    record.createdBy?.toLowerCase().includes(term)
   );
 };
 
+
+export type TableFilters = Record<string, string[] | null>;
 
 export function useScheduleFilters(
   schedules: Schedule[],
@@ -75,13 +73,16 @@ export function useScheduleFilters(
     [searchParams, setSearchParams]
   );
 
-  const [tableFilters, setTableFilters] = useState<Record<string, any>>({});
+  // Estado único para todos os filtros da tabela
+  const [tableFilters, setTableFilters] = useState<TableFilters>({});
   const [showOnlyPending, setShowOnlyPending] = useState(false);
 
+  // Necessário apenas para o highlight 
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState("");
   const searchInput = useRef<InputRef>(null);
 
+  // Tempo desde última atualização
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [timeAgo, setTimeAgo] = useState("agora mesmo");
 
@@ -98,6 +99,7 @@ export function useScheduleFilters(
     return () => clearInterval(interval);
   }, [lastUpdated]);
 
+  // Filtragem global 
   const filteredSchedules = useMemo(() => {
     let result = schedules;
 
@@ -162,35 +164,43 @@ export function useScheduleFilters(
     if (showOnlyPending) count++;
     if (activeTab !== "all") count++;
     Object.values(tableFilters).forEach((val) => {
-      if (val && (Array.isArray(val) ? val.length > 0 : true)) count++;
+      if (val && val.length > 0) count++;
     });
     return count;
   }, [tableFilters, globalSearch, showOnlyPending, activeTab]);
 
+  // Handlers da tabela
   const handleSearch = useCallback(
     (selectedKeys: string[], confirm: () => void, dataIndex: DataIndex) => {
       confirm();
-      setSearchText(selectedKeys[0]);
+      setSearchText(selectedKeys[0] ?? "");
       setSearchedColumn(dataIndex);
     },
     []
   );
 
-  const handleReset = useCallback((clearFilters: () => void) => {
-    clearFilters();
-    setSearchText("");
-  }, []);
+  const handleReset = useCallback(
+    (clearFilters: () => void, dataIndex: DataIndex) => {
+      clearFilters(); 
+      setTableFilters((prev) => ({ ...prev, [dataIndex]: null }));
+      setSearchText("");
+      setSearchedColumn("");
+    },
+    []
+  );
 
+ 
   const handleTableChange = useCallback(
-    (_pagination: any, filters: Record<string, any>) => {
+    (_pagination: any, filters: TableFilters) => {
       setTableFilters(filters);
     },
     []
   );
 
+  // Limpa TUDO
   const clearAllFilters = useCallback(() => {
     setSearchParams({}, { replace: true });
-    setTableFilters({});
+    setTableFilters({});     
     setSearchText("");
     setSearchedColumn("");
     setShowOnlyPending(false);
@@ -215,8 +225,8 @@ export function useScheduleFilters(
     clientOptions,
     serviceOptions,
     activeFilterCount,
-    // Time
     lastUpdated,
     timeAgo,
+    clearAllFilters,
   };
 }

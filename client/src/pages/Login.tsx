@@ -294,10 +294,8 @@ const LoginPage = () => {
             </p>
           </div>
 
-          {/* ── Form ── */}
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-            {/* Email */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <Label htmlFor="email" style={labelStyle}>E-mail</Label>
               <InputWithIcon
@@ -311,7 +309,6 @@ const LoginPage = () => {
               />
             </div>
 
-            {/* Password */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Label htmlFor="password" style={labelStyle}>Senha</Label>
@@ -339,7 +336,6 @@ const LoginPage = () => {
 
         </div>
 
-        {/* ── Global keyframes ── */}
         <style>{`
           @property --sa {
             syntax: '<angle>';
