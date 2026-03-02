@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import {
   Wrench, MapPin, User, Gauge, Hash, Loader2, Monitor,
-  CheckCircle2, Shield, MessageSquare, Eye, ChevronsUpDown, Check, Package,
+  CheckCircle2, Shield, MessageSquare, Eye, ChevronsUpDown, Check, Package,KeySquare ,
 } from "lucide-react";
 import { InputWithIcon } from "@/components/InputWithIcon";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ export interface ProductRef {
 }
 
 export interface ValidationFormData {
+  plate?: string;
   equipmentId: string;
   productId: string;
   installationLocation: string;
@@ -64,6 +65,7 @@ export function ValidationForm({
     equipmentId: "",
     productId: defaultProductId,
     installationLocation: "",
+    plate: "",
     technicianName: "",
     hasSecondaryDevice: false,
     secondaryDeviceId: "",
@@ -226,6 +228,18 @@ export function ValidationForm({
               />
             </div>
           </div>
+
+                 <Field label="Placa do Veículo" >
+            <InputWithIcon
+              icon={<KeySquare className="h-3.5 w-3.5" />}
+              placeholder="Placa do veículo"
+              value={formData.plate}
+              onChange={(e) => updateField("plate", e.target.value)}
+              disabled={isSubmitting}
+              
+              className="h-9 text-sm"
+            />
+          </Field>
         </div>
 
         {/* Checkboxes */}

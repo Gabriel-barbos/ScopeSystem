@@ -50,6 +50,8 @@ export function ScheduleAutocomplete({
     }
   }, [searchValue, selectedSchedule]);
 
+const ALLOWED_STATUSES = ["criado", "agendado"];
+
 const filteredSchedules = useMemo(() => {
   if (!searchValue.trim()) return [];
 
@@ -57,6 +59,7 @@ const filteredSchedules = useMemo(() => {
 
   return schedules
     .filter((schedule) => schedule.serviceType !== "removal")
+    .filter((schedule) => ALLOWED_STATUSES.includes(schedule.status))
     .filter(
       (schedule) =>
         schedule.vin?.toLowerCase().includes(search) ||

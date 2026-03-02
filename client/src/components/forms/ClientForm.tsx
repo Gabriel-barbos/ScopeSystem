@@ -3,43 +3,44 @@ import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { User, FileUser, ChevronsUpDown, Check } from "lucide-react";
+import { LoadingOutlined, PlusOutlined } from "@ant-design/icons";
+import { message, Upload } from "antd";
+import type { GetProp, UploadProps } from "antd";
 
 import { InputWithIcon } from "../InputWithIcon";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
-// Icons
-import { User, FileUser } from "lucide-react";
-import { LoadingOutlined, PlusOutlined } from "@ant-design/icons";
-
-import { message, Upload } from "antd";
-import type { GetProp, UploadProps } from "antd";
-
-//import services
 import type { ClientPayload } from "@/services/ClientService";
 import { useClientService, clientApi } from "@/services/ClientService";
-import { useQuery } from "@tanstack/react-query";
 
 type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
 
-//zod schema de validação
 const FormSchema = z.object({
   name: z.string().min(2, "Nome muito curto"),
   description: z.string().optional(),
-  type: z.string().optional(),
+  parent: z.string().optional().nullable(),
 });
 
 export type ClientFormValues = z.infer<typeof FormSchema>;
 
-// Props do componente
 type Props = {
   clientId?: string;
   onSuccess: () => void;
@@ -54,115 +55,87 @@ const getBase64 = (img: FileType, callback: (url: string) => void) => {
 
 const beforeUpload = (file: FileType) => {
   const isJpgOrPng = file.type === "image/jpeg" || file.type === "image/png";
-  if (!isJpgOrPng) {
-    message.error("Apenas arquivos JPG/PNG são permitidos!");
-  }
+  if (!isJpgOrPng) message.error("Apenas arquivos JPG/PNG são permitidos!");
   const isLt2M = file.size / 1024 / 1024 < 2;
-  if (!isLt2M) {
-    message.error("A imagem deve ter menos de 2MB");
-  }
+  if (!isLt2M) message.error("A imagem deve ter menos de 2MB");
   return isJpgOrPng && isLt2M;
 };
 
-
 export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
   const isEditing = Boolean(clientId);
+  const [openParent, setOpenParent] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>();
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
-// Busca dados do cliente 
- const { data: client, isLoading: loadingClient } = useQuery({
-  queryKey: ["client", clientId],
-  queryFn: () => clientApi.getById(clientId!),
-  enabled: !!clientId, 
-});
-
-
-//mutations 
-const { createClient, updateClient } = useClientService();
-
-const [imageUrl, setImageUrl] = useState<string>();
-  
-const [imageFile, setImageFile] = useState<File | null>(null);
-
-  //react hook form
-  const {
-    register,
-    reset,
-    handleSubmit,
-    control,
-    formState: { errors },
-  } = useForm<ClientFormValues>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      type: "",
-    },
+  const { data: client, isLoading: loadingClient } = useQuery({
+    queryKey: ["client", clientId],
+    queryFn: () => clientApi.getById(clientId!),
+    enabled: !!clientId,
   });
 
-//prenche form ao editar
+  // Busca apenas clientes principais para o select de pai
+  const { data: allClients = [] } = useQuery({
+    queryKey: ["clients"],
+    queryFn: clientApi.getAll,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const mainClients = allClients.filter(
+    (c) => !c.parent && c._id !== clientId
+  );
+
+  const { createClient, updateClient } = useClientService();
+
+  const { register, reset, handleSubmit, control, watch, formState: { errors } } =
+    useForm<ClientFormValues>({
+      resolver: zodResolver(FormSchema),
+      defaultValues: { name: "", description: "", parent: null },
+    });
+
+  const parentValue = watch("parent");
+  const selectedParent = mainClients.find((c) => c._id === parentValue);
+
   useEffect(() => {
     if (client) {
       reset({
         name: client.name,
         description: client.description || "",
-        type: client.type || "",
+        parent: client.parent?._id ?? null,
       });
-
-      if (client.image?.[0]) {
-        setImageUrl(client.image[0]);
-      }
+      if (client.image?.[0]) setImageUrl(client.image[0]);
     }
   }, [client, reset]);
 
- //handle upload da imagem
   const handleChange: UploadProps["onChange"] = (info) => {
     if (info.file.originFileObj) {
       const file = info.file.originFileObj;
-
-      //Guarda o File real 
       setImageFile(file);
-
-      // 2. Cria preview visual
-      getBase64(file, (url) => {
-        setImageUrl(url);
-      });
+      getBase64(file, (url) => setImageUrl(url));
     }
   };
 
-  //submit do form
   async function onSubmit(data: ClientFormValues) {
     try {
-      // Prepara o payload
       const payload: ClientPayload = {
         name: data.name,
         description: data.description,
-        type: data.type,
+        parent: data.parent || null,
         image: imageFile || undefined,
       };
 
       if (isEditing) {
-        await updateClient.mutateAsync({
-          id: clientId!,
-          payload,
-        });
+        await updateClient.mutateAsync({ id: clientId!, payload });
         toast.success("Cliente atualizado com sucesso!");
       } else {
-
         await createClient.mutateAsync(payload);
         toast.success("Cliente criado com sucesso!");
       }
-
-      // Fecha o drawer
       onSuccess();
     } catch (err: any) {
-      console.error("Erro ao salvar cliente:", err);
-      const errorMessage =
-        err?.response?.data?.message || "Erro ao salvar cliente";
-      toast.error(errorMessage);
+      toast.error(err?.response?.data?.error || "Erro ao salvar cliente");
     }
   }
 
-//loading inicial - melhorar depois
   if (isEditing && loadingClient) {
     return (
       <div className="flex justify-center items-center p-10">
@@ -172,16 +145,7 @@ const [imageFile, setImageFile] = useState<File | null>(null);
     );
   }
 
-  //variaveis de loading
   const isSubmitting = createClient.isPending || updateClient.isPending;
-
- // upload button
-  const uploadButton = (
-    <button style={{ border: 0, background: "none" }} type="button">
-      <PlusOutlined />
-      <Label style={{ display: "block", marginTop: 8 }}>Logo</Label>
-    </button>
-  );
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-2">
@@ -189,9 +153,8 @@ const [imageFile, setImageFile] = useState<File | null>(null);
         <Upload
           name="avatar"
           listType="picture-circle"
-          className="avatar-uploader"
           showUploadList={false}
-          customRequest={({ onSuccess }) => onSuccess?.("ok")} 
+          customRequest={({ onSuccess }) => onSuccess?.("ok")}
           beforeUpload={beforeUpload}
           onChange={handleChange}
         >
@@ -203,7 +166,10 @@ const [imageFile, setImageFile] = useState<File | null>(null);
               style={{ width: "100%", borderRadius: "50%", objectFit: "cover" }}
             />
           ) : (
-            uploadButton
+            <button style={{ border: 0, background: "none" }} type="button">
+              <PlusOutlined />
+              <Label style={{ display: "block", marginTop: 8 }}>Logo</Label>
+            </button>
           )}
         </Upload>
       </div>
@@ -223,44 +189,74 @@ const [imageFile, setImageFile] = useState<File | null>(null);
         <InputWithIcon
           icon={<FileUser className="h-4 w-4" />}
           placeholder="ex: Empresa de software"
-          error={errors.description?.message}
           {...register("description")}
         />
       </div>
 
       <div className="space-y-1">
-        <Label>Tipo de Cliente</Label>
+        <Label>Cliente Principal</Label>
+        <p className="text-xs text-muted-foreground">
+          Preencha apenas se este for um sub-cliente
+        </p>
         <Controller
-          name="type"
+          name="parent"
           control={control}
           render={({ field }) => (
-            <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Cliente">Cliente</SelectItem>
-                <SelectItem value="Sub-Cliente">Sub-Cliente</SelectItem>
-              </SelectContent>
-            </Select>
+            <Popover open={openParent} onOpenChange={setOpenParent}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-between font-normal">
+                  {selectedParent ? (
+                    <span className="flex items-center gap-2">
+                      <Avatar className="h-5 w-5">
+                        <AvatarImage src={selectedParent.image?.[0]} />
+                        <AvatarFallback>{selectedParent.name[0]}</AvatarFallback>
+                      </Avatar>
+                      {selectedParent.name}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">Nenhum (cliente principal)</span>
+                  )}
+                  <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-0 w-72">
+                <Command>
+                  <CommandInput placeholder="Buscar cliente..." />
+                  <CommandList>
+                    <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem onSelect={() => { field.onChange(null); setOpenParent(false); }}>
+                        <Check className={cn("mr-2 h-4 w-4", !field.value ? "opacity-100" : "opacity-0")} />
+                        <span className="text-muted-foreground">Nenhum (cliente principal)</span>
+                      </CommandItem>
+                      {mainClients.map((c) => (
+                        <CommandItem
+                          key={c._id}
+                          onSelect={() => { field.onChange(c._id); setOpenParent(false); }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", field.value === c._id ? "opacity-100" : "opacity-0")} />
+                          <Avatar className="h-6 w-6 mr-2">
+                            <AvatarImage src={c.image?.[0]} />
+                            <AvatarFallback>{c.name[0]}</AvatarFallback>
+                          </Avatar>
+                          {c.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           )}
         />
-        {errors.type && (
-          <p className="text-sm text-red-500">{errors.type.message}</p>
-        )}
       </div>
 
       <div className="flex justify-end gap-3 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting
-            ? "Salvando..."
-            : isEditing
-            ? "Salvar alterações"
-            : "Criar cliente"}
+          {isSubmitting ? "Salvando..." : isEditing ? "Salvar alterações" : "Criar cliente"}
         </Button>
       </div>
     </form>

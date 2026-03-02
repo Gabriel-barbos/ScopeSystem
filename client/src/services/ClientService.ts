@@ -5,8 +5,8 @@ export interface Client {
   _id: string;
   name: string;
   description?: string;
-  type?: string;
   image?: string[];
+  parent?: { _id: string; name: string } | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -14,12 +14,13 @@ export interface Client {
 export interface ClientPayload {
   name: string;
   description?: string;
-  type?: string;
+  parent?: string | null;
   image?: File | File[];
 }
 
+
 //API METHODS
- export const clientApi = {
+export const clientApi = {
   getAll: async (): Promise<Client[]> => {
     const { data } = await API.get("/clients");
     return data;
@@ -32,10 +33,8 @@ export interface ClientPayload {
 
   create: async (payload: ClientPayload): Promise<Client> => {
     const formData = new FormData();
-
     Object.entries(payload).forEach(([key, value]) => {
-      if (!value) return;
-
+      if (value == null) return;
       if (key === "image") {
         const files = Array.isArray(value) ? value : [value];
         files.forEach((file) => formData.append("image", file));
@@ -43,20 +42,14 @@ export interface ClientPayload {
         formData.append(key, value as string);
       }
     });
-
     const { data } = await API.post("/clients", formData);
     return data;
   },
 
-  update: async (
-    id: string,
-    payload: ClientPayload
-  ): Promise<Client> => {
+  update: async (id: string, payload: ClientPayload): Promise<Client> => {
     const formData = new FormData();
-
     Object.entries(payload).forEach(([key, value]) => {
-      if (!value) return;
-
+      if (value == null) return;
       if (key === "image") {
         const files = Array.isArray(value) ? value : [value];
         files.forEach((file) => formData.append("image", file));
@@ -64,7 +57,6 @@ export interface ClientPayload {
         formData.append(key, value as string);
       }
     });
-
     const { data } = await API.put(`/clients/${id}`, formData);
     return data;
   },
@@ -74,54 +66,32 @@ export interface ClientPayload {
   },
 };
 
+
 //hooks
 export function useClientService() {
   const queryClient = useQueryClient();
 
-  // salvar no cache 5 minutos
   const clients = useQuery({
     queryKey: ["clients"],
     queryFn: clientApi.getAll,
     staleTime: 1000 * 60 * 5,
   });
 
-  // CREATE
   const createClient = useMutation({
     mutationFn: clientApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
   });
 
-  // UPDATE
   const updateClient = useMutation({
-    mutationFn: ({
-      id,
-      payload,
-    }: {
-      id: string;
-      payload: ClientPayload;
-    }) => clientApi.update(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
-    },
+    mutationFn: ({ id, payload }: { id: string; payload: ClientPayload }) =>
+      clientApi.update(id, payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
   });
 
-  // DELETE
   const deleteClient = useMutation({
     mutationFn: clientApi.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
   });
 
-  return {
-    // queries
-    ...clients,
-
-    // mutations
-    createClient,
-    updateClient,
-    deleteClient,
-  };
+  return { ...clients, createClient, updateClient, deleteClient };
 }

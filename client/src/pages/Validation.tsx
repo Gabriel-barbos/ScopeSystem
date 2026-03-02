@@ -14,6 +14,7 @@ import { toast } from "sonner";
 
 function mapFormToPayload(formData: ValidationFormData) {
   return {
+    plate: formData.plate || undefined,
     deviceId: formData.equipmentId,
     technician: formData.technicianName,
     installationLocation: formData.installationLocation,
