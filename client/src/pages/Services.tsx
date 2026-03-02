@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { CarFront, Search, Eye, SquareUser, FileSpreadsheet, Copy, Check, SearchX, AlertCircle, Loader2 } from "lucide-react";
+import { CarFront, Search, Eye, SquareUser, FileSpreadsheet, Copy, Check, SearchX, AlertCircle, Loader2, CalendarCheck } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,17 @@ function ServiceBadge({ type, config }: { type: string; config: ReturnType<typeo
     );
 }
 
+// 🆕 Formata a data de forma legível
+function formatValidatedAt(dateStr: string): string {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+    });
+}
+
 function ServiceItem({ service, onOpen }: { service: Service; onOpen: (s: Service) => void }) {
     const svcConfig = getServiceConfig(service.serviceType);
 
@@ -83,12 +94,23 @@ function ServiceItem({ service, onOpen }: { service: Service; onOpen: (s: Servic
                         <ServiceBadge type={service.serviceType} config={svcConfig} />
                     </div>
                 </div>
-                {service.plate && (
-                    <span className="px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-mono font-medium border">
-                        {service.plate}
-                    </span>
-                )}
-                <span className="text-xs text-muted-foreground font-mono mx-2">{service.deviceId}</span>
+
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
+                    {service.plate && (
+                        <span className="px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-mono font-medium border">
+                            {service.plate}
+                        </span>
+                    )}
+                    <span className="text-xs text-muted-foreground font-mono">{service.deviceId}</span>
+
+                    {/* 🆕 Data de validação */}
+                    {service.validatedAt && (
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/70">
+                            <CalendarCheck className="h-3 w-3 shrink-0" />
+                            {formatValidatedAt(service.validatedAt)}
+                        </span>
+                    )}
+                </div>
             </div>
 
             <Button
@@ -127,8 +149,8 @@ function EmptyState({ hasSearch }: { hasSearch: boolean }) {
                     {hasSearch ? "Nenhum serviço encontrado" : "Nenhum serviço cadastrado"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                    {hasSearch 
-                        ? "Tente ajustar sua busca ou limpar os filtros" 
+                    {hasSearch
+                        ? "Tente ajustar sua busca ou limpar os filtros"
                         : "Comece importando ou cadastrando serviços"}
                 </p>
             </div>
@@ -162,16 +184,16 @@ export default function Services() {
 
     const debouncedSearch = useDebounce(search, 400);
 
-    const [isSearching, setIsSearching] = useState(false);
-    useEffect(() => { setIsSearching(true); }, [debouncedSearch]);
-
     const { data, isLoading, isFetching, isError, refetch, bulkImport } = useServiceService({
         page: currentPage,
         limit: PAGE_SIZE,
         search: debouncedSearch || undefined,
     });
 
-    useEffect(() => { if (!isFetching) setIsSearching(false); }, [isFetching]);
+    // ✅ Fix: isSearching derivado diretamente dos estados, sem useEffect
+    // Está "pesquisando" enquanto o usuário digitou algo diferente do debounced (aguardando delay)
+    // OU enquanto a query está buscando dados na API
+    const isSearching = search !== debouncedSearch || isFetching;
 
     const services = data?.data ?? [];
     const pagination = data?.pagination;
@@ -268,9 +290,9 @@ export default function Services() {
                     </div>
 
                     {showLoading && <LoadingState />}
-                    
+
                     {showError && <ErrorState onRetry={() => refetch()} />}
-                    
+
                     {showEmpty && <EmptyState hasSearch={!!debouncedSearch} />}
 
                     {showList && (
