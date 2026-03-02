@@ -5,8 +5,9 @@ export interface Vehicle {
   plate?: string;
   vin?: string;
   serviceAddress?: string;
-  responsible?: string;
+  responsible?: string;    
   responsiblePhone?: string;
+  condutor?: string;         
 }
 
 export interface MaintenanceRequest {
@@ -22,6 +23,7 @@ export interface MaintenanceRequest {
   source: string;
   schedulingStatus: string;
   client?: string;
+  condutor?: string;
   vehicles: Vehicle[];
   schedules: string[];
   createdAt: string;

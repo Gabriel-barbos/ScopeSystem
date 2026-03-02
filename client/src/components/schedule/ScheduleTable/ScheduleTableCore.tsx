@@ -19,7 +19,7 @@ interface ScheduleTableCoreProps {
   isLoading: boolean;
   pagination?: { total: number; page: number; limit: number };
   hasFilters: boolean;
-  tableFilters: TableFilters; // <-- recebe o estado controlado
+  tableFilters: TableFilters;
   onClearFilters: () => void;
   onRowClick: (record: Schedule) => void;
   onTableChange: (pagination: any, filters: any) => void;
@@ -153,28 +153,36 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
 
   const columns: ColumnsType<Schedule> = useMemo(() => {
     const base: ColumnsType<Schedule> = [
-      {
-        title: "Cliente",
-        key: "client",
-        ...createSelectFilter(
-          "client",
-          clientOptions,
-          "Selecione os clientes",
-          (value, record) => record.client._id === value,
-          "w-72"
-        ),
-        render: (_, record) => (
-          <Space>
-            <AntAvatar
-              shape="square"
-              size="large"
-              src={record.client.image?.[0]}
-              icon={!record.client.image?.[0] ? <Store size={18} /> : undefined}
-            />
-            <span className="font-medium">{record.client.name}</span>
-          </Space>
-        ),
-      },
+{
+  title: "Cliente",
+  key: "client",
+  ...createSelectFilter(
+    "client",
+    clientOptions,
+    "Selecione os clientes",
+    (value, record) => record.client?._id === value,
+    "w-72"
+  ),
+  render: (_, record) => {
+    const name = record.client?.name ?? "Cliente Desconhecido";
+    const image = record.client?.image?.[0];
+    const isUnknown = !record.client?._id;
+
+    return (
+      <Space>
+        <AntAvatar
+          shape="square"
+          size="large"
+          src={image}
+          icon={!image ? <Store size={18} /> : undefined}
+        />
+        <span className={`font-medium ${isUnknown ? "text-muted-foreground italic" : ""}`}>
+          {name}
+        </span>
+      </Space>
+    );
+  },
+},
       {
         title: "Chassi",
         dataIndex: "vin",

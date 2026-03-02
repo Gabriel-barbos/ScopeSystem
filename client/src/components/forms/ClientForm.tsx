@@ -12,6 +12,7 @@ import type { GetProp, UploadProps } from "antd";
 import { InputWithIcon } from "../InputWithIcon";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
@@ -40,6 +41,9 @@ const FormSchema = z.object({
 });
 
 export type ClientFormValues = z.infer<typeof FormSchema>;
+
+// Tipo derivado do campo parent
+type ClientType = "Cliente" | "subCliente";
 
 type Props = {
   clientId?: string;
@@ -73,7 +77,6 @@ export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
     enabled: !!clientId,
   });
 
-  // Busca apenas clientes principais para o select de pai
   const { data: allClients = [] } = useQuery({
     queryKey: ["clients"],
     queryFn: clientApi.getAll,
@@ -86,14 +89,52 @@ export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
 
   const { createClient, updateClient } = useClientService();
 
-  const { register, reset, handleSubmit, control, watch, formState: { errors } } =
-    useForm<ClientFormValues>({
-      resolver: zodResolver(FormSchema),
-      defaultValues: { name: "", description: "", parent: null },
-    });
+  const {
+    register,
+    reset,
+    handleSubmit,
+    control,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<ClientFormValues>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: { name: "", description: "", parent: null },
+  });
 
   const parentValue = watch("parent");
-  const selectedParent = mainClients.find((c) => c._id === parentValue);
+  const nameValue = watch("name");
+
+  // Pai selecionado e tipo derivado
+  const selectedParent = mainClients.find((c) => c._id === parentValue) ?? null;
+  const clientType: ClientType = selectedParent ? "subCliente" : "Cliente";
+
+  // Prefixo que aparece no input de nome quando há pai
+  const namePrefix = selectedParent ? `${selectedParent.name} - ` : "";
+
+  // Nome real armazenado no formulário (sem o prefixo)
+  // O que o usuário digita é apenas a parte após o prefixo
+  const displayName = nameValue.startsWith(namePrefix)
+    ? nameValue.slice(namePrefix.length)
+    : nameValue;
+
+  // Quando o pai muda, atualiza o nome para incluir/remover o prefixo
+  useEffect(() => {
+    if (selectedParent) {
+      // Se já tem um nome, mantém a parte após qualquer prefixo anterior
+      const baseName = nameValue.includes(" - ")
+        ? nameValue.split(" - ").slice(1).join(" - ")
+        : nameValue;
+      setValue("name", `${selectedParent.name} - ${baseName}`);
+    } else {
+      // Remove prefixo ao desmarcar o pai
+      const baseName = nameValue.includes(" - ")
+        ? nameValue.split(" - ").slice(1).join(" - ")
+        : nameValue;
+      setValue("name", baseName);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parentValue]);
 
   useEffect(() => {
     if (client) {
@@ -114,12 +155,31 @@ export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
     }
   };
 
+  // Handler do input de nome — mantém o prefixo intacto
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const typed = e.target.value;
+
+    if (namePrefix && !typed.startsWith(namePrefix)) {
+      // Impede apagar o prefixo — restaura com o que o usuário tentou digitar
+      const afterPrefix = typed.length > namePrefix.length
+        ? typed.slice(namePrefix.length)
+        : "";
+      setValue("name", `${namePrefix}${afterPrefix}`, { shouldValidate: true });
+      return;
+    }
+
+    setValue("name", typed, { shouldValidate: true });
+  };
+
   async function onSubmit(data: ClientFormValues) {
     try {
+      const type: ClientType = data.parent ? "subCliente" : "Cliente";
+
       const payload: ClientPayload = {
         name: data.name,
         description: data.description,
         parent: data.parent || null,
+        type,
         image: imageFile || undefined,
       };
 
@@ -174,16 +234,58 @@ export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
         </Upload>
       </div>
 
-      <div className="space-y-1">
-        <Label>Nome *</Label>
-        <InputWithIcon
-          icon={<User className="h-4 w-4" />}
-          placeholder="Nome do cliente"
-          error={errors.name?.message}
-          {...register("name")}
-        />
+      {/* ── Badge de tipo ── */}
+      <div className="flex items-center gap-2">
+        <Badge variant={clientType === "Cliente" ? "default" : "secondary"}>
+          {clientType === "Cliente" ? "Cliente" : "Sub-cliente"}
+        </Badge>
+        <span className="text-xs text-muted-foreground">
+          {clientType === "Cliente"
+            ? "Nenhum cliente pai vinculado"
+            : `Vinculado a: ${selectedParent?.name}`}
+        </span>
       </div>
 
+      {/* ── Nome ── */}
+      <div className="space-y-1">
+        <Label>Nome *</Label>
+
+        {/* Quando há prefixo, mostra um wrapper visual com o prefixo fixo */}
+        {namePrefix ? (
+          <div className="flex items-center border rounded-md ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 overflow-hidden">
+            {/* Prefixo bloqueado */}
+            <span className="flex items-center gap-1 pl-3 pr-1 text-sm text-muted-foreground whitespace-nowrap select-none">
+              <User className="h-4 w-4 shrink-0" />
+              {namePrefix}
+            </span>
+            {/* Input apenas com a parte editável */}
+            <input
+              className="flex-1 h-9 bg-transparent pr-3 text-sm outline-none placeholder:text-muted-foreground"
+              placeholder="Nome do sub-cliente"
+              value={displayName}
+              onChange={(e) =>
+                setValue("name", `${namePrefix}${e.target.value}`, {
+                  shouldValidate: true,
+                })
+              }
+            />
+          </div>
+        ) : (
+          <InputWithIcon
+            icon={<User className="h-4 w-4" />}
+            placeholder="Nome do cliente"
+            error={errors.name?.message}
+            {...register("name")}
+            onChange={handleNameChange}
+          />
+        )}
+
+        {errors.name && (
+          <p className="text-xs text-destructive">{errors.name.message}</p>
+        )}
+      </div>
+
+      {/* ── Descrição ── */}
       <div className="space-y-1">
         <Label>Descrição</Label>
         <InputWithIcon
@@ -193,6 +295,7 @@ export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
         />
       </div>
 
+      {/* ── Cliente Principal ── */}
       <div className="space-y-1">
         <Label>Cliente Principal</Label>
         <p className="text-xs text-muted-foreground">
@@ -204,17 +307,24 @@ export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
           render={({ field }) => (
             <Popover open={openParent} onOpenChange={setOpenParent}>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-between font-normal">
+                <Button
+                  variant="outline"
+                  className="w-full justify-between font-normal"
+                >
                   {selectedParent ? (
                     <span className="flex items-center gap-2">
                       <Avatar className="h-5 w-5">
                         <AvatarImage src={selectedParent.image?.[0]} />
-                        <AvatarFallback>{selectedParent.name[0]}</AvatarFallback>
+                        <AvatarFallback>
+                          {selectedParent.name[0]}
+                        </AvatarFallback>
                       </Avatar>
                       {selectedParent.name}
                     </span>
                   ) : (
-                    <span className="text-muted-foreground">Nenhum (cliente principal)</span>
+                    <span className="text-muted-foreground">
+                      Nenhum (cliente principal)
+                    </span>
                   )}
                   <ChevronsUpDown className="h-4 w-4 opacity-50" />
                 </Button>
@@ -225,16 +335,38 @@ export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
                   <CommandList>
                     <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
                     <CommandGroup>
-                      <CommandItem onSelect={() => { field.onChange(null); setOpenParent(false); }}>
-                        <Check className={cn("mr-2 h-4 w-4", !field.value ? "opacity-100" : "opacity-0")} />
-                        <span className="text-muted-foreground">Nenhum (cliente principal)</span>
+                      <CommandItem
+                        onSelect={() => {
+                          field.onChange(null);
+                          setOpenParent(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            !field.value ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        <span className="text-muted-foreground">
+                          Nenhum (cliente principal)
+                        </span>
                       </CommandItem>
                       {mainClients.map((c) => (
                         <CommandItem
                           key={c._id}
-                          onSelect={() => { field.onChange(c._id); setOpenParent(false); }}
+                          onSelect={() => {
+                            field.onChange(c._id);
+                            setOpenParent(false);
+                          }}
                         >
-                          <Check className={cn("mr-2 h-4 w-4", field.value === c._id ? "opacity-100" : "opacity-0")} />
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              field.value === c._id
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
                           <Avatar className="h-6 w-6 mr-2">
                             <AvatarImage src={c.image?.[0]} />
                             <AvatarFallback>{c.name[0]}</AvatarFallback>
@@ -256,7 +388,11 @@ export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
           Cancelar
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Salvando..." : isEditing ? "Salvar alterações" : "Criar cliente"}
+          {isSubmitting
+            ? "Salvando..."
+            : isEditing
+            ? "Salvar alterações"
+            : "Criar cliente"}
         </Button>
       </div>
     </form>

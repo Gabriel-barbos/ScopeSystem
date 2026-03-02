@@ -22,16 +22,20 @@ import DOMPurify from "dompurify";
 import type { MaintenanceRequest, Vehicle } from "@/services/MaintenenceRequestService";
 import { useMaintenanceRequestService } from "@/services/MaintenenceRequestService";
 import { ClientPicker } from "../global/ClientPicker";
+import { ResponsiblePicker } from "../global/ResponsiblePicker";
 import { toast } from "sonner";
 import { useAuth } from "@/context/Authcontext";
+
+// ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface VehicleForm {
   id: string;
   placa: string;
   chassi: string;
-  endereco: string;
-  responsavel: string;
-  telResponsavel: string;
+  serviceAddress: string;
+  condutor: string;
+  responsiblePhone: string;
+  responsible: string;
 }
 
 interface MaintenanceActionModalProps {
@@ -40,242 +44,201 @@ interface MaintenanceActionModalProps {
   onClose: () => void;
 }
 
+// ─── Constants ─────────────────────────────────────────────────────────────────
+
 const statusOptions = [
-  { value: "pending", label: "Criado" },
-  { value: "waiting_address", label: "Aguardando Endereço" },
+  { value: "pending",             label: "Criado" },
+  { value: "waiting_address",     label: "Aguardando Endereço" },
   { value: "waiting_responsible", label: "Aguardando Responsável" },
-  { value: "cancelled", label: "Cancelado" },
+  { value: "cancelled",           label: "Cancelado" },
 ];
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+const emptyVehicle = (responsible = ""): VehicleForm => ({
+  id: crypto.randomUUID(),
+  placa: "",
+  chassi: "",
+  serviceAddress: "",
+  condutor: "",
+  responsiblePhone: "",
+  responsible,
+});
+
+// ─── Component ─────────────────────────────────────────────────────────────────
 
 export default function MaintenanceActionModal({
   request,
   open,
   onClose,
 }: MaintenanceActionModalProps) {
-  const [subject, setSubject] = useState("");
-  const [status, setStatus] = useState("pending");
-  const [showDetails, setShowDetails] = useState(false);
-  const [clientId, setClientId] = useState<string | null>(null);
-  const [vehicles, setVehicles] = useState<VehicleForm[]>([]);
-  const [errors, setErrors] = useState<string[]>([]);
   const { user } = useAuth();
   const { updateMaintenanceRequest, createSchedules } = useMaintenanceRequestService();
 
-  useEffect(() => {
-    if (request) {
-      setSubject(request.subject || "");
-      setStatus(request.schedulingStatus || "pending");
-      setClientId(request.client || null);
+  const [subject, setSubject]           = useState("");
+  const [status, setStatus]             = useState("pending");
+  const [showDetails, setShowDetails]   = useState(false);
+  const [clientId, setClientId]         = useState<string | null>(null);
+  const [errors, setErrors]             = useState<string[]>([]);
 
-      // Carrega veículos existentes ou cria um vazio
-      if (request.vehicles && request.vehicles.length > 0) {
-        setVehicles(
-          request.vehicles.map((v) => ({
-            id: crypto.randomUUID(),
-            placa: v.plate || "",
-            chassi: v.vin || "",
-            endereco: v.serviceAddress || "",
-            responsavel: v.responsible || "",
-            telResponsavel: v.responsiblePhone || "",
-          }))
-        );
-      } else {
-        setVehicles([
-          {
-            id: crypto.randomUUID(),
-            placa: "",
-            chassi: "",
-            endereco: "",
-            responsavel: "",
-            telResponsavel: "",
-          },
-        ]);
-      }
+  // Inicializa já com o usuário logado no primeiro veículo
+  const [vehicles, setVehicles] = useState<VehicleForm[]>(() => [
+    emptyVehicle(user?.name ?? ""),
+  ]);
+
+  // ── Inicialização quando o request muda ──────────────────────────────────────
+
+  useEffect(() => {
+    if (!request) return;
+
+    setSubject(request.subject || "");
+    setStatus(request.schedulingStatus || "pending");
+    setClientId(request.client || null);
+
+    if (request.vehicles && request.vehicles.length > 0) {
+      setVehicles(
+        request.vehicles.map((v) => ({
+          id:               crypto.randomUUID(),
+          placa:            v.plate            || "",
+          chassi:           v.vin              || "",
+          serviceAddress:   v.serviceAddress   || "",
+          condutor:         v.condutor         || "",
+          responsiblePhone: v.responsiblePhone || "",
+          responsible:      v.responsible      || user?.name || "",
+        }))
+      );
+    } else {
+      setVehicles([emptyVehicle(user?.name ?? "")]);
     }
   }, [request]);
 
   if (!request) return null;
 
+  // ── Sanitize HTML ────────────────────────────────────────────────────────────
+
   const sanitizedContent = DOMPurify.sanitize(request.description || "", {
     ALLOWED_TAGS: [
-      "div",
-      "p",
-      "span",
-      "br",
-      "strong",
-      "em",
-      "b",
-      "i",
-      "u",
-      "blockquote",
-      "table",
-      "thead",
-      "tbody",
-      "tr",
-      "td",
-      "th",
-      "ul",
-      "ol",
-      "li",
-      "a",
-      "h1",
-      "h2",
-      "h3",
-      "h4",
-      "h5",
-      "h6",
+      "div", "p", "span", "br", "strong", "em", "b", "i", "u",
+      "blockquote", "table", "thead", "tbody", "tr", "td", "th",
+      "ul", "ol", "li", "a", "h1", "h2", "h3", "h4", "h5", "h6",
     ],
     ALLOWED_ATTR: ["style", "class", "href", "target", "rel", "title", "spellcheck"],
   });
 
-  const handleAddVehicle = () => {
-    setVehicles([
-      ...vehicles,
-      {
-        id: crypto.randomUUID(),
-        placa: "",
-        chassi: "",
-        endereco: "",
-        responsavel: "",
-        telResponsavel: "",
-      },
-    ]);
-  };
+  // ── Vehicle handlers ─────────────────────────────────────────────────────────
+
+  const handleAddVehicle = () =>
+    setVehicles((prev) => [...prev, emptyVehicle(vehicles[0]?.responsible ?? user?.name ?? "")]);
 
   const handleRemoveVehicle = (id: string) => {
-    if (vehicles.length > 1) {
-      setVehicles(vehicles.filter((v) => v.id !== id));
-    }
+    if (vehicles.length > 1)
+      setVehicles((prev) => prev.filter((v) => v.id !== id));
   };
 
-  const handleVehicleChange = (id: string, field: keyof VehicleForm, value: string) => {
-    setVehicles(vehicles.map((v) => (v.id === id ? { ...v, [field]: value } : v)));
-  };
+  const handleVehicleChange = (
+    id: string,
+    field: keyof VehicleForm,
+    value: string
+  ) =>
+    setVehicles((prev) =>
+      prev.map((v) => (v.id === id ? { ...v, [field]: value } : v))
+    );
+
+  // Aplica o responsável em todos os veículos de uma vez
+  const handleResponsibleChange = (name: string) =>
+    setVehicles((prev) => prev.map((v) => ({ ...v, responsible: name })));
+
+  // ── Validation ───────────────────────────────────────────────────────────────
 
   const validateForScheduleCreation = (): string[] => {
-    const validationErrors: string[] = [];
+    const errs: string[] = [];
 
-    if (!clientId) {
-      validationErrors.push("Cliente é obrigatório para criar agendamentos");
-    }
+    if (!clientId) errs.push("Cliente é obrigatório para criar agendamentos");
 
-    vehicles.forEach((vehicle, index) => {
-      if (!vehicle.placa && !vehicle.chassi) {
-        validationErrors.push(
-          `Veículo #${index + 1}: Placa ou Chassi é obrigatório`
-        );
-      }
-      if (!vehicle.endereco) {
-        validationErrors.push(`Veículo #${index + 1}: Endereço é obrigatório`);
-      }
-      if (!vehicle.responsavel) {
-        validationErrors.push(`Veículo #${index + 1}: Responsável é obrigatório`);
-      }
-      if (!vehicle.telResponsavel) {
-        validationErrors.push(
-          `Veículo #${index + 1}: Telefone do responsável é obrigatório`
-        );
-      }
+    vehicles.forEach((v, i) => {
+      const n = i + 1;
+      if (!v.chassi)           errs.push(`Veículo #${n}: Chassi é obrigatório`);
+      if (!v.serviceAddress)   errs.push(`Veículo #${n}: Endereço é obrigatório`);
+      if (!v.condutor)         errs.push(`Veículo #${n}: Condutor é obrigatório`);
+      if (!v.responsiblePhone) errs.push(`Veículo #${n}: Telefone do responsável é obrigatório`);
     });
 
-    return validationErrors;
+    return errs;
   };
 
   const determineStatus = (): string => {
-    const hasAddress = vehicles.every((v) => v.endereco);
-    const hasResponsible = vehicles.every((v) => v.responsavel && v.telResponsavel);
+    const hasAddress     = vehicles.every((v) => v.serviceAddress);
+    const hasResponsible = vehicles.every((v) => v.condutor && v.responsiblePhone);
 
-    if (!hasAddress && !hasResponsible) {
-      return "pending";
-    } else if (hasAddress && !hasResponsible) {
-      return "waiting_responsible";
-    } else if (!hasAddress && hasResponsible) {
-      return "waiting_address";
-    } else {
-      return status; 
-    }
+    if (!hasAddress && !hasResponsible) return "pending";
+    if (hasAddress && !hasResponsible)  return "waiting_responsible";
+    if (!hasAddress && hasResponsible)  return "waiting_address";
+    return status;
   };
+
+  // ── Payload builder ──────────────────────────────────────────────────────────
+
+  const buildVehiclesPayload = (): Vehicle[] =>
+    vehicles.map((v) => ({
+      plate:            v.placa            || undefined,
+      vin:              v.chassi           || undefined,
+      serviceAddress:   v.serviceAddress   || undefined,
+      condutor:         v.condutor         || undefined,
+      responsiblePhone: v.responsiblePhone || undefined,
+      responsible:      v.responsible      || undefined,
+    }));
+
+  // ── Handlers ─────────────────────────────────────────────────────────────────
 
   const handleUpdateRequest = async () => {
     try {
-      const vehiclesData: Vehicle[] = vehicles.map((v) => ({
-        plate: v.placa || undefined,
-        vin: v.chassi || undefined,
-        serviceAddress: v.endereco || undefined,
-        responsible: v.responsavel || undefined,
-        responsiblePhone: v.telResponsavel || undefined,
-      }));
-
-      const newStatus = determineStatus();
-
       await updateMaintenanceRequest.mutateAsync({
         id: request._id,
         payload: {
           subject,
-          schedulingStatus: newStatus,
-          vehicles: vehiclesData,
+          schedulingStatus: determineStatus(),
+          vehicles: buildVehiclesPayload(),
           client: clientId || undefined,
         },
       });
-
       toast.success("Solicitação atualizada com sucesso");
       onClose();
-    } catch (error) {
-      console.error("Error updating request:", error);
+    } catch {
       toast.error("Erro ao atualizar solicitação");
     }
   };
 
   const handleCreateSchedules = async () => {
-      console.log("user completo:", JSON.stringify(user));
-
     const validationErrors = validateForScheduleCreation();
-
     if (validationErrors.length > 0) {
       setErrors(validationErrors);
       return;
     }
-
     setErrors([]);
 
     try {
-      const vehiclesData: Vehicle[] = vehicles.map((v) => ({
-        plate: v.placa || undefined,
-        vin: v.chassi || undefined,
-        serviceAddress: v.endereco || undefined,
-        responsible: v.responsavel || undefined,
-        responsiblePhone: v.telResponsavel || undefined,
-      }));
-
       await updateMaintenanceRequest.mutateAsync({
         id: request._id,
         payload: {
           subject,
-          vehicles: vehiclesData,
+          vehicles: buildVehiclesPayload(),
           client: clientId || undefined,
         },
       });
 
-const result = await createSchedules.mutateAsync({
-  
-  id: request._id,
-  createdBy: user?.name,
-});
-      toast.success(
-        `${result.schedulesCreated} agendamento(s) criado(s) com sucesso!`
-      );
+      const result = await createSchedules.mutateAsync({
+        id: request._id,
+        createdBy: user?.name,
+      });
+
+      toast.success(`${result.schedulesCreated} agendamento(s) criado(s) com sucesso!`);
       onClose();
     } catch (error: any) {
-      console.error("Error creating schedules:", error);
-      toast.error(
-        error.response?.data?.error || "Erro ao criar agendamentos"
-      );
+      toast.error(error.response?.data?.error || "Erro ao criar agendamentos");
     }
   };
 
-  const canCreateSchedules = () => {
-    return validateForScheduleCreation().length === 0;
-  };
+  // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -288,21 +251,21 @@ const result = await createSchedules.mutateAsync({
 
         <div className="flex-1 overflow-y-auto -mx-6 px-6 space-y-6">
 
+          {/* Erros de validação */}
           {errors.length > 0 && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 <ul className="list-disc list-inside space-y-1">
-                  {errors.map((error, index) => (
-                    <li key={index} className="text-sm">
-                      {error}
-                    </li>
+                  {errors.map((err, i) => (
+                    <li key={i} className="text-sm">{err}</li>
                   ))}
                 </ul>
               </AlertDescription>
             </Alert>
           )}
 
+          {/* Assunto + Status */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="subject">Assunto</Label>
@@ -313,13 +276,10 @@ const result = await createSchedules.mutateAsync({
                 placeholder="Assunto da manutenção"
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger id="status">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger id="status"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {statusOptions.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
@@ -331,24 +291,34 @@ const result = await createSchedules.mutateAsync({
             </div>
           </div>
 
+          {/* Info do e-mail */}
           <div className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-muted/50 border border-border">
             <div className="space-y-1">
               <span className="text-xs text-muted-foreground">Cliente</span>
               <p className="text-sm font-medium">{request.category}</p>
             </div>
             <div className="space-y-1">
-              <span className="text-xs text-muted-foreground">
-                E-mail do Contato
-              </span>
+              <span className="text-xs text-muted-foreground">E-mail do Contato</span>
               <p className="text-sm font-medium">{request.contactEmail}</p>
             </div>
           </div>
 
+          {/* Veículos */}
           <div className="space-y-4">
+
+            {/* Barra de ações — cliente, responsável e adicionar */}
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Veículos</h3>
               <div className="flex items-center gap-2">
                 <ClientPicker value={clientId} onChange={setClientId} />
+
+                {/* Responsável global — aplica em todos os veículos */}
+                <ResponsiblePicker
+                  value={vehicles[0]?.responsible ?? ""}
+                  onChange={handleResponsibleChange}
+                  placeholder="Atribuir responsável"
+                />
+
                 <Button
                   type="button"
                   variant="outline"
@@ -356,8 +326,7 @@ const result = await createSchedules.mutateAsync({
                   onClick={handleAddVehicle}
                   className="gap-2"
                 >
-                  <Plus className="h-4 w-4" />
-                  Adicionar outro
+                  <Plus className="h-4 w-4" /> Adicionar outro
                 </Button>
               </div>
             </div>
@@ -367,6 +336,7 @@ const result = await createSchedules.mutateAsync({
                 key={vehicle.id}
                 className="p-4 rounded-lg border border-border bg-card space-y-4"
               >
+                {/* Cabeçalho do card */}
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-muted-foreground">
                     Veículo #{index + 1}
@@ -384,10 +354,12 @@ const result = await createSchedules.mutateAsync({
                   )}
                 </div>
 
-                <div className="grid grid-cols-5 gap-3">
+                {/* Linha 1 — identificação */}
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor={`placa-${vehicle.id}`}>
-                      Placa {!vehicle.chassi && <span className="text-destructive">*</span>}
+                      Placa{" "}
+                      <span className="text-muted-foreground text-xs">(opcional)</span>
                     </Label>
                     <Input
                       id={`placa-${vehicle.id}`}
@@ -406,7 +378,7 @@ const result = await createSchedules.mutateAsync({
 
                   <div className="space-y-2">
                     <Label htmlFor={`chassi-${vehicle.id}`}>
-                      Chassi {!vehicle.placa && <span className="text-destructive">*</span>}
+                      Chassi <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id={`chassi-${vehicle.id}`}
@@ -422,40 +394,49 @@ const result = await createSchedules.mutateAsync({
                       className="uppercase"
                     />
                   </div>
+                </div>
 
+                {/* Linha 2 — operacional */}
+                <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor={`endereco-${vehicle.id}`}>Endereço</Label>
+                    <Label htmlFor={`address-${vehicle.id}`}>
+                      Endereço <span className="text-destructive">*</span>
+                    </Label>
                     <Input
-                      id={`endereco-${vehicle.id}`}
-                      value={vehicle.endereco}
+                      id={`address-${vehicle.id}`}
+                      value={vehicle.serviceAddress}
                       onChange={(e) =>
-                        handleVehicleChange(vehicle.id, "endereco", e.target.value)
+                        handleVehicleChange(vehicle.id, "serviceAddress", e.target.value)
                       }
                       placeholder="Rua, número, cidade"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor={`responsavel-${vehicle.id}`}>Responsável</Label>
+                    <Label htmlFor={`condutor-${vehicle.id}`}>
+                      Condutor <span className="text-destructive">*</span>
+                    </Label>
                     <Input
-                      id={`responsavel-${vehicle.id}`}
-                      value={vehicle.responsavel}
+                      id={`condutor-${vehicle.id}`}
+                      value={vehicle.condutor}
                       onChange={(e) =>
-                        handleVehicleChange(vehicle.id, "responsavel", e.target.value)
+                        handleVehicleChange(vehicle.id, "condutor", e.target.value)
                       }
-                      placeholder="Nome do responsável"
+                      placeholder="Nome do condutor"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor={`tel-${vehicle.id}`}>Tel. Responsável</Label>
+                    <Label htmlFor={`tel-${vehicle.id}`}>
+                      Tel. Responsável <span className="text-destructive">*</span>
+                    </Label>
                     <Input
                       id={`tel-${vehicle.id}`}
-                      value={vehicle.telResponsavel}
+                      value={vehicle.responsiblePhone}
                       onChange={(e) =>
                         handleVehicleChange(
                           vehicle.id,
-                          "telResponsavel",
+                          "responsiblePhone",
                           e.target.value
                         )
                       }
@@ -467,7 +448,7 @@ const result = await createSchedules.mutateAsync({
             ))}
           </div>
 
-
+          {/* Detalhes do e-mail */}
           <div className="border border-border rounded-lg overflow-hidden">
             <button
               type="button"
@@ -475,13 +456,10 @@ const result = await createSchedules.mutateAsync({
               className="w-full flex items-center justify-between p-4 bg-muted/30 hover:bg-muted/50 transition-colors"
             >
               <span className="text-sm font-medium">Ver detalhes do e-mail</span>
-              {showDetails ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
+              {showDetails
+                ? <ChevronUp className="h-4 w-4" />
+                : <ChevronDown className="h-4 w-4" />}
             </button>
-
             {showDetails && (
               <div className="p-4 border-t border-border">
                 <div
@@ -506,7 +484,9 @@ const result = await createSchedules.mutateAsync({
           </Button>
           <Button
             onClick={handleCreateSchedules}
-            disabled={!canCreateSchedules() || createSchedules.isPending}
+            disabled={
+              validateForScheduleCreation().length > 0 || createSchedules.isPending
+            }
           >
             {createSchedules.isPending ? "Criando..." : "Criar Agendamento"}
           </Button>

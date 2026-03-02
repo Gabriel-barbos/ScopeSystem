@@ -140,14 +140,19 @@ export function useScheduleFilters(
     };
   }, [schedules, globalSearch, showOnlyPending]);
 
-  const clientOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    schedules.forEach((item) => map.set(item.client._id, item.client.name));
-    return Array.from(map.entries()).map(([id, name]) => ({
-      value: id,
-      label: name,
-    }));
-  }, [schedules]);
+const clientOptions = useMemo(() => {
+  const map = new Map<string, string>();
+
+  schedules.forEach((item) => {
+    if (!item.client?._id) return; 
+    map.set(item.client._id, item.client.name);
+  });
+
+  return Array.from(map.entries()).map(([id, name]) => ({
+    value: id,
+    label: name,
+  }));
+}, [schedules]);
 
   const serviceOptions = useMemo(() => {
     const services = new Set(

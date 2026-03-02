@@ -11,7 +11,6 @@ import { useClientService } from "@/services/ClientService";
 import { Tabs, TabsContent, TabsList, TabsTrigger, } from "@/components/ui/tabs";
 import { List } from "antd";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import RoleIf from "@/components/RoleIf";
 import { Roles } from "@/utils/roles";
 
@@ -49,8 +48,8 @@ export default function Clients() {
   }
 
   function getTypeBadgeVariant(type?: string) {
-  if (type === "Mensalidade") return "default";
-  if (type === "Avulso Simples") return "secondary";
+  if (type === "Cliente") return "default";
+  if (type === "subCliente") return "secondary";
   return "default";
 }
 
@@ -112,8 +111,8 @@ export default function Clients() {
         >
           <TabsList>
             <TabsTrigger value="all">Todos ({clients?.length})</TabsTrigger>
-            <TabsTrigger value="Cliente"> <CircleUserRound className="m-1" /> Simples</TabsTrigger>
-            <TabsTrigger value="Sub-Cliente"> <Building2 className="m-1" />Sub-Cliente</TabsTrigger>
+            <TabsTrigger value="Cliente"> <CircleUserRound className="m-1" /> Clientes</TabsTrigger>
+            <TabsTrigger value="sub-Cliente"> <Building2 className="m-1" />Sub-Cliente</TabsTrigger>
           </TabsList>
           <TabsContent value={activeTab}>
 

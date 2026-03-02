@@ -5,6 +5,7 @@ export interface Client {
   _id: string;
   name: string;
   description?: string;
+  type?: string;
   image?: string[];
   parent?: { _id: string; name: string } | null;
   createdAt?: string;
@@ -16,6 +17,7 @@ export interface ClientPayload {
   description?: string;
   parent?: string | null;
   image?: File | File[];
+    type?: string;
 }
 
 
