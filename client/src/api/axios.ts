@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "https://scopeserver.onrender.com/api/system",
-  timeout: 10000,
+  timeout: 300000,
 });
 
 //coloca Authorization header automaticamente
