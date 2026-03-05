@@ -10,21 +10,38 @@ import { useScheduleService } from "@/services/ScheduleService";
 import type { SchedulePayload } from "@/services/ScheduleService";
 import { useAuth } from "@/context/Authcontext";
 import { toast } from "sonner";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EditScheduleModal } from "@/components/schedule/EditScheduleModal";
+import {
+  SCHEDULE_COLUMN_MAPPING,
+  REQUIRED_HEADERS,
+  mapRowToPayload,
+} from "@/utils/ScheduleImportconfig";
+
+
+const VIN_LENGTH = 17
+
+function validateImportRow(row: Record<string, any>, index: number): string | null {
+  for (const header of REQUIRED_HEADERS) {
+    if (!row[header]) return `Linha ${index + 1}: campo obrigatório "${header}" está vazio.`
+  }
+
+  const vin = String(row["Chassi"] ?? "").trim()
+  if (vin.length !== VIN_LENGTH) {
+    return `Linha ${index + 1}: Chassi "${vin}" deve ter exatamente ${VIN_LENGTH} caracteres.`
+  }
+
+  return null
+}
+
+
 export default function Appointments() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const { bulkUpdateSchedules } = useScheduleService()
 
-  const { bulkCreateSchedules } = useScheduleService();
+  const { bulkCreateSchedules, bulkUpdateSchedules } = useScheduleService();
   const { user } = useAuth();
 
   function openCreate() {
@@ -32,58 +49,50 @@ export default function Appointments() {
     setIsDrawerOpen(true);
   }
 
-
   const handleImport = async (data: Record<string, any>[]) => {
+    for (let i = 0; i < data.length; i++) {
+      const error = validateImportRow(data[i], i)
+      if (error) {
+        toast.error(error)
+        return
+      }
+    }
+
     try {
       const schedules: SchedulePayload[] = data.map((row) => ({
-        plate: row.Placa || undefined,
-        vin: row.Chassi,
-        model: row.Modelo,
-        serviceType: row.TipoServico || "maintenance",
-        client: row.ClienteId,
-        product: row.EquipamentoId || undefined,
-        scheduledDate: row.Data || undefined,
-        notes: row.Observacoes || undefined,
-        provider: row.Prestador || undefined,
-        vehicleGroup: row.VehicleGroup || undefined,
-        NumeroPedido: "NumeroPedido",
-        status: row.Data ? "agendado" : "criado",
-        createdBy: user?.name || "Sistema",
+        ...mapRowToPayload(row),
+        serviceType: row["TipoServico"] || "maintenance",
+        status:      row["Data"] ? "agendado" : "criado",
+        createdBy:   user?.name || "Sistema",
+        responsible: row["Responsavel"] || user?.name || "Sistema",
       }));
 
       await bulkCreateSchedules.mutateAsync(schedules);
-
       toast.success(`${schedules.length} agendamentos importados com sucesso!`);
       setModalOpen(false);
     } catch (error: any) {
       toast.error(error?.response?.data?.error || "Erro ao importar agendamentos");
-      console.error("Erro no import:", error);
     }
   };
 
   const handleBulkUpdate = async (data: Record<string, any>[]) => {
     try {
-      const result = await bulkUpdateSchedules.mutateAsync(data)
+      const result = await bulkUpdateSchedules.mutateAsync(data);
+      toast.success(result.message);
 
-      toast.success(result.message)
-
-      if (result.errors && result.errors.length > 0) {
+      if (result.errors?.length > 0) {
         toast.warning("Alguns registros apresentaram erros", {
-          description: result.errors.slice(0, 3).join(", ")
-        })
+          description: result.errors.slice(0, 3).join(", "),
+        });
       }
     } catch (error: any) {
       toast.error("Erro ao modificar agendamentos", {
-        description: error.response?.data?.error || error.message
-      })
-
-      if (error.response?.data?.details) {
-        console.error("Detalhes dos erros:", error.response.data.details)
-      }
-
-      throw error
+        description: error.response?.data?.error || error.message,
+      });
+      throw error;
     }
-  }
+  };
+
   return (
     <Card className="mx-auto">
       <CardHeader>
@@ -95,19 +104,21 @@ export default function Appointments() {
             <CardTitle className="text-2xl">Agendamentos</CardTitle>
             <CardDescription>Gerencie seus agendamentos</CardDescription>
           </div>
+
           <Button className="ml-auto" variant="outline" size="sm" onClick={() => setModalOpen(true)}>
-            Importar Dados<FileSpreadsheet />
+            Importar Dados <FileSpreadsheet />
           </Button>
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" onClick={() => setEditModalOpen(true)}> <FilePen /> </Button>
+              <Button variant="outline" onClick={() => setEditModalOpen(true)}>
+                <FilePen />
+              </Button>
             </TooltipTrigger>
             <TooltipContent>
               <p>Editar em Lote</p>
             </TooltipContent>
           </Tooltip>
-
 
           <Button size="sm" onClick={openCreate}>
             Criar Agendamento <CalendarPlus />
@@ -126,19 +137,14 @@ export default function Appointments() {
             <div className="overflow-y-auto max-h-[calc(90vh-100px)] p-4 scrollbar-hidden">
               <ScheduleForm
                 scheduleId={editingScheduleId}
-                onSuccess={() => {
-                  setIsDrawerOpen(false);
-                  setEditingScheduleId(null);
-                }}
-                onCancel={() => {
-                  setIsDrawerOpen(false);
-                  setEditingScheduleId(null);
-                }}
+                onSuccess={() => { setIsDrawerOpen(false); setEditingScheduleId(null); }}
+                onCancel={() => { setIsDrawerOpen(false); setEditingScheduleId(null); }}
               />
             </div>
           </UniversalDrawer>
         </div>
       </CardHeader>
+
       <CardContent>
         <ImportModal
           open={modalOpen}
@@ -147,19 +153,7 @@ export default function Appointments() {
           templateUrl="/templates/agendamentos.xlsx"
           templateName="template-agendamentos.xlsx"
           onImport={handleImport}
-          columnMapping={{
-            Placa: "Placa",
-            Chassi: "Chassi",
-            Modelo: "Descricao",
-            Cliente: "Cliente",
-            Equipamento: "Equipamento",
-            TipoServico: "TipoServico",
-            Data: "Data",
-            Prestador: "Prestador",
-            NumeroPedido: "NumeroPedido",
-            VehicleGroup: "VehicleGroup",
-            Observacoes: "Observacoes",
-          }}
+          columnMapping={SCHEDULE_COLUMN_MAPPING}
         />
 
         <EditScheduleModal
@@ -169,6 +163,7 @@ export default function Appointments() {
           templateName="template-edicao-agendamentos.xlsx"
           onUpdate={handleBulkUpdate}
         />
+
         <ScheduleTable />
       </CardContent>
     </Card>

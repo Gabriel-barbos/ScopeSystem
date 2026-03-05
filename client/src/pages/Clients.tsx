@@ -27,15 +27,18 @@ export default function Clients() {
 
 
   
-  const filteredClients = (clients ?? [])
-    .filter((client) =>
-      client.name.toLowerCase().includes(search.toLowerCase())
-    )
-    .filter((client) => {
-      if (activeTab === "all") return true;
-      return client.type === activeTab;
-    });
-
+const filteredClients = (clients ?? [])
+  .filter((client) =>
+    client.name.toLowerCase().includes(search.toLowerCase())
+  )
+  .filter((client) => {
+    if (activeTab === "all") return true;
+    return client.type === activeTab;
+  })
+  .sort((a, b) =>
+    a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" })
+  );
+  
   function openCreate() {
     setEditingClientId(null);
     setIsDrawerOpen(true);

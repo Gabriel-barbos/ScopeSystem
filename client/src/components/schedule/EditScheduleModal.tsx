@@ -26,10 +26,21 @@ const COLUMN_MAPPING = {
     "Produto": "product",
     "Observações": "notes",
     "Prestador": "provider",
+    "Número do Pedido": "orderNumber",
+    "Endereço": "serviceAddress",
+    "Local do Serviço": "serviceLocation",
+    "Responsável": "responsible",
+    "Telefone do Responsável": "responsiblePhone",
+    "Condutor": "condutor",
+    "Situação": "situation",
+    "Grupo de Veículo": "vehicleGroup",
     // Nomes alternativos aceitos:
     "VIN": "vin",
     "Data Agendamento": "scheduledDate",
     "Observacoes": "notes",
+    "Grupo de Veículos": "vehicleGroup",
+    "fabricante": "product",
+
 }
 
 export function EditScheduleModal({

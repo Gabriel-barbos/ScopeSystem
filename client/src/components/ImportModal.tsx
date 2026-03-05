@@ -34,8 +34,8 @@ export function ImportModal({
     const [fileName, setFileName] = useState("")
 
     const { data: products } = useProductService()
-    
     const { data: clients } = useClientService()
+
     const handleFileUpload = (file: File) => {
         if (!file) return
 
@@ -44,18 +44,25 @@ export function ImportModal({
         reader.onload = (event) => {
             const wb = XLSX.read(event.target?.result, { type: "binary" })
             const ws = wb.Sheets[wb.SheetNames[0]]
-            const jsonData = XLSX.utils.sheet_to_json(ws)
+            const jsonData = XLSX.utils.sheet_to_json(ws) as Record<string, any>[]
 
             const mappedData = columnMapping
-                ? jsonData.map(row =>
-                    Object.entries(columnMapping).reduce((acc, [key, value]) => ({
-                        ...acc,
-                        [value]: row[key]
-                    }), {})
-                )
+                ? jsonData.map(row => {
+                    // Copia todas as colunas do row e renomeia as que têm mapeamento
+                    const result: Record<string, any> = { ...row }
+
+                    for (const [alias, canonical] of Object.entries(columnMapping)) {
+                        if (alias in row && alias !== canonical) {
+                            result[canonical] = row[alias]  // renomeia alias → header canônico
+                            delete result[alias]             // remove a chave original
+                        }
+                    }
+
+                    return result
+                })
                 : jsonData
 
-            setData(mappedData as Record<string, any>[])
+            setData(mappedData)
         }
         reader.readAsBinaryString(file)
     }
@@ -107,21 +114,15 @@ export function ImportModal({
     const handleDownloadTemplate = async () => {
         try {
             const response = await fetch(templateUrl)
-
-            if (!response.ok) {
-                throw new Error("Template não encontrado")
-            }
+            if (!response.ok) throw new Error("Template não encontrado")
 
             const blob = await response.blob()
             const url = window.URL.createObjectURL(blob)
-
             const link = document.createElement("a")
             link.href = url
             link.download = templateName
-
             document.body.appendChild(link)
             link.click()
-
             document.body.removeChild(link)
             window.URL.revokeObjectURL(url)
         } catch (error) {
@@ -129,7 +130,6 @@ export function ImportModal({
             alert("Erro ao baixar o template. Tente novamente.")
         }
     }
-
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
@@ -172,7 +172,7 @@ export function ImportModal({
                                     )}>
                                         <div className="relative">
                                             <FileSpreadsheet className={cn(
-                                                "text-green-600 w-16 h-16 transition-colors duration-200",
+                                                "w-16 h-16 transition-colors duration-200",
                                                 dragActive ? "text-primary" : "text-muted-foreground"
                                             )} />
                                             <div className={cn(
@@ -209,7 +209,7 @@ export function ImportModal({
                             <div className="flex items-center justify-between p-3 bg-accent/50 rounded-lg border">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-primary/10 rounded-md">
-                                        <FileSpreadsheet className="w-4 h-4 text-primary text-green-600" />
+                                        <FileSpreadsheet className="w-4 h-4 text-primary" />
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium">{fileName}</p>
@@ -236,10 +236,7 @@ export function ImportModal({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => {
-                                    setData([])
-                                    setFileName("")
-                                }}
+                                onClick={() => { setData([]); setFileName("") }}
                                 className="w-full text-muted-foreground hover:text-foreground"
                             >
                                 Carregar outro arquivo

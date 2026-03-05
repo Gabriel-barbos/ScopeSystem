@@ -7,7 +7,8 @@ export interface Vehicle {
   serviceAddress?: string;
   responsible?: string;    
   responsiblePhone?: string;
-  condutor?: string;         
+  condutor?: string;
+  model?: string;         
 }
 
 export interface MaintenanceRequest {

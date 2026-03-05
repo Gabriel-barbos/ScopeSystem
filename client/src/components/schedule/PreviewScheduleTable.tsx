@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AlertCircle, CheckCircle2 } from "lucide-react"
+import { AlertCircle, CheckCircle2, FileSpreadsheet, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface PreviewTableProps {
   data: Record<string, any>[]
@@ -25,18 +27,13 @@ const normalize = (str: string) =>
 
 const findBestMatch = (input: string, options: any[] = []) => {
   if (!input || !options?.length) return null
-
   const normalized = normalize(input)
-
   const exact = options.find(opt => normalize(opt.name) === normalized)
   if (exact) return { id: exact._id, name: exact.name }
-
   const contains = options.find(opt => normalize(opt.name).includes(normalized))
   if (contains) return { id: contains._id, name: contains.name }
-
   const partial = options.find(opt => normalized.includes(normalize(opt.name)))
   if (partial) return { id: partial._id, name: partial.name }
-
   return null
 }
 
@@ -51,13 +48,12 @@ export function PreviewTable({
   productColumn = "Equipamento",
   clientColumn = "Cliente"
 }: PreviewTableProps) {
-  const [editableData, setEditableData] = useState<Record<string, any>[]>([])
+  const [processedData, setProcessedData] = useState<Record<string, any>[]>([])
   const [matches, setMatches] = useState<Record<number, { product?: any; client?: any }>>({})
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 10
 
   const isInternalUpdate = useRef(false)
-  
   const lastExternalData = useRef<Record<string, any>[]>([])
 
   useEffect(() => {
@@ -66,16 +62,12 @@ export function PreviewTable({
       return
     }
 
-    if (data === lastExternalData.current) {
-      return
-    }
-    
+    if (data === lastExternalData.current) return
     lastExternalData.current = data
 
     const updatedData = data.map((row, idx) => {
       const productMatch = findBestMatch(row[productColumn], products)
       const clientMatch = findBestMatch(row[clientColumn], clients)
-
       return {
         ...row,
         _originalIndex: idx,
@@ -91,7 +83,7 @@ export function PreviewTable({
     })
 
     setCurrentPage(1)
-    setEditableData(updatedData)
+    setProcessedData(updatedData)
 
     const newMatches: Record<number, any> = {}
     updatedData.forEach((row) => {
@@ -104,57 +96,35 @@ export function PreviewTable({
   }, [data, products, clients, productColumn, clientColumn])
 
   useEffect(() => {
-    if (editableData.length > 0) {
-      onDataChange?.(editableData)
+    if (processedData.length > 0) {
+      onDataChange?.(processedData)
     }
-  }, [editableData])
+  }, [processedData])
 
   if (!data.length) return null
 
   const allColumns = Object.keys(data[0])
   const columns = allColumns.filter(col => !HIDDEN_COLUMNS.includes(col) && !col.endsWith('Id'))
-  
-  const totalPages = Math.ceil(editableData.length / pageSize)
-  const previewData = editableData.slice(
+
+  const totalPages = Math.ceil(processedData.length / pageSize)
+  const pagedData = processedData.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   )
 
-  const handleCellChange = (originalIdx: number, col: string, value: string) => {
-    const realIdx = editableData.findIndex(row => row._originalIndex === originalIdx)
-    if (realIdx === -1) return
+  const errorRows = processedData.filter((row) => {
+    const idx = row._originalIndex
+    const hasClientError = !matches[idx]?.client
+    const hasProductError = !matches[idx]?.product && row.TipoServico === "installation"
+    return hasClientError || hasProductError
+  })
 
-    isInternalUpdate.current = true
-
-    const updated = [...editableData]
-    updated[realIdx] = { ...updated[realIdx], [col]: value }
-
-    if (col === productColumn || col === clientColumn) {
-      const newMatch = col === productColumn
-        ? findBestMatch(value, products)
-        : findBestMatch(value, clients)
-
-      const idColumn = col === productColumn ? 'EquipamentoId' : 'ClienteId'
-      if (newMatch) {
-        updated[realIdx][idColumn] = newMatch.id
-      } else {
-        delete updated[realIdx][idColumn]
-      }
-
-      setMatches(prev => ({
-        ...prev,
-        [originalIdx]: {
-          ...prev[originalIdx],
-          [col === productColumn ? 'product' : 'client']: newMatch
-        }
-      }))
-    }
-
-    setEditableData(updated)
-  }
+  const totalRows = processedData.length
+  const totalErrors = errorRows.length
+  const totalOk = totalRows - totalErrors
 
   const handleMatchSelect = (originalIdx: number, col: string, itemId: string) => {
-    const realIdx = editableData.findIndex(row => row._originalIndex === originalIdx)
+    const realIdx = processedData.findIndex(row => row._originalIndex === originalIdx)
     if (realIdx === -1) return
 
     isInternalUpdate.current = true
@@ -164,13 +134,13 @@ export function PreviewTable({
 
     if (selected) {
       const idColumn = col === productColumn ? 'EquipamentoId' : 'ClienteId'
-      const updated = [...editableData]
+      const updated = [...processedData]
       updated[realIdx] = {
         ...updated[realIdx],
         [col]: selected.name,
         [idColumn]: selected._id
       }
-      setEditableData(updated)
+      setProcessedData(updated)
 
       setMatches(prev => ({
         ...prev,
@@ -188,12 +158,14 @@ export function PreviewTable({
     const isMatchable = isProductCol || isClientCol
 
     if (!isMatchable) {
+      const value = row[col]
       return (
-        <Input
-          value={row[col] || ""}
-          onChange={(e) => handleCellChange(originalIdx, col, e.target.value)}
-          className="h-8 text-sm border-transparent hover:border-input focus:border-primary"
-        />
+        <span className="text-sm text-foreground">
+          {value !== undefined && value !== null && value !== ""
+            ? value
+            : <span className="text-muted-foreground/50 italic text-xs">—</span>
+          }
+        </span>
       )
     }
 
@@ -202,54 +174,171 @@ export function PreviewTable({
     const hasMatch = !!match
 
     return (
-      <div className="flex items-center gap-2">
-        <Select
-          value={match?.id || ""}
-          onValueChange={(val) => handleMatchSelect(originalIdx, col, val)}
-        >
-          <SelectTrigger className={cn(
-            "h-8 text-sm",
-            hasMatch ? "border-green-500/50 bg-green-50/50" : "border-amber-500/50 bg-amber-50/50"
-          )}>
-            <div className="flex items-center gap-2 w-full">
-              {hasMatch ? (
-                <CheckCircle2 className="w-3 h-3 text-green-600 flex-shrink-0" />
-              ) : (
-                <AlertCircle className="w-3 h-3 text-amber-600 flex-shrink-0" />
-              )}
-              <span className="truncate">
-                {match?.name || row[col] || "Selecionar"}
-              </span>
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <Select
+                value={match?.id || ""}
+                onValueChange={(val) => handleMatchSelect(originalIdx, col, val)}
+              >
+                <SelectTrigger className={cn(
+                  "h-8 text-xs min-w-[160px] max-w-[220px]",
+                  hasMatch
+                    ? "border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-900/20 dark:border-emerald-600/40"
+                    : "border-amber-500/50 bg-amber-50/50 dark:bg-amber-900/20 dark:border-amber-600/40"
+                )}>
+                  <div className="flex items-center gap-1.5 w-full overflow-hidden">
+                    {hasMatch
+                      ? <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                      : <AlertCircle className="w-3 h-3 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                    }
+                    <span className="truncate">
+                      {match?.name || row[col] || "Selecionar..."}
+                    </span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  {list.map(item => (
+                    <SelectItem key={item._id} value={item._id}>
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </SelectTrigger>
-          <SelectContent>
-            {list.map(item => (
-              <SelectItem key={item._id} value={item._id}>
-                {item.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs">
+            {hasMatch
+              ? `Vinculado: ${match.name}`
+              : `"${row[col] || "vazio"}" não encontrado — selecione manualmente`
+            }
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     )
   }
 
   return (
-    <div className="space-y-2">
-      <ScrollArea className="h-[300px] rounded-md border">
+    <div className="space-y-3">
+
+      {/* ── Resumo ──────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-3 gap-3">
+        <Card className="border-border/60">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/40">
+              <FileSpreadsheet className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground leading-none mb-0.5">Total de linhas</p>
+              <p className="text-xl font-bold text-foreground">{totalRows}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/60">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground leading-none mb-0.5">Válidas</p>
+              <p className="text-xl font-bold text-foreground">{totalOk}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={cn(
+          "border-border/60",
+          totalErrors > 0 && "border-amber-400/60 dark:border-amber-600/40"
+        )}>
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className={cn(
+              "flex items-center justify-center w-9 h-9 rounded-lg",
+              totalErrors > 0 ? "bg-amber-100 dark:bg-amber-900/40" : "bg-muted"
+            )}>
+              <XCircle className={cn(
+                "w-4 h-4",
+                totalErrors > 0
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-muted-foreground"
+              )} />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground leading-none mb-0.5">Com erro</p>
+              <p className={cn(
+                "text-xl font-bold",
+                totalErrors > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"
+              )}>
+                {totalErrors}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {totalErrors > 0 && (
+        <div className="rounded-lg border border-amber-400/50 bg-amber-50/60 dark:bg-amber-900/10 dark:border-amber-600/30 px-4 py-3">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+            <div className="space-y-1 min-w-0">
+              <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+                {totalErrors} linha{totalErrors > 1 ? "s" : ""} com problema de vínculo — corrija pelo select na tabela abaixo
+              </p>
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {errorRows.slice(0, 20).map((row) => {
+                  const idx = row._originalIndex
+                  const missingClient = !matches[idx]?.client
+                  const missingProduct = !matches[idx]?.product && row.TipoServico === "installation"
+                  const reasons = [
+                    missingClient && "Cliente",
+                    missingProduct && "Equipamento",
+                  ].filter(Boolean).join(", ")
+
+                  return (
+                    <Badge
+                      key={idx}
+                      variant="outline"
+                      className="text-[10px] border-amber-400 bg-amber-100/80 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-600"
+                    >
+                      Linha {idx + 1}
+                      <span className="ml-1 opacity-70">({reasons})</span>
+                    </Badge>
+                  )
+                })}
+                {totalErrors > 20 && (
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] border-amber-400 bg-amber-100/80 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+                  >
+                    +{totalErrors - 20} mais
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Tabela ──────────────────────────────────────────────────────────── */}
+      <ScrollArea className="h-[360px] rounded-lg border border-border/60">
         <Table>
-          <TableHeader className="sticky top-0 bg-muted/50 backdrop-blur">
-            <TableRow>
+          <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm">
+            <TableRow className="hover:bg-transparent border-b border-border/60">
+              <TableHead className="w-10 text-center">#</TableHead>
               <TableHead className="w-8" />
               {columns.map((col) => (
-                <TableHead key={col} className="font-semibold whitespace-nowrap">
+                <TableHead
+                  key={col}
+                  className="font-semibold whitespace-nowrap text-xs uppercase tracking-wide text-muted-foreground"
+                >
                   {col}
                 </TableHead>
               ))}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {previewData.map((row) => {
+            {pagedData.map((row, pageIdx) => {
               const originalIdx = row._originalIndex
               const hasClientError = !matches[originalIdx]?.client
               const hasProductError = !matches[originalIdx]?.product && row.TipoServico === "installation"
@@ -259,20 +348,27 @@ export function PreviewTable({
                 <TableRow
                   key={originalIdx}
                   className={cn(
-                    "transition-colors",
+                    "transition-colors text-sm",
                     hasError
-                      ? "bg-amber-50/40 dark:bg-amber-900/20 border-l-4 border-l-amber-500"
-                      : "hover:bg-muted/50"
+                      ? "bg-amber-50/50 dark:bg-amber-900/10 border-l-2 border-l-amber-400"
+                      : "hover:bg-muted/40"
                   )}
                 >
+                  {/* Número da linha original */}
+                  <TableCell className="w-10 text-center text-xs text-muted-foreground font-mono">
+                    {originalIdx + 1}
+                  </TableCell>
+
+                  {/* Ícone de status */}
                   <TableCell className="w-8 p-2">
-                    {hasError && (
-                      <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                    )}
+                    {hasError
+                      ? <AlertCircle className="w-4 h-4 text-amber-500" />
+                      : <CheckCircle2 className="w-4 h-4 text-emerald-500 opacity-60" />
+                    }
                   </TableCell>
 
                   {columns.map((col) => (
-                    <TableCell key={col} className="whitespace-nowrap">
+                    <TableCell key={col} className="whitespace-nowrap py-2 px-3">
                       {renderCell(row, col, originalIdx)}
                     </TableCell>
                   ))}
@@ -284,10 +380,15 @@ export function PreviewTable({
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
 
-      {editableData.length > pageSize && (
-        <div className="flex items-center justify-between pt-2 px-1">
+      {processedData.length > pageSize && (
+        <div className="flex items-center justify-between pt-1 px-1">
           <p className="text-xs text-muted-foreground">
-            {editableData.length} registro{editableData.length > 1 ? "s" : ""} no total
+            Exibindo{" "}
+            <span className="font-medium text-foreground">
+              {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, totalRows)}
+            </span>{" "}
+            de{" "}
+            <span className="font-medium text-foreground">{totalRows}</span> registros
           </p>
 
           <div className="flex items-center gap-1">
@@ -303,8 +404,7 @@ export function PreviewTable({
 
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter(page =>
-                page === 1 || page === totalPages ||
-                Math.abs(page - currentPage) <= 1
+                page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1
               )
               .reduce<(number | "...")[]>((acc, page, idx, arr) => {
                 if (idx > 0 && page - (arr[idx - 1] as number) > 1) acc.push("...")
@@ -313,7 +413,7 @@ export function PreviewTable({
               }, [])
               .map((page, idx) =>
                 page === "..." ? (
-                  <span key={`e-${idx}`} className="text-xs text-muted-foreground px-1">...</span>
+                  <span key={`e-${idx}`} className="text-xs text-muted-foreground px-1">…</span>
                 ) : (
                   <Button
                     key={page}

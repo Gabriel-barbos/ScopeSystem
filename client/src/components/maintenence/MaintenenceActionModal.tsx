@@ -26,12 +26,12 @@ import { ResponsiblePicker } from "../global/ResponsiblePicker";
 import { toast } from "sonner";
 import { useAuth } from "@/context/Authcontext";
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface VehicleForm {
   id: string;
   placa: string;
   chassi: string;
+  model?: string;
   serviceAddress: string;
   condutor: string;
   responsiblePhone: string;
@@ -44,7 +44,6 @@ interface MaintenanceActionModalProps {
   onClose: () => void;
 }
 
-// ─── Constants ─────────────────────────────────────────────────────────────────
 
 const statusOptions = [
   { value: "pending",             label: "Criado" },
@@ -53,19 +52,18 @@ const statusOptions = [
   { value: "cancelled",           label: "Cancelado" },
 ];
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
 
 const emptyVehicle = (responsible = ""): VehicleForm => ({
   id: crypto.randomUUID(),
   placa: "",
   chassi: "",
+  model: "",
   serviceAddress: "",
   condutor: "",
   responsiblePhone: "",
   responsible,
 });
 
-// ─── Component ─────────────────────────────────────────────────────────────────
 
 export default function MaintenanceActionModal({
   request,
@@ -81,12 +79,10 @@ export default function MaintenanceActionModal({
   const [clientId, setClientId]         = useState<string | null>(null);
   const [errors, setErrors]             = useState<string[]>([]);
 
-  // Inicializa já com o usuário logado no primeiro veículo
   const [vehicles, setVehicles] = useState<VehicleForm[]>(() => [
     emptyVehicle(user?.name ?? ""),
   ]);
 
-  // ── Inicialização quando o request muda ──────────────────────────────────────
 
   useEffect(() => {
     if (!request) return;
@@ -101,6 +97,7 @@ export default function MaintenanceActionModal({
           id:               crypto.randomUUID(),
           placa:            v.plate            || "",
           chassi:           v.vin              || "",
+          model:            v.model            || "",
           serviceAddress:   v.serviceAddress   || "",
           condutor:         v.condutor         || "",
           responsiblePhone: v.responsiblePhone || "",
@@ -114,7 +111,6 @@ export default function MaintenanceActionModal({
 
   if (!request) return null;
 
-  // ── Sanitize HTML ────────────────────────────────────────────────────────────
 
   const sanitizedContent = DOMPurify.sanitize(request.description || "", {
     ALLOWED_TAGS: [
@@ -125,7 +121,6 @@ export default function MaintenanceActionModal({
     ALLOWED_ATTR: ["style", "class", "href", "target", "rel", "title", "spellcheck"],
   });
 
-  // ── Vehicle handlers ─────────────────────────────────────────────────────────
 
   const handleAddVehicle = () =>
     setVehicles((prev) => [...prev, emptyVehicle(vehicles[0]?.responsible ?? user?.name ?? "")]);
@@ -144,11 +139,9 @@ export default function MaintenanceActionModal({
       prev.map((v) => (v.id === id ? { ...v, [field]: value } : v))
     );
 
-  // Aplica o responsável em todos os veículos de uma vez
   const handleResponsibleChange = (name: string) =>
     setVehicles((prev) => prev.map((v) => ({ ...v, responsible: name })));
 
-  // ── Validation ───────────────────────────────────────────────────────────────
 
   const validateForScheduleCreation = (): string[] => {
     const errs: string[] = [];
@@ -158,6 +151,7 @@ export default function MaintenanceActionModal({
     vehicles.forEach((v, i) => {
       const n = i + 1;
       if (!v.chassi)           errs.push(`Veículo #${n}: Chassi é obrigatório`);
+      if (!v.model)            errs.push(`Veículo #${n}: Modelo é obrigatório`);
       if (!v.serviceAddress)   errs.push(`Veículo #${n}: Endereço é obrigatório`);
       if (!v.condutor)         errs.push(`Veículo #${n}: Condutor é obrigatório`);
       if (!v.responsiblePhone) errs.push(`Veículo #${n}: Telefone do responsável é obrigatório`);
@@ -176,19 +170,18 @@ export default function MaintenanceActionModal({
     return status;
   };
 
-  // ── Payload builder ──────────────────────────────────────────────────────────
 
   const buildVehiclesPayload = (): Vehicle[] =>
     vehicles.map((v) => ({
       plate:            v.placa            || undefined,
       vin:              v.chassi           || undefined,
+      model:            v.model            || undefined,
       serviceAddress:   v.serviceAddress   || undefined,
       condutor:         v.condutor         || undefined,
       responsiblePhone: v.responsiblePhone || undefined,
       responsible:      v.responsible      || undefined,
     }));
 
-  // ── Handlers ─────────────────────────────────────────────────────────────────
 
   const handleUpdateRequest = async () => {
     try {
@@ -238,7 +231,6 @@ export default function MaintenanceActionModal({
     }
   };
 
-  // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -251,7 +243,6 @@ export default function MaintenanceActionModal({
 
         <div className="flex-1 overflow-y-auto -mx-6 px-6 space-y-6">
 
-          {/* Erros de validação */}
           {errors.length > 0 && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -265,7 +256,6 @@ export default function MaintenanceActionModal({
             </Alert>
           )}
 
-          {/* Assunto + Status */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="subject">Assunto</Label>
@@ -355,8 +345,10 @@ export default function MaintenanceActionModal({
                 </div>
 
                 {/* Linha 1 — identificação */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-3 gap-3">
+              
+
+                        <div className="space-y-2">
                     <Label htmlFor={`placa-${vehicle.id}`}>
                       Placa{" "}
                       <span className="text-muted-foreground text-xs">(opcional)</span>
@@ -394,6 +386,26 @@ export default function MaintenanceActionModal({
                       className="uppercase"
                     />
                   </div>
+
+                      <div className="space-y-2">
+                    <Label htmlFor={`modelo-${vehicle.id}`}>
+                      Modelo{" "}<span className="text-destructive">*</span>
+                      <span className="text-muted-foreground text-xs"></span>
+                    </Label>
+                    <Input
+                      id={`model-${vehicle.id}`}
+                      value={vehicle.model}
+                      onChange={(e) =>
+                        handleVehicleChange(
+                          vehicle.id,
+                          "model",
+                          e.target.value.toUpperCase()
+                        )
+                      }
+                      placeholder="VW T-CROSS"
+                    />
+                  </div>
+
                 </div>
 
                 {/* Linha 2 — operacional */}
