@@ -40,7 +40,7 @@ const COLUMN_MAPPING = {
     "Observacoes": "notes",
     "Grupo de Veículos": "vehicleGroup",
     "fabricante": "product",
-
+    "Data do Pedido": "orderDate"
 }
 
 export function EditScheduleModal({

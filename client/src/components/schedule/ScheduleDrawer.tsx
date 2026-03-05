@@ -104,12 +104,14 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
   const [isEditing, setIsEditing]       = useState(false);
   const [editedSchedule, setEditedSchedule] = useState<Schedule | null>(null);
-  const [openCalendar, setOpenCalendar] = useState(false);
   const [openClient, setOpenClient]     = useState(false);
   const [openProduct, setOpenProduct]   = useState(false);
   const [clients, setClients]           = useState<Client[]>([]);
   const [products, setProducts]         = useState<Product[]>([]);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
+
+  const [openCalendar, setOpenCalendar] = useState(false);
+  const [openOrderDateCalendar, setOpenOrderDateCalendar] = useState(false);
 
   const { updateSchedule, deleteSchedule } = useScheduleService();
   const queryClient = useQueryClient();
@@ -136,6 +138,7 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
     setEditedSchedule(null);
     setIsEditing(false);
     setOpenCalendar(false);
+    setOpenOrderDateCalendar(false);
     setOpenClient(false);
     setOpenProduct(false);
   };
@@ -172,6 +175,10 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
         hour: "2-digit", minute: "2-digit",
       })
     : "Não informado";
+
+    const formattedOrderDate = data.orderDate
+  ? new Date(data.orderDate).toLocaleDateString("pt-BR")
+  : "Não informado";
 
   // ── Handlers
   const handleEdit   = () => { setEditedSchedule({ ...schedule }); setIsEditing(true); };
@@ -577,6 +584,38 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
               </div>
 
               <Separator />
+                <div className="flex flex-col gap-1.5">
+  <SectionTitle>Data do Pedido</SectionTitle>
+  {isEditing ? (
+    <Popover open={openOrderDateCalendar} onOpenChange={setOpenOrderDateCalendar}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="w-full justify-between bg-background">
+          <span className="text-sm">
+            {data.orderDate
+              ? new Date(data.orderDate).toLocaleDateString("pt-BR")
+              : "Selecionar data"}
+          </span>
+          <CalendarSearch className="h-3.5 w-3.5 opacity-60" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={data.orderDate ? new Date(data.orderDate) : undefined}
+          onSelect={(date) => {
+            if (date) updateField("orderDate", date.toISOString());
+            setOpenOrderDateCalendar(false);
+          }}
+        />
+      </PopoverContent>
+    </Popover>
+  ) : (
+    <div className="flex items-center gap-2 text-sm">
+      <CalendarSearch className="h-4 w-4 text-muted-foreground" />
+      <span>{formattedOrderDate}</span>
+    </div>
+  )}
+</div>
 
               {/* Data agendada */}
               <div className="flex flex-col gap-1.5">

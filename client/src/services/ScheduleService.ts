@@ -32,6 +32,7 @@ export interface Schedule {
   responsiblePhone?: string;
   serviceAddress?: string;
   condutor?: string;
+  orderDate?: string;
   serviceLocation?: string;
   situation?: string;
   createdBy?: string;
@@ -58,6 +59,7 @@ export interface SchedulePayload {
   serviceAddress?: string;
   serviceLocation?: string;
   vehicleGroup?: string;
+  orderDate?: string;
   situation?: string;
 }
 
@@ -73,6 +75,7 @@ export interface BulkUpdatePayload {
   notes?: string;
   provider?: string;
   createdBy?: string;
+  orderDate?: string;
   vehicleGroup?: string;
 }
 

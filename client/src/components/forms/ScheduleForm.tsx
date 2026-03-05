@@ -76,6 +76,7 @@ const FormSchema = z.object({
   serviceLocation: z.string().optional(),
   orderNumber: z.string().optional(),
   createdBy: z.string().optional(),
+  orderDate: z.string().min(2, "Data do pedido é obrigatória"),
 });
 
 export type ScheduleFormValues = z.infer<typeof FormSchema>;
@@ -98,7 +99,10 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
   const isEditing = Boolean(scheduleId);
   const { user } = useAuth();
 
-  const [openCalendar, setOpenCalendar] = useState(false);
+  const [openOrderDateCalendar, setOpenOrderDateCalendar] = useState(false);
+  const [openScheduledDateCalendar, setOpenScheduledDateCalendar] = useState(false);
+
+
   const [openClient, setOpenClient] = useState(false);
   const [openProduct, setOpenProduct] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
@@ -139,6 +143,7 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
       condutor: "",
       responsiblePhone: "",
       vehicleGroup: "",
+      orderDate: "",
     },
   });
 
@@ -181,6 +186,7 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
         serviceLocation: schedule.serviceLocation || "",
         condutor: schedule.condutor || "",
         responsiblePhone: schedule.responsiblePhone || "",
+        orderDate: schedule.orderDate ? schedule.orderDate.split("T")[0] : "",
       });
     }
   }, [schedule, reset]);
@@ -203,6 +209,7 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
         vehicleGroup: data.vehicleGroup,
         serviceAddress: data.serviceAddress,
         serviceLocation: data.serviceLocation,
+        orderDate: data.orderDate || undefined,
         // Manutenção apenas
         ...(isMaintenance && {
           condutor: data.condutor,
@@ -418,6 +425,38 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
           />
         </div>
 
+
+        <div className="space-y-1">
+          <Label>Data do Pedido*</Label>
+          <Controller
+            name="orderDate"
+            control={control}
+            render={({ field }) => (
+              <Popover open={openOrderDateCalendar} onOpenChange={setOpenOrderDateCalendar}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between font-normal">
+                    {field.value
+                      ? new Date(field.value).toLocaleDateString("pt-BR")
+                      : "Selecionar"}
+                    <CalendarSearch className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0">
+                  <Calendar
+                    mode="single"
+                    selected={field.value ? new Date(field.value) : undefined}
+                    onSelect={(date) => {
+                      field.onChange(date?.toISOString());
+                      setOpenOrderDateCalendar(false);
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
+          />
+        </div>
+
+
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <Label>Prestador</Label>
@@ -427,13 +466,15 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
               {...register("provider")}
             />
           </div>
+
+
           <div className="space-y-1">
             <Label>Data do Agendamento</Label>
             <Controller
               name="scheduledDate"
               control={control}
               render={({ field }) => (
-                <Popover open={openCalendar} onOpenChange={setOpenCalendar}>
+                <Popover open={openScheduledDateCalendar} onOpenChange={setOpenScheduledDateCalendar}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-between font-normal">
                       {field.value
@@ -448,7 +489,7 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
                       selected={field.value ? new Date(field.value) : undefined}
                       onSelect={(date) => {
                         field.onChange(date?.toISOString());
-                        setOpenCalendar(false);
+                        setOpenScheduledDateCalendar(false); // ✅ fecha só este
                       }}
                     />
                   </PopoverContent>
