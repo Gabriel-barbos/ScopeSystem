@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Upload, Download, FileSpreadsheet, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { SCHEDULE_IMPORT_COLUMNS } from "@/utils/ScheduleImportconfig"
 
 interface EditScheduleModalProps {
     open: boolean
@@ -34,13 +35,13 @@ const COLUMN_MAPPING = {
     "Condutor": "condutor",
     "Situação": "situation",
     "Grupo de Veículo": "vehicleGroup",
+    "Data do Pedido": "orderDate",
     // Nomes alternativos aceitos:
     "VIN": "vin",
     "Data Agendamento": "scheduledDate",
     "Observacoes": "notes",
     "Grupo de Veículos": "vehicleGroup",
     "fabricante": "product",
-    "Data do Pedido": "orderDate"
 }
 
 export function EditScheduleModal({
@@ -57,37 +58,32 @@ export function EditScheduleModal({
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 20
 
-    const handleFileUpload = (file: File) => {
-        if (!file) return
+  const handleFileUpload = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = (event) => {
+        const wb = XLSX.read(event.target?.result, { type: "binary" })
+        const ws = wb.Sheets[wb.SheetNames[0]]
+        const jsonData = XLSX.utils.sheet_to_json(ws)
 
-        setFileName(file.name)
-        const reader = new FileReader()
-        reader.onload = (event) => {
-            const wb = XLSX.read(event.target?.result, { type: "binary" })
-            const ws = wb.Sheets[wb.SheetNames[0]]
-            const jsonData = XLSX.utils.sheet_to_json(ws)
+        const mappedData = jsonData.map(row => {
+            const mapped: Record<string, any> = {}
 
-            console.log("Dados brutos do Excel:", jsonData)
-            console.log(" Mapeamento de colunas:", COLUMN_MAPPING)
+            for (const { header, aliases = [], field } of SCHEDULE_IMPORT_COLUMNS) {
+                // Testa o header principal e todos os aliases
+                const matchedKey = [header, ...aliases].find(key => row[key] !== undefined)
+                if (matchedKey !== undefined) {
+                    mapped[field] = row[matchedKey]
+                }
+            }
 
-            const mappedData = jsonData.map(row => {
-                const mapped = Object.entries(COLUMN_MAPPING).reduce((acc, [excelCol, dbField]) => {
-                    if (row[excelCol] !== undefined) {
-                        acc[dbField] = row[excelCol]
-                    }
-                    return acc
-                }, {} as Record<string, any>)
-                
-                console.log("Linha mapeada:", mapped)
-                return mapped
-            })
+            return mapped
+        })
 
-            console.log("✅ Dados finais mapeados:", mappedData)
-            setData(mappedData)
-            setCurrentPage(1)
-        }
-        reader.readAsBinaryString(file)
+        setData(mappedData)
+        setCurrentPage(1)
     }
+    reader.readAsBinaryString(file)
+}
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault()
