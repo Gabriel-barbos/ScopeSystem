@@ -13,7 +13,7 @@ export const SCHEDULE_IMPORT_COLUMNS: ColumnConfig[] = [
   { header: "TipoServico",         field: "serviceType",      required: true,  aliases: ["Serviço", "Tipo"] },
   { header: "Placa",               field: "plate",            required: false },
   { header: "Modelo",              field: "model",            required: true, aliases: ["Modelo do Carro"] },
-  { header: "Data",                field: "scheduledDate",    required: false },
+  { header: "Data",                field: "scheduledDate",    required: false, aliases: ["data", "DATA", "Data Agendamento"] },
   { header: "Prestador",           field: "provider",         required: false, aliases: ["Técnico"] },
   { header: "NumeroPedido",        field: "orderNumber",      required: false, aliases: ["Lista nº", "Pedido"] },
   { header: "Endereco",            field: "serviceAddress",   required: false, aliases: ["Endereço"] },

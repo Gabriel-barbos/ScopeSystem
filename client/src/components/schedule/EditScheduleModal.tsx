@@ -17,29 +17,29 @@ interface EditScheduleModalProps {
 const DATE_FIELDS = new Set(["scheduledDate", "orderDate"])
 
 function parseExcelDate(value: any): string | undefined {
-    if (!value) return undefined
+  if (!value) return undefined
 
-    if (typeof value === "number") {
-        const date = new Date((value - 25569) * 86400 * 1000)
-        const d = date.getUTCDate()
-        const m = date.getUTCMonth() + 1
-        const y = date.getUTCFullYear()
-        return `${d}/${m}/${y}`
+  if (typeof value === "number") {
+    const date = new Date((value - 25569) * 86400 * 1000)
+    const d = String(date.getUTCDate()).padStart(2, "0")
+    const m = String(date.getUTCMonth() + 1).padStart(2, "0")
+    const y = date.getUTCFullYear()
+    return `${d}/${m}/${y}`
+  }
+
+  if (typeof value === "string") {
+    const parts = value.includes("/") ? value.split("/") : null
+    if (parts?.length === 3) return value
+    const date = new Date(value)
+    if (!isNaN(date.getTime())) {
+      const d = String(date.getUTCDate()).padStart(2, "0")
+      const m = String(date.getUTCMonth() + 1).padStart(2, "0")
+      const y = date.getUTCFullYear()
+      return `${d}/${m}/${y}`
     }
+  }
 
-    if (typeof value === "string") {
-        const parts = value.includes("/") ? value.split("/") : null
-        if (parts?.length === 3) return value 
-        const date = new Date(value)
-        if (!isNaN(date.getTime())) {
-            const d = date.getUTCDate()
-            const m = date.getUTCMonth() + 1
-            const y = date.getUTCFullYear()
-            return `${d}/${m}/${y}`
-        }
-    }
-
-    return undefined
+  return undefined
 }
 
 export function EditScheduleModal({
