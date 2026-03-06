@@ -34,12 +34,10 @@ import { getDateRangeFromPeriod } from "@/utils/dateUtils";
 
 
 const statsConfig = {
-  agendamentos: [
-     { key: "concluidos", title: "Concluídos", icon: CheckCircle, color: "#52c41a" },
-    { key: "pendentes", title: "Pendentes", icon: Clock, color: "#faad14" },
-    { key: "cancelados", title: "Cancelados", icon: XCircle, color: "#ff4d4f" },
-   
-  ],
+agendamentos: [
+  { key: "instalacoes", title: "Instalações", icon: Wrench,   color: "#1890ff" },
+  { key: "manutencoes", title: "Manutenções", icon: Settings, color: "#722ed1" },
+],
   servicos: [
     { key: "instalacoes", title: "Instalações", icon: Wrench, color: "#1890ff" },
     { key: "manutencoes", title: "Manutenções", icon: Settings, color: "#722ed1" },
@@ -187,8 +185,8 @@ function Reports() {
 
         {/* Agendamentos */}
         <section className="space-y-3">
-          <h3 className="text-lg font-semibold">Agendamentos</h3>
-          <div className="grid grid-cols-3 gap-4">
+          <h3 className="text-lg font-semibold">Pendências - Agendamentos</h3>
+          <div className="grid grid-cols-2 gap-4">
             {statsConfig.agendamentos.map(({ key, ...props }) => (
               <StatCard
                 key={key}
@@ -201,7 +199,6 @@ function Reports() {
 
         {/* Indicadores */}
         <section className="space-y-3">
-          <h3 className="text-lg font-semibold">Indicadores</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <PieChartPending data={data?.pendingByClient ?? []} />
             <BarChartPendingTecnics data={data?.pendingByProvider ?? []} />
