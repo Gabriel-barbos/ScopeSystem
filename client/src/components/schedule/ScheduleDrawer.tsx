@@ -63,7 +63,6 @@ const STATUS_OPTIONS = [
   { value: "atrasado",   label: "Atrasado" },
 ];
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
 
 const isMaintenance = (t: string) => t === "maintenance";
 const getClientId = (c: Schedule["client"]) => (typeof c === "string" ? c : c._id);
@@ -71,7 +70,6 @@ const getProductId = (p: Schedule["product"]) => (typeof p === "string" ? p : p?
 const getInitials = (name: string) =>
   name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
 
 type FieldProps = {
   editing: boolean;
@@ -92,14 +90,12 @@ const Field = ({ editing, icon, label, value, onChange, placeholder }: FieldProp
     <InfoField icon={icon} label={label} value={value || "Não informado"} />
   );
 
-// Cabeçalho de seção
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
     {children}
   </p>
 );
 
-// ─── Component ─────────────────────────────────────────────────────────────────
 
 const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
   const [isEditing, setIsEditing]       = useState(false);
@@ -180,7 +176,6 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
   ? new Date(data.orderDate).toLocaleDateString("pt-BR")
   : "Não informado";
 
-  // ── Handlers
   const handleEdit   = () => { setEditedSchedule({ ...schedule }); setIsEditing(true); };
   const handleCancel = resetEditState;
 
@@ -207,6 +202,7 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
         ...(isMaintenance(editedSchedule.serviceType) && {
           responsiblePhone: editedSchedule.responsiblePhone,
           condutor:         editedSchedule.condutor,
+          orderDate: editedSchedule.orderDate,
         }),
       };
       await updateSchedule.mutateAsync({ id: editedSchedule._id, payload });

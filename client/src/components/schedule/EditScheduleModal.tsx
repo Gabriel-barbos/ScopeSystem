@@ -14,34 +14,32 @@ interface EditScheduleModalProps {
     onUpdate: (data: Record<string, any>[]) => Promise<void>
 }
 
-// Mapeamento: coluna do Excel -> campo do banco (em inglês)
-const COLUMN_MAPPING = {
-    "Chassi": "vin",                   
-    "Status": "status",
-    "Cliente": "client",                
-    "Data": "scheduledDate",
-    "Modelo": "model",
-    "Placa": "plate",
-    "Tipo de Serviço": "serviceType",
-    "Equipamento": "product",            
-    "Produto": "product",
-    "Observações": "notes",
-    "Prestador": "provider",
-    "Número do Pedido": "orderNumber",
-    "Endereço": "serviceAddress",
-    "Local do Serviço": "serviceLocation",
-    "Responsável": "responsible",
-    "Telefone do Responsável": "responsiblePhone",
-    "Condutor": "condutor",
-    "Situação": "situation",
-    "Grupo de Veículo": "vehicleGroup",
-    "Data do Pedido": "orderDate",
-    // Nomes alternativos aceitos:
-    "VIN": "vin",
-    "Data Agendamento": "scheduledDate",
-    "Observacoes": "notes",
-    "Grupo de Veículos": "vehicleGroup",
-    "fabricante": "product",
+const DATE_FIELDS = new Set(["scheduledDate", "orderDate"])
+
+function parseExcelDate(value: any): string | undefined {
+    if (!value) return undefined
+
+    if (typeof value === "number") {
+        const date = new Date((value - 25569) * 86400 * 1000)
+        const d = date.getUTCDate()
+        const m = date.getUTCMonth() + 1
+        const y = date.getUTCFullYear()
+        return `${d}/${m}/${y}`
+    }
+
+    if (typeof value === "string") {
+        const parts = value.includes("/") ? value.split("/") : null
+        if (parts?.length === 3) return value 
+        const date = new Date(value)
+        if (!isNaN(date.getTime())) {
+            const d = date.getUTCDate()
+            const m = date.getUTCMonth() + 1
+            const y = date.getUTCFullYear()
+            return `${d}/${m}/${y}`
+        }
+    }
+
+    return undefined
 }
 
 export function EditScheduleModal({
@@ -68,11 +66,12 @@ export function EditScheduleModal({
         const mappedData = jsonData.map(row => {
             const mapped: Record<string, any> = {}
 
-            for (const { header, aliases = [], field } of SCHEDULE_IMPORT_COLUMNS) {
-                // Testa o header principal e todos os aliases
+         for (const { header, aliases = [], field } of SCHEDULE_IMPORT_COLUMNS) {
                 const matchedKey = [header, ...aliases].find(key => row[key] !== undefined)
                 if (matchedKey !== undefined) {
-                    mapped[field] = row[matchedKey]
+                    mapped[field] = DATE_FIELDS.has(field)
+                        ? parseExcelDate(row[matchedKey])
+                        : row[matchedKey]
                 }
             }
 
