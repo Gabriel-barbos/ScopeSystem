@@ -19,7 +19,7 @@ import {
   TimerReset,
 SearchX,
 OctagonX,
-MailCheck
+MailWarning 
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
@@ -108,7 +108,7 @@ export const statusConfig: Record<StatusType, BadgeConfig> = {
     label: "Aguardando Cliente",
     className:
       "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300 border-fuchsia-200 dark:border-fuchsia-800",
-    icon: MailCheck,
+    icon: MailWarning,
   },
   waiting_address: {
     label: "Aguardando Endereço",
