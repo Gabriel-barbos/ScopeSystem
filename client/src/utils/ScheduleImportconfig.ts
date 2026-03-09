@@ -1,3 +1,4 @@
+import { parseExcelDate, DATE_FIELDS } from "@/utils/Exceldateutils"
 
 export interface ColumnConfig {
   header: string
@@ -12,9 +13,9 @@ export const SCHEDULE_IMPORT_COLUMNS: ColumnConfig[] = [
   { header: "Status",              field: "status",           required: false },
   { header: "TipoServico",         field: "serviceType",      required: true,  aliases: ["Serviço", "Tipo"] },
   { header: "Placa",               field: "plate",            required: false },
-  { header: "Modelo",              field: "model",            required: true, aliases: ["Modelo do Carro"] },
+  { header: "Modelo",              field: "model",            required: true,  aliases: ["Modelo do Carro"] },
   { header: "Data",                field: "scheduledDate",    required: false, aliases: ["data", "DATA", "Data Agendamento"] },
-  { header: "Prestador",           field: "provider",         required: false, aliases: ["Técnico"] },
+  { header: "Prestador",           field: "provider",         required: false, aliases: ["Técnico", "Tecnico"] },
   { header: "NumeroPedido",        field: "orderNumber",      required: false, aliases: ["Lista nº", "Pedido"] },
   { header: "Endereco",            field: "serviceAddress",   required: false, aliases: ["Endereço"] },
   { header: "LocalServico",        field: "serviceLocation",  required: false },
@@ -25,15 +26,13 @@ export const SCHEDULE_IMPORT_COLUMNS: ColumnConfig[] = [
   { header: "Situacao",            field: "situation",        required: false },
   { header: "Observacoes",         field: "notes",            required: false },
   { header: "Equipamento",         field: "product",          required: false, aliases: ["Fabricante", "Dispositivo"] },
-  { header: "Data do pedido",      field: "orderDate",        required: true, aliases: ["Data Pedido"] },
-  { header: "Data da remoção",      field: "removalDate",     required: false, aliases: ["Data Remocao","DATA REMOCAO","Data Remoção"] },
-
+  { header: "Data do pedido",      field: "orderDate",        required: true,  aliases: ["Data Pedido", "data de solicitação"] },
+  { header: "Data da remoção",     field: "removalDate",      required: false, aliases: ["Data Remocao", "DATA REMOCAO", "Data Remoção"] },
 ]
-
 
 export const SCHEDULE_COLUMN_MAPPING = Object.fromEntries(
   SCHEDULE_IMPORT_COLUMNS.flatMap(({ header, aliases = [] }) =>
-    [header, ...aliases].map((key) => [key, header]) 
+    [header, ...aliases].map((key) => [key, header])
   )
 )
 
@@ -41,17 +40,25 @@ export const REQUIRED_HEADERS = SCHEDULE_IMPORT_COLUMNS
   .filter((c) => c.required)
   .map((c) => c.header)
 
-
 export function mapRowToPayload(row: Record<string, any>): Record<string, any> {
   const payload: Record<string, any> = {}
 
   for (const { header, field } of SCHEDULE_IMPORT_COLUMNS) {
-    const value = field === "client"  ? row["ClienteId"]
-                : field === "product" ? row["EquipamentoId"]
-                : row[header]
+    // Campos de referência usam os IDs já resolvidos pelo PreviewTable
+    const raw = field === "client"  ? row["ClienteId"]
+              : field === "product" ? row["EquipamentoId"]
+              : row[header]
 
-    if (value !== undefined && value !== null && value !== "") {
-      payload[field] = field === "vin" ? String(value).trim() : value
+    if (raw === undefined || raw === null || raw === "") continue
+
+    if (field === "vin") {
+      payload[field] = String(raw).trim()
+    } else if (DATE_FIELDS.has(field)) {
+      // Converte serial do Excel, DD/MM/YYYY, ISO, etc → "YYYY-MM-DD"
+      const iso = parseExcelDate(raw)
+      if (iso) payload[field] = iso
+    } else {
+      payload[field] = raw
     }
   }
 

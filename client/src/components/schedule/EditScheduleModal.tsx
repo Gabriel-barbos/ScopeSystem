@@ -4,7 +4,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Upload, Download, FileSpreadsheet, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useClientService } from "@/services/ClientService"
+import { findBestMatch } from "@/utils/Matchutils"
 import { SCHEDULE_IMPORT_COLUMNS } from "@/utils/ScheduleImportconfig"
+import { parseExcelDate, formatDateBR, DATE_FIELDS } from "@/utils/Exceldateutils"
 
 interface EditScheduleModalProps {
     open: boolean
@@ -14,33 +17,25 @@ interface EditScheduleModalProps {
     onUpdate: (data: Record<string, any>[]) => Promise<void>
 }
 
-const DATE_FIELDS = new Set(["scheduledDate", "orderDate", "removalDate"])
-
-function parseExcelDate(value: any): string | undefined {
-  if (!value) return undefined
-
-  if (typeof value === "number") {
-    const date = new Date((value - 25569) * 86400 * 1000)
-    const d = String(date.getUTCDate()).padStart(2, "0")
-    const m = String(date.getUTCMonth() + 1).padStart(2, "0")
-    const y = date.getUTCFullYear()
-    return `${d}/${m}/${y}`
-  }
-
-  if (typeof value === "string") {
-    const parts = value.includes("/") ? value.split("/") : null
-    if (parts?.length === 3) return value
-    const date = new Date(value)
-    if (!isNaN(date.getTime())) {
-      const d = String(date.getUTCDate()).padStart(2, "0")
-      const m = String(date.getUTCMonth() + 1).padStart(2, "0")
-      const y = date.getUTCFullYear()
-      return `${d}/${m}/${y}`
-    }
-  }
-
-  return undefined
+// Normaliza para lookup case-insensitive: minúsculo + sem acento + sem espaço lateral
+function normalizeKey(str: string): string {
+    return str
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
 }
+
+// Deriva o mapeamento de SCHEDULE_IMPORT_COLUMNS (fonte única de verdade)
+// Resultado: { "chassi" → "vin", "cliente" → "client", "tiposervico" → "serviceType", ... }
+// Todas as chaves já são normalizadas, então o lookup é sempre case-insensitive
+const COLUMN_MAPPING: Record<string, string> = Object.fromEntries(
+    SCHEDULE_IMPORT_COLUMNS.flatMap(({ header, aliases = [], field }) =>
+        [header, ...aliases]
+            .filter(Boolean)
+            .map((key) => [normalizeKey(key), field])
+    )
+)
 
 export function EditScheduleModal({
     open,
@@ -56,53 +51,64 @@ export function EditScheduleModal({
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 20
 
-  const handleFileUpload = (file: File) => {
-    const reader = new FileReader()
-    reader.onload = (event) => {
-        const wb = XLSX.read(event.target?.result, { type: "binary" })
-        const ws = wb.Sheets[wb.SheetNames[0]]
-        const jsonData = XLSX.utils.sheet_to_json(ws)
+    // Carrega clientes para resolver nome → _id no campo "client"
+    const { data: clientsRaw } = useClientService()
+    const clients = (clientsRaw as any)?.data ?? clientsRaw ?? []
 
-        const mappedData = jsonData.map(row => {
-            const mapped: Record<string, any> = {}
+    const handleFileUpload = (file: File) => {
+        if (!file) return
 
-         for (const { header, aliases = [], field } of SCHEDULE_IMPORT_COLUMNS) {
-                const matchedKey = [header, ...aliases].find(key => row[key] !== undefined)
-                if (matchedKey !== undefined) {
-                    mapped[field] = DATE_FIELDS.has(field)
-                        ? parseExcelDate(row[matchedKey])
-                        : row[matchedKey]
+        setFileName(file.name)
+        const reader = new FileReader()
+        reader.onload = (event) => {
+            const wb = XLSX.read(event.target?.result, { type: "binary" })
+            const ws = wb.Sheets[wb.SheetNames[0]]
+            const jsonData = XLSX.utils.sheet_to_json(ws) as Record<string, any>[]
+
+            const mappedData = jsonData.map(row => {
+                const result: Record<string, any> = {}
+
+                for (const [excelCol, value] of Object.entries(row)) {
+                    // Normaliza a chave da coluna do Excel para busca case-insensitive
+                    const normalizedCol = normalizeKey(excelCol)
+                    const dbField = COLUMN_MAPPING[normalizedCol]
+
+                    if (!dbField) continue // ignora colunas desconhecidas
+
+                    if (dbField === "client" && typeof value === "string") {
+                        // Resolve o nome do cliente para seu _id via fuzzy match
+                        const match = findBestMatch(value, clients)
+                        result[dbField] = match?.id ?? value
+                    } else if (DATE_FIELDS.has(dbField)) {
+                        // Converte serial do Excel ou qualquer formato → "YYYY-MM-DD"
+                        result[dbField] = parseExcelDate(value) ?? value
+                    } else {
+                        result[dbField] = value
+                    }
                 }
-            }
 
-            return mapped
-        })
+                return result
+            })
 
-        setData(mappedData)
-        setCurrentPage(1)
+            setData(mappedData)
+            setCurrentPage(1)
+        }
+        reader.readAsBinaryString(file)
     }
-    reader.readAsBinaryString(file)
-}
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault()
         e.stopPropagation()
-        if (e.type === "dragenter" || e.type === "dragover") {
-            setDragActive(true)
-        } else if (e.type === "dragleave") {
-            setDragActive(false)
-        }
+        if (e.type === "dragenter" || e.type === "dragover") setDragActive(true)
+        else if (e.type === "dragleave") setDragActive(false)
     }
 
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault()
         e.stopPropagation()
         setDragActive(false)
-
         const file = e.dataTransfer.files?.[0]
-        if (file?.name.match(/\.(xlsx|xls)$/)) {
-            handleFileUpload(file)
-        }
+        if (file?.name.match(/\.(xlsx|xls)$/)) handleFileUpload(file)
     }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,10 +120,7 @@ export function EditScheduleModal({
         setLoading(true)
         try {
             await onUpdate(data)
-            onOpenChange(false)
-            setData([])
-            setFileName("")
-            setCurrentPage(1)
+            handleClose()
         } finally {
             setLoading(false)
         }
@@ -134,7 +137,6 @@ export function EditScheduleModal({
         try {
             const response = await fetch(templateUrl)
             if (!response.ok) throw new Error("Template não encontrado")
-
             const blob = await response.blob()
             const url = window.URL.createObjectURL(blob)
             const link = document.createElement("a")
@@ -186,130 +188,102 @@ export function EditScheduleModal({
                                     onChange={handleInputChange}
                                     className="hidden"
                                 />
-
                                 <label
                                     htmlFor="edit-file-upload"
                                     className="flex flex-col items-center justify-center py-12 cursor-pointer"
                                 >
-                                    <div className={cn(
-                                        "transition-all duration-300",
-                                        dragActive ? "scale-110" : "scale-100"
-                                    )}>
-                                        <div className="relative">
-                                            <FileSpreadsheet className={cn(
-                                                "text-green-600 w-16 h-16 transition-colors duration-200",
-                                                dragActive ? "text-primary" : "text-muted-foreground"
-                                            )} />
-                                            <div className={cn(
-                                                "absolute inset-0 rounded-full blur-xl transition-opacity duration-300",
-                                                dragActive ? "opacity-20 bg-primary" : "opacity-0"
-                                            )} />
-                                        </div>
+                                    <div className={cn("transition-all duration-300", dragActive ? "scale-110" : "scale-100")}>
+                                        <FileSpreadsheet className={cn(
+                                            "w-16 h-16 transition-colors duration-200",
+                                            dragActive ? "text-primary" : "text-muted-foreground"
+                                        )} />
                                     </div>
-
-                                    <div className="mt-6 text-center space-y-2">
-                                        <p className="text-sm font-medium">
-                                            Arraste o arquivo ou <span className="text-primary">clique para selecionar</span>
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            Formatos aceitos: .xlsx, .xls
-                                        </p>
-                                    </div>
+                                    <p className="mt-4 text-sm font-medium">
+                                        {dragActive ? "Solte o arquivo aqui" : "Arraste ou clique para enviar"}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-1">.xlsx ou .xls</p>
                                 </label>
-
-                                <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-                                    <button
-                                        type="button"
-                                        onClick={handleDownloadTemplate}
-                                        className="text-xs text-muted-foreground hover:text-primary transition-colors duration-200 flex items-center gap-1 group"
-                                    >
-                                        <Download className="w-3 h-3 group-hover:translate-y-0.5 transition-transform duration-200" />
-                                        Baixar template de exemplo
-                                    </button>
-                                </div>
                             </div>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleDownloadTemplate}
+                                className="w-full gap-2"
+                            >
+                                <Download className="w-4 h-4" />
+                                Baixar template de edição
+                            </Button>
                         </div>
                     ) : (
-                        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                            <div className="flex items-center justify-between p-3 bg-accent/50 rounded-lg border">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-primary/10 rounded-md">
-                                        <FileSpreadsheet className="w-4 h-4 text-primary text-green-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium">{fileName}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {data.length} agendamento{data.length > 1 ? "s" : ""} para modificar
-                                        </p>
-                                    </div>
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                                <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                                <div>
+                                    <p className="text-sm font-medium text-green-800 dark:text-green-300">
+                                        {data.length} registro{data.length !== 1 ? "s" : ""} para modificar
+                                    </p>
+                                    <p className="text-xs text-green-600 dark:text-green-400">{fileName}</p>
                                 </div>
-                                <CheckCircle2 className="w-5 h-5 text-green-600" />
                             </div>
 
-                            <div className="space-y-2">
-                                <p className="text-sm font-medium">Pré-visualização</p>
-                                <div className="border rounded-lg overflow-hidden">
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-sm">
-                                            <thead className="bg-muted/50">
-                                                <tr>
-                                                    {Object.keys(data[0] || {}).map(key => (
-                                                        <th key={key} className="px-4 py-2 text-left font-medium">
-                                                            {key}
-                                                        </th>
+                            <div className="border rounded-lg overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-muted/50">
+                                            <tr>
+                                                {Object.keys(data[0] || {}).map(key => (
+                                                    <th key={key} className="px-4 py-2 text-left font-medium whitespace-nowrap">
+                                                        {key}
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {paginatedData.map((row, idx) => (
+                                                <tr key={idx} className="border-t hover:bg-muted/20">
+                                                    {Object.entries(row).map(([key, value], i) => (
+                                                        <td key={i} className="px-4 py-2 whitespace-nowrap text-muted-foreground">
+                                                            {DATE_FIELDS.has(key)
+                                                                ? formatDateBR(value)
+                                                                : String(value ?? "—")}
+                                                        </td>
                                                     ))}
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                {paginatedData.map((row, idx) => (
-                                                    <tr key={idx} className="border-t hover:bg-muted/20">
-                                                        {Object.values(row).map((value, i) => (
-                                                            <td key={i} className="px-4 py-2">
-                                                                {String(value)}
-                                                            </td>
-                                                        ))}
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {totalPages > 1 && (
+                                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                    <span>Página {currentPage} de {totalPages}</span>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
+                                        >
+                                            Anterior
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={currentPage === totalPages}
+                                        >
+                                            Próxima
+                                        </Button>
                                     </div>
                                 </div>
-
-                                {totalPages > 1 && (
-                                    <div className="flex items-center justify-between pt-2">
-                                        <p className="text-xs text-muted-foreground">
-                                            Página {currentPage} de {totalPages}
-                                        </p>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                                disabled={currentPage === 1}
-                                            >
-                                                Anterior
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                                disabled={currentPage === totalPages}
-                                            >
-                                                Próxima
-                                            </Button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                            )}
 
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => {
-                                    setData([])
-                                    setFileName("")
-                                    setCurrentPage(1)
-                                }}
+                                onClick={() => { setData([]); setFileName(""); setCurrentPage(1) }}
                                 className="w-full text-muted-foreground hover:text-foreground"
                             >
                                 Carregar outro arquivo
@@ -327,7 +301,7 @@ export function EditScheduleModal({
                             {loading ? (
                                 <>
                                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                                    Modificando agendamentos...
+                                    Modificando...
                                 </>
                             ) : (
                                 <>
