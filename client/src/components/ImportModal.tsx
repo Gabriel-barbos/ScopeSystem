@@ -18,32 +18,21 @@ interface ImportModalProps {
   templateUrl: string
   templateName: string
   onImport: (data: Record<string, any>[]) => void | Promise<void>
-  // columnMapping agora é opcional — se não for passado, usa SCHEDULE_IMPORT_COLUMNS
-  columnMapping?: Record<string, string>
 }
 
-// Normaliza string para lookup case-insensitive (minúsculo + sem acento)
 function normalizeKey(str: string): string {
-  return str
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
+  return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
 }
 
-// Constrói o mapeamento inicial a partir de SCHEDULE_IMPORT_COLUMNS:
-// { "coluna normalizada do excel" → "field do banco" }
-// Isso detecta automaticamente header + aliases, case-insensitive
+// { "coluna normalizada" → "field do banco" } — usado para deteção automática
 const BASE_COLUMN_MAP: Record<string, string> = Object.fromEntries(
   SCHEDULE_IMPORT_COLUMNS.flatMap(({ header, aliases = [], field }) =>
-    [header, ...aliases]
-      .filter(Boolean)
-      .map((key) => [normalizeKey(key), field])
+    [header, ...aliases].filter(Boolean).map((key) => [normalizeKey(key), field])
   )
 )
 
-// Dado um array de colunas do Excel, retorna o mapeamento inicial
-// { "nome exato da coluna" → "field" } para as que forem reconhecidas
+// Detecta automaticamente quais colunas do Excel mapeiam para qual field
+// Retorna { "Chassi" → "vin", "Data" → "scheduledDate", ... }
 function buildInitialMapping(excelCols: string[]): Record<string, string> {
   const result: Record<string, string> = {}
   for (const col of excelCols) {
@@ -53,20 +42,29 @@ function buildInitialMapping(excelCols: string[]): Record<string, string> {
   return result
 }
 
-// Aplica o mapeamento nos dados brutos do Excel
-// Converte { "coluna Excel" → valor } em { "field do banco" → valor }
-function applyMapping(
+// Converte rawData (colunas PT) → payload (fields EN) apenas no momento de importar
+// Também aplica conversão de datas e preserva ClienteId/EquipamentoId resolvidos pela PreviewTable
+function buildPayload(
   rows: Record<string, any>[],
   mapping: Record<string, string>
 ): Record<string, any>[] {
   return rows.map((row) => {
     const result: Record<string, any> = {}
-    for (const [excelCol, value] of Object.entries(row)) {
-      const field = mapping[excelCol]
-      if (field) {
-        result[field] = DATE_FIELDS.has(field) ? parseExcelDate(value) ?? value : value
+
+    for (const [excelCol, field] of Object.entries(mapping)) {
+      // Para client e product, usa os IDs já resolvidos pela PreviewTable se existirem
+      if (field === "client") {
+        result[field] = row["ClienteId"] ?? row[excelCol]
+      } else if (field === "product") {
+        result[field] = row["EquipamentoId"] ?? row[excelCol]
+      } else if (DATE_FIELDS.has(field)) {
+        const parsed = parseExcelDate(row[excelCol])
+        if (parsed) result[field] = parsed
+      } else if (row[excelCol] !== undefined && row[excelCol] !== null && row[excelCol] !== "") {
+        result[field] = field === "vin" ? String(row[excelCol]).trim() : row[excelCol]
       }
     }
+
     return result
   })
 }
@@ -79,9 +77,9 @@ export function ImportModal({
   templateName,
   onImport,
 }: ImportModalProps) {
-  // Dados brutos do Excel, com as colunas originais intactas
+  // rawData sempre em português (colunas originais do Excel) — nunca convertido
   const [rawData, setRawData] = useState<Record<string, any>[]>([])
-  // Mapeamento editável: coluna Excel → field do banco
+  // mapping: { "coluna Excel PT" → "field banco EN" }
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({})
 
   const [loading, setLoading] = useState(false)
@@ -91,28 +89,30 @@ export function ImportModal({
   const { data: products } = useProductService()
   const { data: clients } = useClientService()
 
-  // Colunas que vieram do Excel (nomes originais, para exibição no painel)
   const excelColumns = useMemo(
     () => (rawData.length > 0 ? Object.keys(rawData[0]) : []),
     [rawData]
   )
 
-  // Dados já mapeados para os fields do banco, prontos para a PreviewTable e para importar
-  const mappedData = useMemo(
-    () => applyMapping(rawData, columnMapping),
-    [rawData, columnMapping]
+  // Qual coluna do Excel corresponde a "client" e "product" no mapeamento atual
+  // Passado para a PreviewTable para ela saber qual coluna exibir o select de match
+  const clientColumn = useMemo(
+    () => Object.entries(columnMapping).find(([, f]) => f === "client")?.[0] ?? "Cliente",
+    [columnMapping]
+  )
+  const productColumn = useMemo(
+    () => Object.entries(columnMapping).find(([, f]) => f === "product")?.[0] ?? "Equipamento",
+    [columnMapping]
   )
 
   const handleFileUpload = (file: File) => {
     if (!file) return
     setFileName(file.name)
-
     const reader = new FileReader()
     reader.onload = (event) => {
       const wb = XLSX.read(event.target?.result, { type: "binary" })
       const ws = wb.Sheets[wb.SheetNames[0]]
       const jsonData = XLSX.utils.sheet_to_json(ws) as Record<string, any>[]
-
       setRawData(jsonData)
       setColumnMapping(buildInitialMapping(Object.keys(jsonData[0] ?? {})))
     }
@@ -142,7 +142,8 @@ export function ImportModal({
   const handleImport = async () => {
     setLoading(true)
     try {
-      await onImport(mappedData)
+      // Conversão para EN acontece AQUI, não antes — rawData sempre fica em PT
+      await onImport(buildPayload(rawData, columnMapping))
       handleClose()
     } finally {
       setLoading(false)
@@ -184,7 +185,6 @@ export function ImportModal({
 
         <div className="flex-1 overflow-y-auto space-y-6 pr-1">
           {rawData.length === 0 ? (
-            /* ── Upload ───────────────────────────────────────────────── */
             <div className="space-y-3">
               <div
                 onDragEnter={handleDrag}
@@ -194,27 +194,13 @@ export function ImportModal({
                 className={cn(
                   "relative border-2 border-dashed rounded-lg transition-all duration-200",
                   "hover:border-primary/50 hover:bg-accent/5",
-                  dragActive
-                    ? "border-primary bg-accent/10 scale-[1.01]"
-                    : "border-muted-foreground/55"
+                  dragActive ? "border-primary bg-accent/10 scale-[1.01]" : "border-muted-foreground/55"
                 )}
               >
-                <input
-                  type="file"
-                  id="file-upload"
-                  accept=".xlsx,.xls"
-                  onChange={handleInputChange}
-                  className="hidden"
-                />
-                <label
-                  htmlFor="file-upload"
-                  className="flex flex-col items-center justify-center py-12 cursor-pointer"
-                >
+                <input type="file" id="file-upload" accept=".xlsx,.xls" onChange={handleInputChange} className="hidden" />
+                <label htmlFor="file-upload" className="flex flex-col items-center justify-center py-12 cursor-pointer">
                   <div className={cn("transition-all duration-300", dragActive ? "scale-110" : "scale-100")}>
-                    <FileSpreadsheet className={cn(
-                      "w-16 h-16 transition-colors duration-200",
-                      dragActive ? "text-primary" : "text-muted-foreground"
-                    )} />
+                    <FileSpreadsheet className={cn("w-16 h-16 transition-colors duration-200", dragActive ? "text-primary" : "text-muted-foreground")} />
                   </div>
                   <p className="mt-4 text-sm font-medium">
                     {dragActive ? "Solte o arquivo aqui" : "Arraste ou clique para enviar"}
@@ -223,20 +209,13 @@ export function ImportModal({
                 </label>
               </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDownloadTemplate}
-                className="w-full gap-2"
-              >
+              <Button variant="outline" size="sm" onClick={handleDownloadTemplate} className="w-full gap-2">
                 <Download className="w-4 h-4" />
                 Baixar template
               </Button>
             </div>
           ) : (
-            /* ── Arquivo carregado ────────────────────────────────────── */
             <div className="space-y-5">
-              {/* Cabeçalho com nome do arquivo */}
               <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
                 <div>
@@ -247,30 +226,23 @@ export function ImportModal({
                 </div>
               </div>
 
-              {/* Painel de mapeamento de colunas */}
+              {/* Painel mostra colunas PT → campo PT (FIELD_LABELS resolve field→header) */}
               <ColumnMappingPanel
                 excelColumns={excelColumns}
                 mapping={columnMapping}
                 onMappingChange={setColumnMapping}
               />
 
-              {/* Preview da tabela com dados já mapeados */}
               <div className="space-y-2">
                 <p className="text-sm font-medium">Pré-visualização dos dados</p>
+                {/* PreviewTable recebe rawData (PT) — nunca dados convertidos */}
                 <PreviewTable
-                  data={mappedData}
-                  onDataChange={(updated) => {
-                    // PreviewTable devolve os dados com ClienteId/EquipamentoId resolvidos
-                    // Precisamos sincronizar de volta com o rawData
-                    // Como os índices são 1:1, reconstruímos o rawData com os IDs
-                    setRawData((prev) =>
-                      prev.map((row, i) => ({ ...row, ...updated[i] }))
-                    )
-                  }}
+                  data={rawData}
+                  onDataChange={setRawData}
                   products={products?.filter((p: any) => p.category === "Dispositivo")}
                   clients={clients}
-                  productColumn="product"
-                  clientColumn="client"
+                  productColumn={productColumn}
+                  clientColumn={clientColumn}
                 />
               </div>
 
