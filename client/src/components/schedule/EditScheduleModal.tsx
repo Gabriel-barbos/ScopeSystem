@@ -14,7 +14,7 @@ interface EditScheduleModalProps {
     onUpdate: (data: Record<string, any>[]) => Promise<void>
 }
 
-const DATE_FIELDS = new Set(["scheduledDate", "orderDate"])
+const DATE_FIELDS = new Set(["scheduledDate", "orderDate", "removalDate"])
 
 function parseExcelDate(value: any): string | undefined {
   if (!value) return undefined

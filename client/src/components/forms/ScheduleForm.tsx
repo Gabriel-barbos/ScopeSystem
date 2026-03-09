@@ -316,6 +316,8 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
                   <SelectItem value="maintenance">Manutenção</SelectItem>
                   <SelectItem value="installation">Instalação</SelectItem>
                   <SelectItem value="removal">Remoção</SelectItem>
+                  <SelectItem value="diagnostic">Diagnóstico</SelectItem>
+                  <SelectItem value="reinstallation">Reinstalação</SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -489,7 +491,7 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
                       selected={field.value ? new Date(field.value) : undefined}
                       onSelect={(date) => {
                         field.onChange(date?.toISOString());
-                        setOpenScheduledDateCalendar(false); // ✅ fecha só este
+                        setOpenScheduledDateCalendar(false); 
                       }}
                     />
                   </PopoverContent>

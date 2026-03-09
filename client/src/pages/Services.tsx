@@ -63,7 +63,6 @@ function ServiceBadge({ type, config }: { type: string; config: ReturnType<typeo
     );
 }
 
-// 🆕 Formata a data de forma legível
 function formatValidatedAt(dateStr: string): string {
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
@@ -78,7 +77,10 @@ function ServiceItem({ service, onOpen }: { service: Service; onOpen: (s: Servic
     const svcConfig = getServiceConfig(service.serviceType);
 
     return (
-        <div className="flex items-center gap-4 px-4 py-3.5 rounded-xl border bg-card hover:bg-accent/30 hover:border-primary/20 transition-all duration-150 group">
+        <div
+            onClick={() => onOpen(service)}
+            className="flex items-center gap-4 px-4 py-3.5 rounded-xl border bg-card hover:bg-accent/30 hover:border-primary/20 transition-all duration-150 group cursor-pointer"
+        >
             <div className="shrink-0 h-12 w-12 rounded-lg overflow-hidden bg-muted flex items-center justify-center ring-1 ring-border">
                 {service.client?.image?.[0] ? (
                     <img src={service.client.image[0]} alt={service.client.name} className="h-full w-full object-cover" />
@@ -103,7 +105,6 @@ function ServiceItem({ service, onOpen }: { service: Service; onOpen: (s: Servic
                     )}
                     <span className="text-xs text-muted-foreground font-mono">{service.deviceId}</span>
 
-                    {/* 🆕 Data de validação */}
                     {service.validatedAt && (
                         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/70">
                             <CalendarCheck className="h-3 w-3 shrink-0" />
@@ -117,7 +118,10 @@ function ServiceItem({ service, onOpen }: { service: Service; onOpen: (s: Servic
                 variant="ghost"
                 size="sm"
                 className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => onOpen(service)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onOpen(service);
+                }}
             >
                 <Eye className="h-4 w-4 mr-1.5" />
                 Detalhes
@@ -190,9 +194,6 @@ export default function Services() {
         search: debouncedSearch || undefined,
     });
 
-    // ✅ Fix: isSearching derivado diretamente dos estados, sem useEffect
-    // Está "pesquisando" enquanto o usuário digitou algo diferente do debounced (aguardando delay)
-    // OU enquanto a query está buscando dados na API
     const isSearching = search !== debouncedSearch || isFetching;
 
     const services = data?.data ?? [];

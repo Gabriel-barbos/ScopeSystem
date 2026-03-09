@@ -25,7 +25,7 @@ export interface Schedule {
   notes?: string;
   client: ClientRef;
   product?: ProductRef;
-  status: "criado" | "agendado" | "concluido" | "atrasado" | "cancelado";
+  status: "criado" | "agendado" | "concluido" | "frustrado" | "cancelado" | "atrasado"; 
   provider?: string;
   vehicleGroup?: string;
   responsible?: string;
@@ -38,6 +38,7 @@ export interface Schedule {
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
+  removalDate?: string;
 }
 
 export interface SchedulePayload {
@@ -49,7 +50,7 @@ export interface SchedulePayload {
   notes?: string;
   client: string;
   product?: string;
-  status?: "criado" | "agendado" | "concluido" | "atrasado" | "cancelado";
+  status?: "criado" | "agendado" | "concluido" | "atrasado" | "cancelado"| "frustrado";
   createdBy?: string;
   orderNumber?: string;
   provider?: string;
@@ -61,6 +62,7 @@ export interface SchedulePayload {
   vehicleGroup?: string;
   orderDate?: string;
   situation?: string;
+  removalDate?: string;
 }
 
 export interface BulkUpdatePayload {

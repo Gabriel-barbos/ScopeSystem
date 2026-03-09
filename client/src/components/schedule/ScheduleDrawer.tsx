@@ -25,7 +25,7 @@ import {
   Pencil, Trash2, Car, Hash, Wrench, CalendarCheck, ContactRound,
   KeySquare, SatelliteDish, X, Check, ChevronsUpDown, CalendarSearch,
   UserCog, Folder, MapPin, Phone, User, ClipboardList, Navigation,
-  FileText,
+  FileText, CalendarX,
 } from "lucide-react";
 import { getStatusConfig } from "@/utils/badges";
 import InfoField from "@/components/global/InfoField";
@@ -50,24 +50,30 @@ type Product = { _id: string; name: string };
 
 
 const SERVICE_TYPES: Record<string, string> = {
-  installation: "Instalação",
-  maintenance: "Manutenção",
-  removal: "Remoção",
+  installation:    "Instalação",
+  maintenance:     "Manutenção",
+  removal:         "Remoção",
+  reinstallation:  "Reinstalação",
+  diagnostic:      "Remoção Diagnóstico",
 };
 
 const STATUS_OPTIONS = [
-  { value: "criado",     label: "Criado" },
-  { value: "agendado",   label: "Agendado" },
-  { value: "concluido",  label: "Concluído" },
-  { value: "cancelado",  label: "Cancelado" },
-  { value: "atrasado",   label: "Atrasado" },
+  { value: "criado",    label: "Criado" },
+  { value: "agendado",  label: "Agendado" },
+  { value: "concluido", label: "Concluído" },
+  { value: "cancelado", label: "Cancelado" },
+  { value: "atrasado",  label: "Atrasado" },
+  { value: "frustrado", label: "Frustrado" },
 ];
 
 
-const isMaintenance = (t: string) => t === "maintenance";
-const getClientId = (c: Schedule["client"]) => (typeof c === "string" ? c : c._id);
+const isMaintenance    = (t: string) => t === "maintenance";
+// ✅ Tipos que exibem o campo removalDate
+const isRemovalService = (t: string) => t === "diagnostic" || t === "reinstallation";
+
+const getClientId  = (c: Schedule["client"]) => (typeof c === "string" ? c : c._id);
 const getProductId = (p: Schedule["product"]) => (typeof p === "string" ? p : p?._id);
-const getInitials = (name: string) =>
+const getInitials  = (name: string) =>
   name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
 
 
@@ -98,16 +104,18 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 
 
 const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
-  const [isEditing, setIsEditing]       = useState(false);
-  const [editedSchedule, setEditedSchedule] = useState<Schedule | null>(null);
-  const [openClient, setOpenClient]     = useState(false);
-  const [openProduct, setOpenProduct]   = useState(false);
-  const [clients, setClients]           = useState<Client[]>([]);
-  const [products, setProducts]         = useState<Product[]>([]);
+  const [isEditing, setIsEditing]             = useState(false);
+  const [editedSchedule, setEditedSchedule]   = useState<Schedule | null>(null);
+  const [openClient, setOpenClient]           = useState(false);
+  const [openProduct, setOpenProduct]         = useState(false);
+  const [clients, setClients]                 = useState<Client[]>([]);
+  const [products, setProducts]               = useState<Product[]>([]);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
-  const [openCalendar, setOpenCalendar] = useState(false);
-  const [openOrderDateCalendar, setOpenOrderDateCalendar] = useState(false);
+  const [openCalendar, setOpenCalendar]                     = useState(false);
+  const [openOrderDateCalendar, setOpenOrderDateCalendar]   = useState(false);
+  // ✅ State dedicado ao calendar de remoção
+  const [openRemovalDateCalendar, setOpenRemovalDateCalendar] = useState(false);
 
   const { updateSchedule, deleteSchedule } = useScheduleService();
   const queryClient = useQueryClient();
@@ -121,11 +129,12 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
   const data = isEditing ? editedSchedule : schedule;
   if (!data) return null;
 
-  const isMaint    = isMaintenance(data.serviceType);
-  const statusBadge = getStatusConfig(data.status);
-  const StatusIcon  = statusBadge.icon;
+  const isMaint       = isMaintenance(data.serviceType);
+  // ✅ Flag reativa — recalcula sempre que serviceType muda em edição
+  const isRemoval     = isRemovalService(data.serviceType);
+  const statusBadge   = getStatusConfig(data.status);
+  const StatusIcon    = statusBadge.icon;
 
-  // ── Helpers ──────────────────────────────────────────────────────────────────
 
   const updateField = <K extends keyof Schedule>(field: K, value: Schedule[K]) =>
     setEditedSchedule((prev) => prev && { ...prev, [field]: value });
@@ -135,6 +144,7 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
     setIsEditing(false);
     setOpenCalendar(false);
     setOpenOrderDateCalendar(false);
+    setOpenRemovalDateCalendar(false);
     setOpenClient(false);
     setOpenProduct(false);
   };
@@ -172,9 +182,14 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
       })
     : "Não informado";
 
-    const formattedOrderDate = data.orderDate
-  ? new Date(data.orderDate).toLocaleDateString("pt-BR")
-  : "Não informado";
+  const formattedOrderDate = data.orderDate
+    ? new Date(data.orderDate).toLocaleDateString("pt-BR")
+    : "Não informado";
+
+  // ✅ Data de remoção formatada para exibição
+  const formattedRemovalDate = data.removalDate
+    ? new Date(data.removalDate).toLocaleDateString("pt-BR")
+    : "Não informado";
 
   const handleEdit   = () => { setEditedSchedule({ ...schedule }); setIsEditing(true); };
   const handleCancel = resetEditState;
@@ -202,7 +217,12 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
         ...(isMaintenance(editedSchedule.serviceType) && {
           responsiblePhone: editedSchedule.responsiblePhone,
           condutor:         editedSchedule.condutor,
-          orderDate: editedSchedule.orderDate,
+          orderDate:        editedSchedule.orderDate,
+          removalDate:      editedSchedule.removalDate,
+        }),
+        // ✅ Inclui removalDate no payload apenas para diagnostic e reinstallation
+        ...(isRemovalService(editedSchedule.serviceType) && {
+          removalDate: editedSchedule.removalDate,
         }),
       };
       await updateSchedule.mutateAsync({ id: editedSchedule._id, payload });
@@ -236,67 +256,65 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
         className="min-h-[55vh] max-h-[78vh] h-auto flex flex-col gap-0 p-0"
       >
 
-        {/* ── Header ── */}
-     <SheetHeader className="px-6 py-4 border-b">
-  <div className="flex items-center justify-between">
-    <div className="flex items-center gap-4">
-      {schedule.client && typeof schedule.client !== "string" && schedule.client.image?.[0] && (
-        <img
-          src={schedule.client.image[0]}
-          alt={schedule.client.name}
-          className="w-14 h-14 rounded-lg object-contain bg-white"
-        />
-      )}
-      <div className="flex items-center gap-3">
-        <span className="text-lg font-semibold">{data.vin}</span>
-        <span className={cn(
-          "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border",
-          statusBadge.className
-        )}>
-          <StatusIcon className="h-3.5 w-3.5" />
-          {statusBadge.label}
-        </span>
-      </div>
-    </div>
+        <SheetHeader className="px-6 py-4 border-b">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {schedule.client && typeof schedule.client !== "string" && schedule.client.image?.[0] && (
+                <img
+                  src={schedule.client.image[0]}
+                  alt={schedule.client.name}
+                  className="w-14 h-14 rounded-lg object-contain bg-white"
+                />
+              )}
+              <div className="flex items-center gap-3">
+                <span className="text-lg font-semibold">{data.vin}</span>
+                <span className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border",
+                  statusBadge.className
+                )}>
+                  <StatusIcon className="h-3.5 w-3.5" />
+                  {statusBadge.label}
+                </span>
+              </div>
+            </div>
 
-    <div className="flex gap-2">
-      {isEditing ? (
-        <>
-          <Button variant="outline" size="sm" onClick={handleCancel} className="gap-2">
-            <X className="h-4 w-4" /> Cancelar
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            className="gap-2"
-            disabled={updateSchedule.isPending}
-          >
-            <Check className="h-4 w-4" />
-            {updateSchedule.isPending ? "Salvando..." : "Salvar"}
-          </Button>
-        </>
-      ) : (
-        <>
-          <Button variant="outline" size="sm" onClick={handleEdit} className="gap-2">
-            <Pencil className="h-4 w-4" /> Editar
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setOpenDeleteModal(true)}
-            className="gap-2 text-red-500 hover:text-red-600"
-            disabled={deleteSchedule.isPending}
-          >
-            <Trash2 className="h-4 w-4" />
-            {deleteSchedule.isPending ? "Excluindo..." : "Excluir"}
-          </Button>
-        </>
-      )}
-    </div>
-  </div>
-</SheetHeader>
+            <div className="flex gap-2 mx-4">
+              {isEditing ? (
+                <>
+                  <Button variant="outline" size="sm" onClick={handleCancel} className="gap-2">
+                    <X className="h-4 w-4" /> Cancelar
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSave}
+                    className="gap-2"
+                    disabled={updateSchedule.isPending}
+                  >
+                    <Check className="h-4 w-4" />
+                    {updateSchedule.isPending ? "Salvando..." : "Salvar"}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" size="sm" onClick={handleEdit} className="gap-2">
+                    <Pencil className="h-4 w-4" /> Editar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setOpenDeleteModal(true)}
+                    className="gap-2 text-red-500 hover:text-red-600"
+                    disabled={deleteSchedule.isPending}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {deleteSchedule.isPending ? "Excluindo..." : "Excluir"}
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </SheetHeader>
 
-        {/* ── Body ── */}
         <div className="flex-1 overflow-y-auto">
           <div className="flex gap-0 h-full divide-x">
 
@@ -472,7 +490,6 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
                 <div className="space-y-4">
                   <SectionTitle>Atribuição</SectionTitle>
 
-                  {/* Responsável — sempre visível, com ResponsiblePicker em edição */}
                   {isEditing ? (
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs text-muted-foreground flex items-center gap-1.5">
@@ -530,7 +547,7 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
                   />
                 </div>
 
-                {/* Seção: Manutenção — sempre na grid, condicional */}
+                {/* Seção: Manutenção — condicional */}
                 {isMaint && (
                   <div className="space-y-4">
                     <SectionTitle>Manutenção</SectionTitle>
@@ -580,38 +597,83 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
               </div>
 
               <Separator />
-                <div className="flex flex-col gap-1.5">
-  <SectionTitle>Data do Pedido</SectionTitle>
-  {isEditing ? (
-    <Popover open={openOrderDateCalendar} onOpenChange={setOpenOrderDateCalendar}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" className="w-full justify-between bg-background">
-          <span className="text-sm">
-            {data.orderDate
-              ? new Date(data.orderDate).toLocaleDateString("pt-BR")
-              : "Selecionar data"}
-          </span>
-          <CalendarSearch className="h-3.5 w-3.5 opacity-60" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={data.orderDate ? new Date(data.orderDate) : undefined}
-          onSelect={(date) => {
-            if (date) updateField("orderDate", date.toISOString());
-            setOpenOrderDateCalendar(false);
-          }}
-        />
-      </PopoverContent>
-    </Popover>
-  ) : (
-    <div className="flex items-center gap-2 text-sm">
-      <CalendarSearch className="h-4 w-4 text-muted-foreground" />
-      <span>{formattedOrderDate}</span>
-    </div>
-  )}
-</div>
+
+              {/* Data do Pedido */}
+              <div className="flex flex-col gap-1.5">
+                <SectionTitle>Data do Pedido</SectionTitle>
+                {isEditing ? (
+                  <Popover open={openOrderDateCalendar} onOpenChange={setOpenOrderDateCalendar}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between bg-background">
+                        <span className="text-sm">
+                          {data.orderDate
+                            ? new Date(data.orderDate).toLocaleDateString("pt-BR")
+                            : "Selecionar data"}
+                        </span>
+                        <CalendarSearch className="h-3.5 w-3.5 opacity-60" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={data.orderDate ? new Date(data.orderDate) : undefined}
+                        onSelect={(date) => {
+                          if (date) updateField("orderDate", date.toISOString());
+                          setOpenOrderDateCalendar(false);
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm">
+                    <CalendarSearch className="h-4 w-4 text-muted-foreground" />
+                    <span>{formattedOrderDate}</span>
+                  </div>
+                )}
+              </div>
+
+              {isRemoval && (
+                <>
+                  <Separator />
+                  <div className="flex flex-col gap-1.5">
+                    <SectionTitle>Data de Remoção</SectionTitle>
+                    {isEditing ? (
+                      <Popover
+                        open={openRemovalDateCalendar}
+                        onOpenChange={setOpenRemovalDateCalendar}
+                      >
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-between bg-background">
+                            <span className="text-sm">
+                              {data.removalDate
+                                ? new Date(data.removalDate).toLocaleDateString("pt-BR")
+                                : "Selecionar data"}
+                            </span>
+                            <CalendarX className="h-3.5 w-3.5 opacity-60" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={data.removalDate ? new Date(data.removalDate) : undefined}
+                            onSelect={(date) => {
+                              if (date) updateField("removalDate", date.toISOString());
+                              setOpenRemovalDateCalendar(false);
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm">
+                        <CalendarX className="h-4 w-4 text-muted-foreground" />
+                        <span>{formattedRemovalDate}</span>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              <Separator />
 
               {/* Data agendada */}
               <div className="flex flex-col gap-1.5">

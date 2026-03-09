@@ -16,6 +16,9 @@ import {
   MapPinX,
   UserStar,
   ShoppingBag,
+  TimerReset,
+SearchX,
+OctagonX
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
@@ -24,7 +27,7 @@ import { LucideIcon } from "lucide-react";
 export type StatusType =
   | "criado"
   | "agendado"
-  | "atrasado"
+  | "frustrado"
   | "concluido"
   | "cancelado"
   | "observacao"
@@ -32,7 +35,7 @@ export type StatusType =
   | "waiting_responsible"; 
 
 // Serviços
-export type ServiceType = "maintenance" | "installation" | "removal";
+export type ServiceType = "maintenance" | "installation" | "removal" | "reinstallation" | "diagnostic" ;
 
 export type BackendRole =
   | "administrator"
@@ -75,11 +78,11 @@ export const statusConfig: Record<StatusType, BadgeConfig> = {
       "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800",
     icon: Calendar,
   },
-  atrasado: {
-    label: "Atrasado",
+  frustrado: {
+    label: "Frustrado",
     className:
       "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800",
-    icon: AlertCircle,
+    icon: OctagonX,
   },
   observacao: {
     label: "Em Observação",
@@ -139,6 +142,19 @@ export const serviceConfig: Record<string, BadgeConfig> = {
     className:
       "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700",
     icon: ClipboardList,
+  },
+    diagnostic: {
+    label: "Diagnóstico",
+    className:
+      "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300 border-pink-200 dark:border-pink-800",
+    icon: SearchX,
+  },
+
+     reinstallation: {
+    label: "Reinstalação",
+    className:
+      "bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-300 border-lime-200 dark:border-lime-800",
+    icon: TimerReset,
   },
     //legacy
     manutenção: {

@@ -26,6 +26,8 @@ export const SCHEDULE_IMPORT_COLUMNS: ColumnConfig[] = [
   { header: "Observacoes",         field: "notes",            required: false },
   { header: "Equipamento",         field: "product",          required: false, aliases: ["Fabricante", "Dispositivo"] },
   { header: "Data do pedido",      field: "orderDate",        required: true, aliases: ["Data Pedido"] },
+  { header: "Data da remoção",      field: "removalDate",     required: false, aliases: ["Data Remocao","DATA REMOCAO","Data Remoção"] },
+
 ]
 
 
