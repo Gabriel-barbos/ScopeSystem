@@ -64,11 +64,11 @@ const STATUS_OPTIONS = [
   { value: "cancelado", label: "Cancelado" },
   { value: "atrasado",  label: "Atrasado" },
   { value: "frustrado", label: "Frustrado" },
+  { value: "aguardando_cliente", label: "Aguardando Cliente" },
 ];
 
 
 const isMaintenance    = (t: string) => t === "maintenance";
-// ✅ Tipos que exibem o campo removalDate
 const isRemovalService = (t: string) => t === "diagnostic" || t === "reinstallation";
 
 const getClientId  = (c: Schedule["client"]) => (typeof c === "string" ? c : c._id);
@@ -114,7 +114,6 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
 
   const [openCalendar, setOpenCalendar]                     = useState(false);
   const [openOrderDateCalendar, setOpenOrderDateCalendar]   = useState(false);
-  // ✅ State dedicado ao calendar de remoção
   const [openRemovalDateCalendar, setOpenRemovalDateCalendar] = useState(false);
 
   const { updateSchedule, deleteSchedule } = useScheduleService();
@@ -130,7 +129,6 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
   if (!data) return null;
 
   const isMaint       = isMaintenance(data.serviceType);
-  // ✅ Flag reativa — recalcula sempre que serviceType muda em edição
   const isRemoval     = isRemovalService(data.serviceType);
   const statusBadge   = getStatusConfig(data.status);
   const StatusIcon    = statusBadge.icon;

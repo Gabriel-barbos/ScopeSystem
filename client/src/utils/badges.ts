@@ -18,7 +18,8 @@ import {
   ShoppingBag,
   TimerReset,
 SearchX,
-OctagonX
+OctagonX,
+MailCheck
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
@@ -32,7 +33,8 @@ export type StatusType =
   | "cancelado"
   | "observacao"
   | "waiting_address"      
-  | "waiting_responsible"; 
+  | "waiting_responsible"
+  | "aguardando_cliente"; 
 
 // Serviços
 export type ServiceType = "maintenance" | "installation" | "removal" | "reinstallation" | "diagnostic" ;
@@ -101,6 +103,12 @@ export const statusConfig: Record<StatusType, BadgeConfig> = {
     className:
       "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800",
     icon: CheckCircle,
+  },
+    aguardando_cliente: {
+    label: "Aguardando Cliente",
+    className:
+      "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300 border-fuchsia-200 dark:border-fuchsia-800",
+    icon: MailCheck,
   },
   waiting_address: {
     label: "Aguardando Endereço",
