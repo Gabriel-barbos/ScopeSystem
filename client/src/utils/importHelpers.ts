@@ -1,10 +1,4 @@
-/**
- * importHelpers.ts
- * Utilitários para limpar e transformar dados brutos de planilha
- * antes de enviar ao backend.
- */
 
-// ── Limpeza de strings ──────────────────────────────────────────────────────
 
 /** Remove espaços extras no início, fim e múltiplos espaços internos */
 export function trimAll(value: unknown): string {
@@ -76,27 +70,40 @@ export function cleanRow(row: Record<string, any>): Record<string, any> {
 
 // ── Normalização de serviceType ─────────────────────────────────────────────
 
-const SERVICE_TYPE_MAP: Record<string, string> = {
-  instalacao:   "installation",
-  instalação:   "installation",
-  installation: "installation",
-  manutencao:   "maintenance",
-  manutenção:   "maintenance",
-  maintenance:  "maintenance",
-  remocao:      "removal",
-  remoção:      "removal",
-  removal:      "removal",
-}
-
-/**
- * Normaliza o valor de serviceType para o enum aceito pelo backend.
- * Retorna undefined se não reconhecido.
- */
 export function normalizeServiceType(value: unknown): string | undefined {
-  const key = cleanString(value)
+  const v = cleanString(value)
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\s_-]+/g, "")
 
-  return SERVICE_TYPE_MAP[key]
+  if (v.includes("reinstal"))  return "reinstallation"
+  if (v.includes("instal"))    return "installation"
+  if (v.includes("manut"))     return "maintenance"
+  if (v.includes("remo"))      return "removal"
+  if (v.includes("diagn"))     return "diagnostic"
+  if (v.includes("visita"))    return "diagnostic"
+
+  return undefined
+}
+
+export function normalizeStatus(value: unknown): StatusType | undefined {
+  const v = cleanString(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\s_-]+/g, "")
+
+  if (v.includes("reinstal"))  return undefined // serviceType, não status
+  if (v.includes("aguard"))    return "aguardando_cliente"
+  if (v.includes("waitaddr"))  return "waiting_address"
+  if (v.includes("waitresp"))  return "waiting_responsible"
+  if (v.includes("agenda"))    return "agendado"
+  if (v.includes("conclu"))    return "concluido"
+  if (v.includes("cancel"))    return "cancelado"
+  if (v.includes("frustr"))    return "frustrado"
+  if (v.includes("observ"))    return "observacao"
+  if (v.includes("cri"))       return "criado"
+
+  return undefined
 }

@@ -1,34 +1,12 @@
-/**
- * buildSchedulePayload.ts
- * Transforma as linhas brutas do Excel + mapeamento de colunas
- * em SchedulePayload[] prontos para enviar ao backend.
- *
- * Aplica:
- *  - limpeza de strings (cleanRow)
- *  - conversão de datas Excel (parseExcelDate)
- *  - normalização de VIN e placa
- *  - normalização de serviceType
- *  - resolução de client/product pelos IDs já matchados (ClienteId / EquipamentoId)
- */
-
 import { parseExcelDate, DATE_FIELDS } from "@/utils/Exceldateutils"
-import { cleanRow, normalizeVin, normalizePlate, normalizeServiceType } from "@/utils/importHelpers"
+import { cleanRow, normalizeVin, normalizePlate, normalizeServiceType, normalizeStatus } from "@/utils/importHelpers"
 import type { SchedulePayload } from "@/services/ScheduleService"
 
-/**
- * Converte rawRows (colunas do Excel) para SchedulePayload[]
- * usando o mapeamento coluna → field definido pelo usuário no Step 2.
- *
- * @param rows    - linhas brutas do Excel
- * @param mapping - { "Nome Coluna Excel": "fieldDoSchema" }
- * @param meta    - dados extras como createdBy (usuário logado)
- */
 export function buildSchedulePayload(
   rows: Record<string, any>[],
   mapping: Record<string, string>,
   meta: { createdBy?: string } = {}
 ): SchedulePayload[] {
-  // Inverte o mapping para field → coluna Excel (facilita o lookup por field)
   const fieldToCol = Object.fromEntries(
     Object.entries(mapping).map(([col, field]) => [field, col])
   )
@@ -39,10 +17,7 @@ export function buildSchedulePayload(
   }
 
   return rows.map((rawRow) => {
-    // 1. Limpa todos os campos string
     const row = cleanRow(rawRow)
-
-    // 2. Monta o payload campo a campo
     const payload: Record<string, any> = {}
 
     for (const [field, col] of Object.entries(fieldToCol)) {
@@ -51,7 +26,6 @@ export function buildSchedulePayload(
       if (value === undefined || value === null || value === "") continue
 
       if (DATE_FIELDS.has(field)) {
-        // Converte serial Excel ou string de data → "YYYY-MM-DD"
         const parsed = parseExcelDate(value)
         if (parsed) payload[field] = parsed
         continue
@@ -68,18 +42,23 @@ export function buildSchedulePayload(
       }
 
       if (field === "serviceType") {
-        payload[field] = normalizeServiceType(value)
+        const normalized = normalizeServiceType(value)
+        if (normalized) payload[field] = normalized
+        continue
+      }
+
+      if (field === "status") {
+        const normalized = normalizeStatus(value)
+        if (normalized) payload[field] = normalized
         continue
       }
 
       if (field === "client") {
-        // Prefere o ID resolvido pelo matching (ClienteId), cai no valor bruto
         payload[field] = row["ClienteId"] ?? value
         continue
       }
 
       if (field === "product") {
-        // Prefere o ID resolvido pelo matching (EquipamentoId)
         payload[field] = row["EquipamentoId"] ?? value
         continue
       }
@@ -87,8 +66,11 @@ export function buildSchedulePayload(
       payload[field] = value
     }
 
-    // 3. Campos derivados / defaults
-    payload.status = payload.scheduledDate ? "agendado" : "criado"
+    // Status: usa o da planilha (já normalizado acima) ou deriva do scheduledDate
+    if (!payload.status) {
+      payload.status = payload.scheduledDate ? "agendado" : "criado"
+    }
+
     payload.createdBy = meta.createdBy || "Sistema"
 
     if (!payload.responsible) {
