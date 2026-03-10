@@ -31,18 +31,18 @@ function mapFormToPayload(formData: ValidationFormData) {
 
 function Validation() {
   const [searchQuery, setSearchQuery] = useState("");
-
-   const { scheduleList, isLoading } = useScheduleService({
-    limit: 1000,
-    search: searchQuery || undefined,
-  });
- 
-  const { createFromValidation } = useServiceService();
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [products, setProducts] = useState<ProductRef[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false); // ← guard local
 
-  // Carrega todos os produtos uma vez ao montar — mesma abordagem do ScheduleDrawer
+  const { scheduleList, isLoading } = useScheduleService({
+    limit: 1000,
+    search: searchQuery || undefined,
+  });
+
+  const { createFromValidation } = useServiceService();
+
   useEffect(() => {
     productApi.getAll()
       .then((res) => setProducts(res.data ?? res))
@@ -51,19 +51,33 @@ function Validation() {
 
   const handleValidationSubmit = async (formData: ValidationFormData) => {
     if (!selectedSchedule) return;
+
+    if (isSubmitting || createFromValidation.isPending) return;
+
+    setIsSubmitting(true);
     try {
       await createFromValidation.mutateAsync({
         scheduleId: selectedSchedule._id,
         validationData: mapFormToPayload(formData),
       });
+
+     
+      setSelectedSchedule(null);
       setShowSuccessModal(true);
       toast.success("Validação registrada com sucesso!");
     } catch {
       toast.error("Erro ao validar instalação. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleCancel = () => setSelectedSchedule(null);
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    setSelectedSchedule(null); 
+  };
 
   const handleNewValidation = () => {
     setShowSuccessModal(false);
@@ -80,7 +94,9 @@ function Validation() {
             </div>
             <div>
               <CardTitle className="text-2xl">Validação de Instalação</CardTitle>
-              <CardDescription>Valide e registre os dados de instalação dos equipamentos</CardDescription>
+              <CardDescription>
+                Valide e registre os dados de instalação dos equipamentos
+              </CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -101,7 +117,8 @@ function Validation() {
               <ValidationForm
                 onSubmit={handleValidationSubmit}
                 onCancel={handleCancel}
-                isSubmitting={createFromValidation.isPending}
+                // Combina os dois estados para garantir que o botão fique bloqueado
+                isSubmitting={isSubmitting || createFromValidation.isPending}
                 products={products}
                 defaultProductId={selectedSchedule.product?._id ?? ""}
               />
@@ -114,7 +131,7 @@ function Validation() {
 
       <ValidationSuccessModal
         open={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
+        onClose={handleCloseSuccessModal}  // ← usa o novo handler
         onNewValidation={handleNewValidation}
       />
     </>

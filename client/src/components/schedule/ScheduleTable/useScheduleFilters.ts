@@ -63,6 +63,11 @@ export function useScheduleFilters(dataUpdatedAt?: number) {
     return colFilter?.length ? colFilter.join(",") : undefined;
   }, [tableFilters]);
 
+  const responsible = useMemo(() => {
+    const colFilter = tableFilters["responsible"];
+    return colFilter?.length ? colFilter[0] : undefined;
+  }, [tableFilters]);
+
   const queryParams: ScheduleQueryParams = useMemo(() => ({
     page,
     limit,
@@ -70,7 +75,8 @@ export function useScheduleFilters(dataUpdatedAt?: number) {
     serviceType,
     status,
     client,
-  }), [page, limit, globalSearch, serviceType, status, client]);
+    responsible,
+  }), [page, limit, globalSearch, serviceType, status, client, responsible]);
 
   // ─── Highlight only ──────────────────────────────────────────────────────
 

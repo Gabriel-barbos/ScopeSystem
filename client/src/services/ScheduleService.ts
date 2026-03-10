@@ -99,6 +99,7 @@ export interface ScheduleQueryParams {
   status?: string;
   serviceType?: string;
   client?: string;
+  responsible?: string;
 }
 
 export const scheduleApi = {
@@ -110,7 +111,7 @@ export const scheduleApi = {
         ...(params?.search      && { search:      params.search }),
         ...(params?.status      && { status:      params.status }),
         ...(params?.serviceType && { serviceType: params.serviceType }),
-        ...(params?.client      && { client:      params.client }),
+        ...(params?.responsible && { responsible: params.responsible }),
       },
     });
     return data;

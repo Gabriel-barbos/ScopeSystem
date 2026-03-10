@@ -67,7 +67,7 @@ export default function ScheduleImportPage() {
     setFile(f)
     setExcelColumns(columns)
     setRawRows(rows)
-    setMatchedRows(rows) // começa igual, Step 3 vai enriquecer
+    setMatchedRows(rows) 
     setMapping(buildInitialMapping(columns))
     setErrors([])
     setImportStatus("idle")
@@ -103,7 +103,7 @@ export default function ScheduleImportPage() {
 
   return (
     <div className="min-h-screen bg-page-background">
-      <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
+      <div className=" mx-auto px-4 py-8 space-y-8">
 
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>

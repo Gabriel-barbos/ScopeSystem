@@ -44,20 +44,18 @@ export function findDuplicateIndexes(
   rows: Record<string, any>[],
   keyField: string
 ): Set<number> {
-  const seen = new Map<string, number>() // valor → primeiro índice
-  const duplicates = new Set<number>()
+  const seen = new Map<string, number[]>() // valor → lista de índices
 
   rows.forEach((row, i) => {
     const val = cleanString(row[keyField]).toLowerCase()
     if (!val) return
-
-    if (seen.has(val)) {
-      duplicates.add(i) // marca o duplicado (não o original)
-    } else {
-      seen.set(val, i)
-    }
+    seen.set(val, [...(seen.get(val) ?? []), i])
   })
 
+  const duplicates = new Set<number>()
+  seen.forEach((indexes) => {
+    if (indexes.length > 1) indexes.forEach((i) => duplicates.add(i))
+  })
   return duplicates
 }
 
