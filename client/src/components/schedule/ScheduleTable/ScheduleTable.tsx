@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Input, Button, Tag, Switch, Tooltip as AntTooltip } from "antd";
 import { SearchOutlined, ClearOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,18 +18,21 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 const ScheduleTable: React.FC = () => {
-  const filters = useScheduleFilters();
+  const [dataUpdatedAt, setDataUpdatedAt] = useState<number | undefined>();
+
+  const filters = useScheduleFilters(dataUpdatedAt);
 
   const {
     data: response,
     isLoading,
     isFetching,
-    dataUpdatedAt,
+    dataUpdatedAt: queryDataUpdatedAt,
     refetch,
   } = useScheduleService(filters.queryParams);
 
-  // Passa dataUpdatedAt pro hook de filters via prop
-  const filtersWithUpdate = useScheduleFilters(dataUpdatedAt);
+  useEffect(() => {
+    if (queryDataUpdatedAt) setDataUpdatedAt(queryDataUpdatedAt);
+  }, [queryDataUpdatedAt]);
 
   const schedules  = response?.data       ?? [];
   const pagination = response?.pagination;
