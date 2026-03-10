@@ -50,8 +50,9 @@ export function ScheduleAutocomplete({
   }, [schedules]);
 
   // Servidor já filtrou por search + status — apenas remove removals
-  const filteredSchedules = schedules.filter((s) => s.serviceType !== "removal");
-
+  const filteredSchedules = schedules.filter(
+    (s) => s.serviceType !== "removal" && s.status !== "concluido"
+  );
   const handleInputChange = (value: string) => {
     setSearchValue(value);
     onSearchChange?.(value);
