@@ -30,7 +30,13 @@ function mapFormToPayload(formData: ValidationFormData) {
 }
 
 function Validation() {
-  const { scheduleList, isLoading } = useScheduleService();
+  const [searchQuery, setSearchQuery] = useState("");
+
+   const { scheduleList, isLoading } = useScheduleService({
+    limit: 1000,
+    search: searchQuery || undefined,
+  });
+ 
   const { createFromValidation } = useServiceService();
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -85,6 +91,7 @@ function Validation() {
             isLoading={isLoading}
             onSelect={setSelectedSchedule}
             selectedSchedule={selectedSchedule}
+            onSearchChange={setSearchQuery}
           />
 
           {selectedSchedule ? (

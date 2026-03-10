@@ -23,6 +23,8 @@ interface ScheduleAutocompleteProps {
   isLoading: boolean;
   onSelect: (schedule: Schedule | null) => void;
   selectedSchedule: Schedule | null;
+  onSearchChange?: (value: string) => void;
+
 }
 
 export function ScheduleAutocomplete({
@@ -73,14 +75,14 @@ const filteredSchedules = useMemo(() => {
     setSearchValue(schedule.plate || schedule.vin);
     setOpen(false);
   };
-
-  const handleInputChange = (value: string) => {
-    setSearchValue(value);
-    if (!value.trim()) {
-      onSelect(null);
-      setOpen(false);
-    }
-  };
+const handleInputChange = (value: string) => {
+  setSearchValue(value);
+  onSearchChange?.(value);  
+  if (!value.trim()) {
+    onSelect(null);
+    setOpen(false);
+  }
+};
 
   const handleClear = () => {
     setSearchValue("");

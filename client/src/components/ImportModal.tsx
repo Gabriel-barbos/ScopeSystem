@@ -113,8 +113,12 @@ export function ImportModal({
       const wb = XLSX.read(event.target?.result, { type: "binary" })
       const ws = wb.Sheets[wb.SheetNames[0]]
       const jsonData = XLSX.utils.sheet_to_json(ws) as Record<string, any>[]
+      // Lê headers diretamente da planilha (linha 1) — sheet_to_json omite colunas
+      // inteiramente ausentes nos dados, então a union de rows ainda falha quando
+      // NENHUMA linha tem valor naquela coluna (ex: 200 linhas, só 14 com Placa)
+      const sheetHeaders = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 })[0] ?? []
       setRawData(jsonData)
-      setColumnMapping(buildInitialMapping(Object.keys(jsonData[0] ?? {})))
+      setColumnMapping(buildInitialMapping(sheetHeaders.map(String)))
     }
     reader.readAsBinaryString(file)
   }
@@ -238,7 +242,21 @@ export function ImportModal({
                 {/* PreviewTable recebe rawData (PT) — nunca dados convertidos */}
                 <PreviewTable
                   data={rawData}
-                  onDataChange={setRawData}
+                  onDataChange={(processed) => {
+                    // A PreviewTable adiciona _originalIndex, ClienteId, EquipamentoId no processedData.
+                    // Só nos interessa salvar de volta os IDs resolvidos — o resto é dado interno da tabela.
+                    setRawData((prev) =>
+                      prev.map((row, i) => {
+                        const match = processed.find((p) => p._originalIndex === i)
+                        if (!match) return row
+                        return {
+                          ...row,
+                          ...(match.ClienteId    && { ClienteId:     match.ClienteId }),
+                          ...(match.EquipamentoId && { EquipamentoId: match.EquipamentoId }),
+                        }
+                      })
+                    )
+                  }}
                   products={products?.filter((p: any) => p.category === "Dispositivo")}
                   clients={clients}
                   productColumn={productColumn}

@@ -97,18 +97,20 @@ export interface PaginatedResponse<T> {
 
 export const scheduleApi = {
 
-  getAll: async (params?: {
-    page?: number;
-    limit?: number;
-  }): Promise<PaginatedResponse<Schedule>> => {
-    const { data } = await API.get("/schedules", {
-      params: {
-        page: params?.page ?? 1,
-        limit: params?.limit ?? 1000, 
-      },
-    });
-    return data;
-  },
+getAll: async (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}): Promise<PaginatedResponse<Schedule>> => {
+  const { data } = await API.get("/schedules", {
+    params: {
+      page: params?.page ?? 1,
+      limit: params?.limit ?? 1000,
+      ...(params?.search && { search: params.search }),
+    },
+  });
+  return data;
+},
 
   getById: async (id: string): Promise<Schedule> => {
     const { data } = await API.get(`/schedules/${id}`);
@@ -153,15 +155,16 @@ export const scheduleApi = {
 export function useScheduleService(params?: {
   page?: number;
   limit?: number;
+  search?: string;
 }) {
   const queryClient = useQueryClient();
 
-  const schedules = useQuery({
-    queryKey: ["schedules", params?.page, params?.limit],
+   const schedules = useQuery({
+    queryKey: ["schedules", params?.page, params?.limit, params?.search],
     queryFn: () => scheduleApi.getAll(params),
     staleTime: 1000 * 60 * 5,
   });
-
+  
   const scheduleList = schedules.data?.data ?? [];
   const pagination = schedules.data?.pagination;
 

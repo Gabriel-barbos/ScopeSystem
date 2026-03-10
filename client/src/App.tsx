@@ -22,8 +22,7 @@ import PrivateRoute from "@/components/PrivateRoute";
 import { Roles } from "@/utils/roles";
 import  Removal  from "./pages/Removal";
 import Home from "./pages/Home";
-
-
+import ScheduleImportPage from "./pages/ScheduleImportPage";
 
 const queryClient = new QueryClient();
 
@@ -168,12 +167,21 @@ const App = () => (
                   </Layout>
                 </PrivateRoute>
               }
-            />
+            /> 
+
+            <Route path="/import/schedules" element={
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING, Roles.CX, Roles.COMMERCIAL]}>
+                  <Layout><ScheduleImportPage /></Layout>
+                </PrivateRoute>
+          } />
 
             <Route path="/login" element={<LoginPage />} />
             <Route path="*" element={<NotFound />} />
-          </Routes>
 
+
+          </Routes>
+              
+            
         </BrowserRouter>
            </AntdThemeProvider>
       </AuthProvider>

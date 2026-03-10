@@ -1,47 +1,24 @@
 import { Calendar, CalendarPlus, SquarePen, CirclePlus, FileSpreadsheet, FilePen } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UniversalDrawer } from "@/components/UniversalDrawer";
-import { ImportModal } from "@/components/ImportModal";
 import ScheduleForm from "@/components/forms/ScheduleForm";
 import ScheduleTable from "@/components/schedule/ScheduleTable/ScheduleTable";
 import { useScheduleService } from "@/services/ScheduleService";
-import type { SchedulePayload } from "@/services/ScheduleService";
 import { useAuth } from "@/context/Authcontext";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EditScheduleModal } from "@/components/schedule/EditScheduleModal";
-import {
-  SCHEDULE_COLUMN_MAPPING,
-  REQUIRED_HEADERS,
-  mapRowToPayload,
-} from "@/utils/ScheduleImportconfig";
-
-
-const VIN_LENGTH = 17
-
-function validateImportRow(row: Record<string, any>, index: number): string | null {
-  for (const header of REQUIRED_HEADERS) {
-    if (!row[header]) return `Linha ${index + 1}: campo obrigatório "${header}" está vazio.`
-  }
-
-  const vin = String(row["Chassi"] ?? "").trim()
-  if (vin.length !== VIN_LENGTH) {
-    return `Linha ${index + 1}: Chassi "${vin}" deve ter exatamente ${VIN_LENGTH} caracteres.`
-  }
-
-  return null
-}
-
 
 export default function Appointments() {
+  const navigate = useNavigate()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
-  const { bulkCreateSchedules, bulkUpdateSchedules } = useScheduleService();
+  const { bulkUpdateSchedules } = useScheduleService();
   const { user } = useAuth();
 
   function openCreate() {
@@ -49,37 +26,10 @@ export default function Appointments() {
     setIsDrawerOpen(true);
   }
 
-  const handleImport = async (data: Record<string, any>[]) => {
-    for (let i = 0; i < data.length; i++) {
-      const error = validateImportRow(data[i], i)
-      if (error) {
-        toast.error(error)
-        return
-      }
-    }
-
-    try {
-      const schedules: SchedulePayload[] = data.map((row) => ({
-        ...mapRowToPayload(row),
-        serviceType: row["TipoServico"] || "maintenance",
-        status:      row["Data"] ? "agendado" : "criado",
-        createdBy:   user?.name || "Sistema",
-        responsible: row["Responsavel"] || user?.name || "Sistema",
-      }));
-
-      await bulkCreateSchedules.mutateAsync(schedules);
-      toast.success(`${schedules.length} agendamentos importados com sucesso!`);
-      setModalOpen(false);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Erro ao importar agendamentos");
-    }
-  };
-
   const handleBulkUpdate = async (data: Record<string, any>[]) => {
     try {
       const result = await bulkUpdateSchedules.mutateAsync(data);
       toast.success(result.message);
-
       if (result.errors?.length > 0) {
         toast.warning("Alguns registros apresentaram erros", {
           description: result.errors.slice(0, 3).join(", "),
@@ -105,8 +55,14 @@ export default function Appointments() {
             <CardDescription>Gerencie seus agendamentos</CardDescription>
           </div>
 
-          <Button className="ml-auto" variant="outline" size="sm" onClick={() => setModalOpen(true)}>
-            Importar Dados <FileSpreadsheet />
+          {/* Redireciona para a nova página de importação */}
+          <Button
+            className="ml-auto"
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/import/schedules")}
+          >
+            Importar Dados <FileSpreadsheet className="ml-1.5 h-4 w-4" />
           </Button>
 
           <Tooltip>
@@ -121,7 +77,7 @@ export default function Appointments() {
           </Tooltip>
 
           <Button size="sm" onClick={openCreate}>
-            Criar Agendamento <CalendarPlus />
+            Criar Agendamento <CalendarPlus className="ml-1.5 h-4 w-4" />
           </Button>
 
           <UniversalDrawer
@@ -146,16 +102,6 @@ export default function Appointments() {
       </CardHeader>
 
       <CardContent>
-        <ImportModal
-          open={modalOpen}
-          onOpenChange={setModalOpen}
-          title="Importar Agendamentos"
-          templateUrl="/templates/agendamentos.xlsx"
-          templateName="template-agendamentos.xlsx"
-          onImport={handleImport}
-          columnMapping={SCHEDULE_COLUMN_MAPPING}
-        />
-
         <EditScheduleModal
           open={editModalOpen}
           onOpenChange={setEditModalOpen}
@@ -163,7 +109,6 @@ export default function Appointments() {
           templateName="template-edicao-agendamentos.xlsx"
           onUpdate={handleBulkUpdate}
         />
-
         <ScheduleTable />
       </CardContent>
     </Card>
