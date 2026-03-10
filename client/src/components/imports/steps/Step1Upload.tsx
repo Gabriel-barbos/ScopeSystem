@@ -20,15 +20,11 @@ export function Step1Upload({ onFileLoaded }: Step1UploadProps) {
       const wb = XLSX.read(e.target?.result, { type: "binary" })
       const ws = wb.Sheets[wb.SheetNames[0]]
 
-      // Lê o header separadamente como array de strings (primeira linha da planilha).
-      // Isso garante que colunas com células vazias nas primeiras linhas
-      // (ex: "Placa" onde só 43 de 200 carros têm placa) sejam detectadas corretamente.
-      // Se usarmos Object.keys(rows[0]), colunas sem valor na linha 1 são ignoradas.
+     
       const [headerRow] = XLSX.utils.sheet_to_json(ws, { header: 1 }) as string[][]
       const columns = (headerRow ?? []).filter(Boolean)
 
-      // defVal: "" faz células vazias virarem "" ao invés de serem omitidas do objeto.
-      // Isso garante que todas as linhas tenham as mesmas chaves, mesmo sem valor.
+
       const rows = XLSX.utils.sheet_to_json(ws, {
         defVal: "",
       }) as Record<string, any>[]

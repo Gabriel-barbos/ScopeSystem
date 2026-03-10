@@ -114,7 +114,7 @@ export default function ScheduleImportPage() {
             <p className="text-sm text-muted-foreground">
               {rawRows.length > 0
                 ? `${rawRows.length} linhas carregadas — ${file?.name}`
-                : "Agendamentos e serviços"}
+                : "Agendamentos"}
             </p>
           </div>
         </div>

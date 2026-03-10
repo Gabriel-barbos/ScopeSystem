@@ -31,6 +31,8 @@ interface ScheduleTableCoreProps {
   clientOptions: { value: string; label: string }[];
   serviceOptions: { value: string; label: string }[];
   hideServiceColumn?: boolean;
+  currentPage: number;
+  pageLimit: number;
 }
 
 const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
@@ -50,13 +52,12 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
   clientOptions,
   serviceOptions,
   hideServiceColumn = false,
+  currentPage,
+  pageLimit,
 }) => {
-  // Busca textual com highlight
+  // Busca textual — apenas highlight, sem onFilter (servidor filtra)
   const getColumnSearchProps = useCallback(
-    (
-      dataIndex: DataIndex,
-      getValue: (record: Schedule) => string
-    ): ColumnType<Schedule> => ({
+    (dataIndex: DataIndex, _getValue: (r: Schedule) => string): ColumnType<Schedule> => ({
       filteredValue: tableFilters[dataIndex] ?? null,
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div className="p-2 w-60">
@@ -64,12 +65,8 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
             ref={searchInput}
             placeholder="Buscar..."
             value={selectedKeys[0]}
-            onChange={(e) =>
-              setSelectedKeys(e.target.value ? [e.target.value] : [])
-            }
-            onPressEnter={() =>
-              onSearch(selectedKeys as string[], confirm, dataIndex)
-            }
+            onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => onSearch(selectedKeys as string[], confirm, dataIndex)}
             className="mb-2"
           />
           <Space>
@@ -81,28 +78,16 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
             >
               Buscar
             </Button>
-            <Button
-              size="small"
-              onClick={() => clearFilters && onReset(clearFilters, dataIndex)}
-            >
+            <Button size="small" onClick={() => clearFilters && onReset(clearFilters, dataIndex)}>
               Limpar
             </Button>
           </Space>
         </div>
       ),
-      filterIcon: (filtered) => (
-        <SearchOutlined className={filtered ? "text-blue-500" : ""} />
-      ),
-      onFilter: (value, record) =>
-        getValue(record)
-          .toLowerCase()
-          .includes((value as string).toLowerCase()),
+      filterIcon: (filtered) => <SearchOutlined className={filtered ? "text-blue-500" : ""} />,
       render: (text) =>
         searchedColumn === dataIndex ? (
-          <Highlighter
-            searchWords={[searchText]}
-            textToHighlight={text?.toString() || ""}
-          />
+          <Highlighter searchWords={[searchText]} textToHighlight={text?.toString() || ""} />
         ) : (
           text
         ),
@@ -110,13 +95,12 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
     [tableFilters, searchText, searchedColumn, searchInput, onSearch, onReset]
   );
 
-  // Filtro de seleção múltipla (Select)
+  // Filtro de seleção múltipla — sem onFilter (servidor filtra)
   const createSelectFilter = useCallback(
     (
       columnKey: string,
       options: { value: string; label: string }[],
       placeholder: string,
-      filterFn: (value: any, record: Schedule) => boolean,
       width = "w-64"
     ): Partial<ColumnType<Schedule>> => ({
       filteredValue: tableFilters[columnKey] ?? null,
@@ -137,52 +121,33 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
             maxTagCount="responsive"
           />
           <Space className="w-full flex justify-between">
-            <Button type="primary" size="small" onClick={() => confirm()}>
-              Aplicar
-            </Button>
-            <Button size="small" onClick={() => clearFilters?.()}>
-              Limpar
-            </Button>
+            <Button type="primary" size="small" onClick={() => confirm()}>Aplicar</Button>
+            <Button size="small" onClick={() => clearFilters?.()}>Limpar</Button>
           </Space>
         </div>
       ),
-      onFilter: filterFn,
     }),
     [tableFilters]
   );
 
   const columns: ColumnsType<Schedule> = useMemo(() => {
     const base: ColumnsType<Schedule> = [
-{
-  title: "Cliente",
-  key: "client",
-  ...createSelectFilter(
-    "client",
-    clientOptions,
-    "Selecione os clientes",
-    (value, record) => record.client?._id === value,
-    "w-72"
-  ),
-  render: (_, record) => {
-    const name = record.client?.name ?? "Cliente Desconhecido";
-    const image = record.client?.image?.[0];
-    const isUnknown = !record.client?._id;
-
-    return (
-      <Space>
-        <AntAvatar
-          shape="square"
-          size="large"
-          src={image}
-          icon={!image ? <Store size={18} /> : undefined}
-        />
-        <span className={`font-medium ${isUnknown ? "text-muted-foreground italic" : ""}`}>
-          {name}
-        </span>
-      </Space>
-    );
-  },
-},
+      {
+        title: "Cliente",
+        key: "client",
+        ...createSelectFilter("client", clientOptions, "Selecione os clientes", "w-72"),
+        render: (_, record) => {
+          const name    = record.client?.name ?? "Cliente Desconhecido";
+          const image   = record.client?.image?.[0];
+          const unknown = !record.client?._id;
+          return (
+            <Space>
+              <AntAvatar shape="square" size="large" src={image} icon={!image ? <Store size={18} /> : undefined} />
+              <span className={`font-medium ${unknown ? "text-muted-foreground italic" : ""}`}>{name}</span>
+            </Space>
+          );
+        },
+      },
       {
         title: "Chassi",
         dataIndex: "vin",
@@ -204,29 +169,10 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
             onClear={() => clearFilters?.()}
           />
         ),
-        onFilter: (value, record) => {
-          if (!record.scheduledDate || typeof value !== "string") return true;
-          const [start, end] = value.split(",");
-          const recordDate = new Date(record.scheduledDate).getTime();
-          return (
-            recordDate >= new Date(start).getTime() &&
-            recordDate <= new Date(end).getTime()
-          );
-        },
-        sorter: (a, b) => {
-          const dateA = a.scheduledDate
-            ? new Date(a.scheduledDate).getTime()
-            : Infinity;
-          const dateB = b.scheduledDate
-            ? new Date(b.scheduledDate).getTime()
-            : Infinity;
-          return dateA - dateB;
-        },
+        sorter: true,
         sortDirections: ["ascend", "descend"] as const,
         render: (_, record) => {
-          const date = record.scheduledDate
-            ? new Date(record.scheduledDate)
-            : null;
+          const date    = record.scheduledDate ? new Date(record.scheduledDate) : null;
           const isValid = date && !isNaN(date.getTime());
 
           if (!isValid) {
@@ -256,19 +202,12 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
         title: "Serviço",
         dataIndex: "serviceType",
         key: "serviceType",
-        ...createSelectFilter(
-          "serviceType",
-          serviceOptions,
-          "Selecione os serviços",
-          (value, record) => record.serviceType === value
-        ),
+        ...createSelectFilter("serviceType", serviceOptions, "Selecione os serviços"),
         render: (serviceType: string) => {
           const config = getServiceConfig(serviceType || "");
-          const Icon = config.icon;
+          const Icon   = config.icon;
           return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${config.className}`}
-            >
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${config.className}`}>
               <Icon className="h-3.5 w-3.5" />
               <span>{config.label}</span>
             </span>
@@ -282,19 +221,12 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
         title: "Status",
         dataIndex: "status",
         key: "status",
-        ...createSelectFilter(
-          "status",
-          statusFilterOptions,
-          "Selecione os status",
-          (value, record) => record.status === value
-        ),
+        ...createSelectFilter("status", statusFilterOptions, "Selecione os status"),
         render: (status: string) => {
           const config = getStatusConfig(status);
-          const Icon = config.icon;
+          const Icon   = config.icon;
           return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${config.className}`}
-            >
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${config.className}`}>
               <Icon className="h-3.5 w-3.5" />
               <span>{config.label}</span>
             </span>
@@ -316,9 +248,7 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
                   </AvatarFallback>
                 </Avatar>
               </TooltipTrigger>
-              <TooltipContent>
-                <p>{responsible}</p>
-              </TooltipContent>
+              <TooltipContent><p>{responsible}</p></TooltipContent>
             </Tooltip>
           </div>
         ),
@@ -330,10 +260,7 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
         render: (_, record) => (
           <Button
             icon={<EyeOutlined />}
-            onClick={(e) => {
-              e.stopPropagation();
-              onRowClick(record);
-            }}
+            onClick={(e) => { e.stopPropagation(); onRowClick(record); }}
           >
             Detalhes
           </Button>
@@ -343,13 +270,9 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
 
     return base;
   }, [
-    clientOptions,
-    serviceOptions,
-    tableFilters, 
-    getColumnSearchProps,
-    createSelectFilter,
-    onRowClick,
-    hideServiceColumn,
+    clientOptions, serviceOptions, tableFilters,
+    getColumnSearchProps, createSelectFilter,
+    onRowClick, hideServiceColumn,
   ]);
 
   return (
@@ -365,18 +288,15 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
         style: { cursor: "pointer" },
       })}
       pagination={{
-        pageSize: pagination?.limit ?? 10,
-        total: pagination?.total ?? data.length,
-        current: pagination?.page,
-        showSizeChanger: true,
-        showTotal: (total, range) => `${range[0]}-${range[1]} de ${total}`,
+        current:         currentPage,
+        pageSize:        pageLimit,
+        total:           pagination?.total ?? data.length,
+        showSizeChanger: false,
+        showTotal:       (total, range) => `${range[0]}-${range[1]} de ${total}`,
       }}
       locale={{
         emptyText: (
-          <ScheduleEmptyState
-            hasFilters={hasFilters}
-            onClearFilters={onClearFilters}
-          />
+          <ScheduleEmptyState hasFilters={hasFilters} onClearFilters={onClearFilters} />
         ),
       }}
     />

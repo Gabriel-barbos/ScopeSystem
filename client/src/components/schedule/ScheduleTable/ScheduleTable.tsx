@@ -1,49 +1,53 @@
-import React, { useState, useCallback } from "react";
-import {
-  Input,
-  Button,
-  Tag,
-  Switch,
-  Tooltip as AntTooltip,
-} from "antd";
-import {
-  SearchOutlined,
-  ClearOutlined,
-  ReloadOutlined,
-} from "@ant-design/icons";
+import React, { useState, useCallback, useMemo } from "react";
+import { Input, Button, Tag, Switch, Tooltip as AntTooltip } from "antd";
+import { SearchOutlined, ClearOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Clock } from "lucide-react";
 
 import { useScheduleService, Schedule } from "@/services/ScheduleService";
 import { useScheduleFilters, TabKey } from "./useScheduleFilters";
+import { getServiceConfig } from "@/utils/badges";
 import ScheduleTableCore from "./ScheduleTableCore";
 import ScheduleDrawer from "../ScheduleDrawer";
 import "./scheduleTable.styles.css";
 
-
 const TABS: { key: TabKey; label: string }[] = [
-  { key: "all", label: "Todos" },
+  { key: "all",          label: "Todos" },
   { key: "installation", label: "Instalações" },
-  { key: "maintenance", label: "Manutenções" },
+  { key: "maintenance",  label: "Manutenções" },
 ];
 
-
 const ScheduleTable: React.FC = () => {
+  const filters = useScheduleFilters();
+
   const {
     data: response,
     isLoading,
     isFetching,
     dataUpdatedAt,
     refetch,
-  } = useScheduleService();
+  } = useScheduleService(filters.queryParams);
 
-  const schedules = response?.data ?? [];
+  // Passa dataUpdatedAt pro hook de filters via prop
+  const filtersWithUpdate = useScheduleFilters(dataUpdatedAt);
+
+  const schedules  = response?.data       ?? [];
   const pagination = response?.pagination;
 
-  const filters = useScheduleFilters(schedules, dataUpdatedAt);
+  // clientOptions e serviceOptions derivados da página atual
+  const clientOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    schedules.forEach((s) => { if (s.client?._id) map.set(s.client._id, s.client.name); });
+    return Array.from(map.entries()).map(([id, name]) => ({ value: id, label: name }));
+  }, [schedules]);
+
+  const serviceOptions = useMemo(() => {
+    const services = new Set(schedules.map((s) => s.serviceType).filter(Boolean));
+    return Array.from(services).map((s) => ({ value: s, label: getServiceConfig(s).label }));
+  }, [schedules]);
 
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen,        setDrawerOpen]        = useState(false);
 
   const handleRowClick = useCallback((record: Schedule) => {
     setSelectedSchedule(record);
@@ -56,7 +60,7 @@ const ScheduleTable: React.FC = () => {
         <div className="schedule-toolbar-left">
           <Input
             prefix={<SearchOutlined className="text-muted-foreground" />}
-            placeholder="Buscar por chassi, placa, cliente..."
+            placeholder="Buscar por chassi ou placa..."
             value={filters.globalSearch}
             onChange={(e) => filters.setGlobalSearch(e.target.value)}
             allowClear
@@ -81,23 +85,17 @@ const ScheduleTable: React.FC = () => {
               className="text-muted-foreground hover:text-foreground"
             >
               Limpar filtros
-              <Tag color="blue" className="ml-1.5">
-                {filters.activeFilterCount}
-              </Tag>
+              <Tag color="blue" className="ml-1.5">{filters.activeFilterCount}</Tag>
             </Button>
           )}
         </div>
 
         <div className="schedule-toolbar-right">
           <span className="text-sm text-muted-foreground whitespace-nowrap">
-            {filters.filteredSchedules.length}
-            {pagination?.total ? ` de ${pagination.total}` : ""}{" "}
-            agendamento{filters.filteredSchedules.length !== 1 ? "s" : ""}
+            {pagination?.total ?? 0} agendamento{pagination?.total !== 1 ? "s" : ""}
           </span>
 
-          <AntTooltip
-            title={`Última atualização: ${filters.lastUpdated.toLocaleTimeString("pt-BR")}`}
-          >
+          <AntTooltip title={`Última atualização: ${filters.lastUpdated.toLocaleTimeString("pt-BR")}`}>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {filters.timeAgo}
@@ -107,12 +105,7 @@ const ScheduleTable: React.FC = () => {
           <AntTooltip title="Atualizar dados">
             <Button
               type="text"
-              icon={
-                <ReloadOutlined
-                  spin={isFetching}
-                  className={isFetching ? "text-primary" : ""}
-                />
-              }
+              icon={<ReloadOutlined spin={isFetching} className={isFetching ? "text-primary" : ""} />}
               onClick={() => refetch()}
               disabled={isFetching}
             />
@@ -121,44 +114,37 @@ const ScheduleTable: React.FC = () => {
       </div>
 
       <div className="px-4 pt-3">
-        <Tabs
-          value={filters.activeTab}
-          onValueChange={(v) => filters.setActiveTab(v as TabKey)}
-        >
+        <Tabs value={filters.activeTab} onValueChange={(v) => filters.setActiveTab(v as TabKey)}>
           <TabsList>
             {TABS.map(({ key, label }) => (
               <TabsTrigger key={key} value={key}>
                 {label}
-                <Tag
-                  color={filters.activeTab === key ? "blue" : "default"}
-                  className="ml-1.5"
-                >
-                  {filters.tabCounts[key]}
-                </Tag>
               </TabsTrigger>
             ))}
           </TabsList>
         </Tabs>
       </div>
 
-  <ScheduleTableCore
-  data={filters.filteredSchedules}
-  isLoading={isLoading}
-  pagination={pagination}
-  hasFilters={filters.activeFilterCount > 0}
-  tableFilters={filters.tableFilters}  
-  onClearFilters={filters.clearAllFilters}
-  onRowClick={handleRowClick}
-  onTableChange={filters.handleTableChange}
-  searchText={filters.searchText}
-  searchedColumn={filters.searchedColumn}
-  searchInput={filters.searchInput}
-  onSearch={filters.handleSearch}
-  onReset={filters.handleReset}
-  clientOptions={filters.clientOptions}
-  serviceOptions={filters.serviceOptions}
-  hideServiceColumn={filters.activeTab !== "all"}
-/>
+      <ScheduleTableCore
+        data={schedules}
+        isLoading={isLoading || isFetching}
+        pagination={pagination}
+        hasFilters={filters.activeFilterCount > 0}
+        tableFilters={filters.tableFilters}
+        onClearFilters={filters.clearAllFilters}
+        onRowClick={handleRowClick}
+        onTableChange={filters.handleTableChange}
+        searchText={filters.searchText}
+        searchedColumn={filters.searchedColumn}
+        searchInput={filters.searchInput}
+        onSearch={filters.handleSearch}
+        onReset={filters.handleReset}
+        clientOptions={clientOptions}
+        serviceOptions={serviceOptions}
+        hideServiceColumn={filters.activeTab !== "all"}
+        currentPage={filters.page}
+        pageLimit={filters.limit}
+      />
 
       <ScheduleDrawer
         open={drawerOpen}

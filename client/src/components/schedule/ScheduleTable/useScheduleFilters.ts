@@ -1,18 +1,16 @@
 import { useRef, useState, useMemo, useCallback, useEffect } from "react";
 import type { InputRef } from "antd";
 import { useSearchParams } from "react-router-dom";
-import { Schedule } from "@/services/ScheduleService";
+import { ScheduleQueryParams } from "@/services/ScheduleService";
 import { getServiceConfig } from "@/utils/badges";
 
-export type TabKey = "all" | "installation" | "maintenance";
-export type DataIndex = "vin" | "serviceType" | "status" | "createdBy";
-
-const COMPLETED_STATUSES = ["concluido", "cancelado"];
+export type TabKey    = "all" | "installation" | "maintenance";
+export type DataIndex = "vin" | "serviceType" | "status" | "client" | "responsible";
 
 const TAB_SERVICE_MAP: Record<TabKey, string | null> = {
-  all: null,
+  all:          null,
   installation: "installation",
-  maintenance: "maintenance",
+  maintenance:  "maintenance",
 };
 
 export const getInitials = (name: string): string => {
@@ -31,207 +29,145 @@ export const formatTimeAgo = (date: Date): string => {
   return `há ${Math.floor(hours / 24)}d`;
 };
 
-const matchesGlobalSearch = (record: Schedule, search: string): boolean => {
-  const term = search.toLowerCase();
-  return !!(
-    record.vin?.toLowerCase().includes(term) ||
-    record.plate?.toLowerCase().includes(term) ||
-    record.client?.name?.toLowerCase().includes(term) ||
-    record.model?.toLowerCase().includes(term) ||
-    record.orderNumber?.toLowerCase().includes(term) ||
-    record.createdBy?.toLowerCase().includes(term)
-  );
-};
-
-
 export type TableFilters = Record<string, string[] | null>;
 
-export function useScheduleFilters(
-  schedules: Schedule[],
-  dataUpdatedAt?: number
-) {
+export function useScheduleFilters(dataUpdatedAt?: number) {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const globalSearch = searchParams.get("q") || "";
-  const activeTab = (searchParams.get("tab") as TabKey) || "all";
+  const globalSearch = searchParams.get("q")   || "";
+  const activeTab    = (searchParams.get("tab") as TabKey) || "all";
 
-  const setGlobalSearch = useCallback(
-    (value: string) => {
-      const params = new URLSearchParams(searchParams);
-      value ? params.set("q", value) : params.delete("q");
-      setSearchParams(params, { replace: true });
-    },
-    [searchParams, setSearchParams]
-  );
-
-  const setActiveTab = useCallback(
-    (tab: TabKey) => {
-      const params = new URLSearchParams(searchParams);
-      tab === "all" ? params.delete("tab") : params.set("tab", tab);
-      setSearchParams(params, { replace: true });
-    },
-    [searchParams, setSearchParams]
-  );
-
-  // Estado único para todos os filtros da tabela
-  const [tableFilters, setTableFilters] = useState<TableFilters>({});
+  const [tableFilters,    setTableFilters]    = useState<TableFilters>({});
   const [showOnlyPending, setShowOnlyPending] = useState(false);
+  const [page,            setPage]            = useState(1);
+  const limit = 50;
 
-  // Necessário apenas para o highlight 
-  const [searchText, setSearchText] = useState("");
+  // ─── Derivar params server-side ──────────────────────────────────────────
+
+  const serviceType = useMemo(() => {
+    const colFilter = tableFilters["serviceType"];
+    if (colFilter?.length) return colFilter.join(",");
+    const tabService = TAB_SERVICE_MAP[activeTab];
+    return tabService ?? undefined;
+  }, [activeTab, tableFilters]);
+
+  const status = useMemo(() => {
+    const colFilter = tableFilters["status"];
+    if (colFilter?.length) return colFilter.join(",");
+    if (showOnlyPending)   return "criado,agendado";
+    return undefined;
+  }, [tableFilters, showOnlyPending]);
+
+  const client = useMemo(() => {
+    const colFilter = tableFilters["client"];
+    return colFilter?.length ? colFilter.join(",") : undefined;
+  }, [tableFilters]);
+
+  const queryParams: ScheduleQueryParams = useMemo(() => ({
+    page,
+    limit,
+    search:      globalSearch || undefined,
+    serviceType,
+    status,
+    client,
+  }), [page, limit, globalSearch, serviceType, status, client]);
+
+  // ─── Highlight only ──────────────────────────────────────────────────────
+
+  const [searchText,     setSearchText]     = useState("");
   const [searchedColumn, setSearchedColumn] = useState("");
   const searchInput = useRef<InputRef>(null);
 
-  // Tempo desde última atualização
+  // ─── Tempo desde última atualização ──────────────────────────────────────
+
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [timeAgo, setTimeAgo] = useState("agora mesmo");
+  const [timeAgo,     setTimeAgo]     = useState("agora mesmo");
 
   useEffect(() => {
     if (dataUpdatedAt) setLastUpdated(new Date(dataUpdatedAt));
   }, [dataUpdatedAt]);
 
   useEffect(() => {
-    const interval = setInterval(
-      () => setTimeAgo(formatTimeAgo(lastUpdated)),
-      30_000
-    );
+    const interval = setInterval(() => setTimeAgo(formatTimeAgo(lastUpdated)), 30_000);
     setTimeAgo(formatTimeAgo(lastUpdated));
     return () => clearInterval(interval);
   }, [lastUpdated]);
 
-  // Filtragem global 
-  const filteredSchedules = useMemo(() => {
-    let result = schedules;
+  // ─── Setters com reset de página ─────────────────────────────────────────
 
-    if (globalSearch) {
-      result = result.filter((s) => matchesGlobalSearch(s, globalSearch));
-    }
+  const setGlobalSearch = useCallback((value: string) => {
+    const params = new URLSearchParams(searchParams);
+    value ? params.set("q", value) : params.delete("q");
+    setSearchParams(params, { replace: true });
+    setPage(1);
+  }, [searchParams, setSearchParams]);
 
-    const serviceFilter = TAB_SERVICE_MAP[activeTab];
-    if (serviceFilter) {
-      result = result.filter((s) => s.serviceType === serviceFilter);
-    }
+  const setActiveTab = useCallback((tab: TabKey) => {
+    const params = new URLSearchParams(searchParams);
+    tab === "all" ? params.delete("tab") : params.set("tab", tab);
+    setSearchParams(params, { replace: true });
+    setPage(1);
+  }, [searchParams, setSearchParams]);
 
-    if (showOnlyPending) {
-      result = result.filter((s) => !COMPLETED_STATUSES.includes(s.status));
-    }
+  const handleShowOnlyPending = useCallback((value: boolean) => {
+    setShowOnlyPending(value);
+    setPage(1);
+  }, []);
 
-    return result;
-  }, [schedules, globalSearch, activeTab, showOnlyPending]);
+  // ─── Handlers da tabela ──────────────────────────────────────────────────
 
-  const tabCounts = useMemo(() => {
-    const base = globalSearch
-      ? schedules.filter((s) => matchesGlobalSearch(s, globalSearch))
-      : schedules;
+  const handleTableChange = useCallback((pagination: any, filters: TableFilters) => {
+    setTableFilters(filters);
+    setPage(pagination.current ?? 1);
+  }, []);
 
-    const apply = (list: Schedule[]) =>
-      showOnlyPending
-        ? list.filter((s) => !COMPLETED_STATUSES.includes(s.status))
-        : list;
+  const handleSearch = useCallback((
+    selectedKeys: string[],
+    confirm: () => void,
+    dataIndex: DataIndex
+  ) => {
+    confirm();
+    setSearchText(selectedKeys[0] ?? "");
+    setSearchedColumn(dataIndex);
+    setPage(1);
+  }, []);
 
-    return {
-      all: apply(base).length,
-      installation: apply(
-        base.filter((s) => s.serviceType === "installation")
-      ).length,
-      maintenance: apply(
-        base.filter((s) => s.serviceType === "maintenance")
-      ).length,
-    };
-  }, [schedules, globalSearch, showOnlyPending]);
+  const handleReset = useCallback((clearFilters: () => void, dataIndex: DataIndex) => {
+    clearFilters();
+    setTableFilters((prev) => ({ ...prev, [dataIndex]: null }));
+    setSearchText("");
+    setSearchedColumn("");
+  }, []);
 
-const clientOptions = useMemo(() => {
-  const map = new Map<string, string>();
+  const clearAllFilters = useCallback(() => {
+    setSearchParams({}, { replace: true });
+    setTableFilters({});
+    setSearchText("");
+    setSearchedColumn("");
+    setShowOnlyPending(false);
+    setPage(1);
+  }, [setSearchParams]);
 
-  schedules.forEach((item) => {
-    if (!item.client?._id) return; 
-    map.set(item.client._id, item.client.name);
-  });
-
-  return Array.from(map.entries()).map(([id, name]) => ({
-    value: id,
-    label: name,
-  }));
-}, [schedules]);
-
-  const serviceOptions = useMemo(() => {
-    const services = new Set(
-      schedules.map((item) => item.serviceType).filter(Boolean)
-    );
-    return Array.from(services).map((service) => ({
-      value: service,
-      label: getServiceConfig(service).label,
-    }));
-  }, [schedules]);
+  // ─── Contagem de filtros ativos ───────────────────────────────────────────
 
   const activeFilterCount = useMemo(() => {
     let count = globalSearch ? 1 : 0;
     if (showOnlyPending) count++;
     if (activeTab !== "all") count++;
-    Object.values(tableFilters).forEach((val) => {
-      if (val && val.length > 0) count++;
-    });
+    Object.values(tableFilters).forEach((val) => { if (val?.length) count++; });
     return count;
   }, [tableFilters, globalSearch, showOnlyPending, activeTab]);
 
-  // Handlers da tabela
-  const handleSearch = useCallback(
-    (selectedKeys: string[], confirm: () => void, dataIndex: DataIndex) => {
-      confirm();
-      setSearchText(selectedKeys[0] ?? "");
-      setSearchedColumn(dataIndex);
-    },
-    []
-  );
-
-  const handleReset = useCallback(
-    (clearFilters: () => void, dataIndex: DataIndex) => {
-      clearFilters(); 
-      setTableFilters((prev) => ({ ...prev, [dataIndex]: null }));
-      setSearchText("");
-      setSearchedColumn("");
-    },
-    []
-  );
-
- 
-  const handleTableChange = useCallback(
-    (_pagination: any, filters: TableFilters) => {
-      setTableFilters(filters);
-    },
-    []
-  );
-
-  // Limpa TUDO
-  const clearAllFilters = useCallback(() => {
-    setSearchParams({}, { replace: true });
-    setTableFilters({});     
-    setSearchText("");
-    setSearchedColumn("");
-    setShowOnlyPending(false);
-  }, [setSearchParams]);
-
   return {
-    globalSearch,
-    setGlobalSearch,
-    activeTab,
-    setActiveTab,
-    showOnlyPending,
-    setShowOnlyPending,
-    tableFilters,
-    handleTableChange,
-    searchText,
-    searchedColumn,
-    searchInput,
-    handleSearch,
-    handleReset,
-    filteredSchedules,
-    tabCounts,
-    clientOptions,
-    serviceOptions,
-    activeFilterCount,
-    lastUpdated,
-    timeAgo,
-    clearAllFilters,
+    globalSearch,   setGlobalSearch,
+    activeTab,      setActiveTab,
+    showOnlyPending, setShowOnlyPending: handleShowOnlyPending,
+    tableFilters,   handleTableChange,
+    searchText,     searchedColumn, searchInput,
+    handleSearch,   handleReset,
+    activeFilterCount, clearAllFilters,
+    lastUpdated,    timeAgo,
+    queryParams,
+    page,           limit,
   };
 }
