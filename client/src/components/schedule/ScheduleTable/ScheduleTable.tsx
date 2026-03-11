@@ -3,8 +3,10 @@ import { Input, Button, Tag, Switch, Tooltip as AntTooltip } from "antd";
 import { SearchOutlined, ClearOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Clock } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import { useScheduleService, Schedule } from "@/services/ScheduleService";
+import { clientApi } from "@/services/ClientService";
 import { useScheduleFilters, TabKey } from "./useScheduleFilters";
 import { getServiceConfig } from "@/utils/badges";
 import ScheduleTableCore from "./ScheduleTableCore";
@@ -37,12 +39,17 @@ const ScheduleTable: React.FC = () => {
   const schedules  = response?.data       ?? [];
   const pagination = response?.pagination;
 
-  // clientOptions e serviceOptions derivados da página atual
-  const clientOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    schedules.forEach((s) => { if (s.client?._id) map.set(s.client._id, s.client.name); });
-    return Array.from(map.entries()).map(([id, name]) => ({ value: id, label: name }));
-  }, [schedules]);
+
+  const { data: allClients = [] } = useQuery({
+    queryKey: ["clients"],
+    queryFn: clientApi.getAll,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const clientOptions = useMemo(
+    () => allClients.map((c) => ({ value: c._id, label: c.name })),
+    [allClients]
+  );
 
   const serviceOptions = useMemo(() => {
     const services = new Set(schedules.map((s) => s.serviceType).filter(Boolean));
