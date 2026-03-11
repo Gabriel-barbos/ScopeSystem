@@ -12,6 +12,9 @@ export interface ValidationPayload {
   validationNotes?: string;
   secondaryDevice?: string;
   vehicleGroup?: string;
+  product?: string;
+  plate?: string;
+  
 }
 
 export interface CreateFromValidationPayload {

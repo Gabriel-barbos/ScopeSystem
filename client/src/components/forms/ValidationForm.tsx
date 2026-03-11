@@ -124,7 +124,7 @@ export function ValidationForm({
           <Field label="Equipamento">
             <Popover open={openProduct} onOpenChange={setOpenProduct}>
               <PopoverTrigger asChild>
-                <Button
+                <Button 
                   type="button"
                   variant="outline"
                   disabled={isSubmitting}
