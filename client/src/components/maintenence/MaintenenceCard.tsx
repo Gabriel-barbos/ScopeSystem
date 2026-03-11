@@ -2,7 +2,7 @@ import {
     Calendar,
     Mail,
     User,
-    Tag,
+    Store,
     ExternalLink,
     ChevronRight,
     Clock,
@@ -126,6 +126,10 @@ export default function MaintenanceCard({ request, onOpen }: MaintenanceCardProp
                         <span className="inline-flex items-center gap-1.5">
                             <Mail className="h-3.5 w-3.5 " />
                             {request.contactEmail}
+                        </span>
+                          <span className="inline-flex items-center gap-1.5">
+                            <Store className="h-3.5 w-3.5 " />
+                            {request.category}
                         </span>
                     </div>
 
