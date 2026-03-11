@@ -15,27 +15,54 @@ function tokenize(str: string): string[] {
     .filter((t) => t.length >= 2)
 }
 
-function diceCoefficient(a: string, b: string): number {
-  if (!a || !b) return 0
-  if (a === b) return 1
+function bigrams(s: string): string[] {
+  const set: string[] = []
+  for (let i = 0; i < s.length - 1; i++) set.push(s.slice(i, i + 2))
+  return set
+}
 
-  const bigrams = (s: string) => {
-    const set: string[] = []
-    for (let i = 0; i < s.length - 1; i++) set.push(s.slice(i, i + 2))
-    return set
-  }
+// ── Estrutura pré-computada por opção ────────────────────────────────────────
+// Evita recomputar normalize/tokenize/bigrams das options a cada linha.
 
-  const aGrams = bigrams(a)
-  const bGrams = bigrams(b)
+interface PrecomputedOption {
+  _id: string
+  name: string
+  normalized: string
+  tokens: string[]
+  bigramList: string[]
+}
+
+function precompute(options: MatchOption[]): PrecomputedOption[] {
+  return options.map((opt) => {
+    const normalized = normalize(opt.name)
+    return {
+      _id: opt._id,
+      name: opt.name,
+      normalized,
+      tokens: tokenize(opt.name),
+      bigramList: bigrams(normalized),
+    }
+  })
+}
+
+// Cache por referência de array — se a lista de options não mudar, não recomputa
+const cache = new WeakMap<MatchOption[], PrecomputedOption[]>()
+
+function getPrecomputed(options: MatchOption[]): PrecomputedOption[] {
+  if (!cache.has(options)) cache.set(options, precompute(options))
+  return cache.get(options)!
+}
+
+// ── Algoritmos usando dados pré-computados ────────────────────────────────────
+
+function diceFromBigrams(aGrams: string[], bGrams: string[]): number {
   if (!aGrams.length || !bGrams.length) return 0
-
   const bSet = [...bGrams]
   let matches = 0
   for (const gram of aGrams) {
     const idx = bSet.indexOf(gram)
     if (idx !== -1) { matches++; bSet.splice(idx, 1) }
   }
-
   return (2 * matches) / (aGrams.length + bGrams.length)
 }
 
@@ -60,39 +87,33 @@ export interface MatchResult {
 
 const THRESHOLD = 0.4
 
-/**
- * Ranking de candidatos para cliente usando score composto.
- * Resolve o problema de "Unidas" ganhar de "Unidas - RAC":
- * o Jaccard de tokens penaliza candidatos com menos tokens que o input.
- */
-function rankClients(needle: string, options: MatchOption[]): MatchResult[] {
-  const inputTokens = tokenize(needle)
-  const nNeedle = normalize(needle)
+// ── rankClients usando pré-computados ─────────────────────────────────────────
+// Recebe tanto as options originais quanto os pré-computados para evitar
+// repassar o array raw desnecessariamente.
 
-  return options
+function rankPrecomputed(
+  needle: string,
+  inputTokens: string[],
+  needleBigrams: string[],
+  precomputed: PrecomputedOption[]
+): MatchResult[] {
+  return precomputed
     .map((opt) => {
-      const nOpt = normalize(opt.name)
-      const dice = diceCoefficient(nNeedle, nOpt)
-      const jaccard = tokenJaccard(inputTokens, tokenize(opt.name))
-      // Penaliza candidato com menos tokens que o input
-      const penalty = tokenize(opt.name).length < inputTokens.length
-        ? tokenize(opt.name).length / inputTokens.length
-        : 1
+      const dice = diceFromBigrams(needleBigrams, opt.bigramList)
+      const jaccard = tokenJaccard(inputTokens, opt.tokens)
+      const penalty =
+        opt.tokens.length < inputTokens.length
+          ? opt.tokens.length / inputTokens.length
+          : 1
       return { id: opt._id, name: opt.name, score: (dice * 0.6 + jaccard * 0.4) * penalty }
     })
     .filter((r) => r.score >= THRESHOLD)
     .sort((a, b) => b.score - a.score)
 }
 
-/**
- * findBestMatch — lógica original preservada integralmente para produtos.
- * Para clientes (quando chamado com a lista de clientes), usa rankClients
- * apenas no fallback após exato e contains, para não regredir casos simples.
- *
- * Na prática, como o Step3 chama findBestMatch sem distinguir cliente/produto,
- * a separação é feita internamente: o contains resolve produtos curtos como
- * "gv50cg" → "Queclink GV50CG", e o rankClients entra só quando contains falha.
- */
+// ── findBestMatch — API pública inalterada ────────────────────────────────────
+// Internamente usa pré-cômputo via WeakMap cache.
+
 export function findBestMatch(
   input: string,
   options: MatchOption[] = []
@@ -100,16 +121,15 @@ export function findBestMatch(
   if (!input || !options.length) return null
 
   const needle = normalize(input)
+  const precomputed = getPrecomputed(options)
 
   // 1. Match exato
-  const exact = options.find((opt) => normalize(opt.name) === needle)
+  const exact = precomputed.find((opt) => opt.normalized === needle)
   if (exact) return { id: exact._id, name: exact.name, score: 1 }
 
-  // 2. Contains — resolve produtos (ex: "gv50cg" contido em "Queclink GV50CG")
-  //    Retorna TODOS os matches e ranqueia pelo score composto,
-  //    evitando que o primeiro da lista vença sem critério.
-  const contained = options.filter((opt) => {
-    const hay = normalize(opt.name)
+  // 2. Contains
+  const contained = precomputed.filter((opt) => {
+    const hay = opt.normalized
     return (
       (hay.includes(needle) && needle.length >= 4) ||
       (needle.includes(hay) && hay.length >= 4)
@@ -120,16 +140,17 @@ export function findBestMatch(
     return { id: contained[0]._id, name: contained[0].name, score: 0.9 }
   }
 
+  const inputTokens = tokenize(input)
+  const needleBigrams = bigrams(needle)
+
   if (contained.length > 1) {
-    // Múltiplos matches por contains → usa rankClients para desempatar
-    const ranked = rankClients(input, contained)
+    const ranked = rankPrecomputed(input, inputTokens, needleBigrams, contained)
     if (ranked.length) return ranked[0]
-    // Se rankClients não desempatar, retorna o de nome mais longo (mais específico)
-    const longest = contained.sort((a, b) => b.name.length - a.name.length)[0]
+    const longest = [...contained].sort((a, b) => b.name.length - a.name.length)[0]
     return { id: longest._id, name: longest.name, score: 0.9 }
   }
 
-  // 3. Dice puro — fallback para casos sem contains
-  const scored = rankClients(input, options)
+  // 3. Dice puro
+  const scored = rankPrecomputed(input, inputTokens, needleBigrams, precomputed)
   return scored[0] ?? null
 }
