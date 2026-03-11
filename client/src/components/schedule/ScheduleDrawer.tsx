@@ -184,7 +184,6 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
     ? new Date(data.orderDate).toLocaleDateString("pt-BR")
     : "Não informado";
 
-  // ✅ Data de remoção formatada para exibição
   const formattedRemovalDate = data.removalDate
     ? new Date(data.removalDate).toLocaleDateString("pt-BR")
     : "Não informado";
@@ -204,6 +203,7 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
         client:          getClientId(editedSchedule.client)!,
         serviceType:     editedSchedule.serviceType,
         product:         getProductId(editedSchedule.product),
+        orderDate:        editedSchedule.orderDate,
         scheduledDate:   editedSchedule.scheduledDate,
         notes:           editedSchedule.notes,
         status:          editedSchedule.status,
@@ -215,10 +215,9 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
         ...(isMaintenance(editedSchedule.serviceType) && {
           responsiblePhone: editedSchedule.responsiblePhone,
           condutor:         editedSchedule.condutor,
-          orderDate:        editedSchedule.orderDate,
+          
           removalDate:      editedSchedule.removalDate,
         }),
-        // ✅ Inclui removalDate no payload apenas para diagnostic e reinstallation
         ...(isRemovalService(editedSchedule.serviceType) && {
           removalDate: editedSchedule.removalDate,
         }),

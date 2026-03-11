@@ -16,17 +16,15 @@
 export function parseExcelDate(value: unknown): string | null {
   if (value === null || value === undefined || value === "") return null
 
-  // Já é um objeto Date
   if (value instanceof Date) {
     return isNaN(value.getTime()) ? null : toISODate(value)
   }
 
-  // Serial number do Excel
-  // Fórmula: (serial - 25569) * 86400 * 1000
-  // 25569 = dias entre 01/01/1900 (época do Excel) e 01/01/1970 (época Unix)
+  // Serial number do Excel → constrói via Date.UTC com noon para evitar drift de fuso
   if (typeof value === "number") {
     if (value <= 0) return null
-    const date = new Date((value - 25569) * 86400 * 1000)
+    const days = Math.round(value) - 25569 // Math.round previne frações de dia
+    const date = new Date(Date.UTC(1970, 0, 1 + days, 12, 0, 0))
     return isNaN(date.getTime()) ? null : toISODate(date)
   }
 
@@ -34,7 +32,6 @@ export function parseExcelDate(value: unknown): string | null {
     const trimmed = value.trim()
     if (!trimmed) return null
 
-    // DD/MM/YYYY — formato brasileiro comum em planilhas
     const brMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
     if (brMatch) {
       const [, day, month, year] = brMatch.map(Number)
@@ -42,18 +39,15 @@ export function parseExcelDate(value: unknown): string | null {
       return isNaN(date.getTime()) ? null : toISODate(date)
     }
 
-    // YYYY-MM-DD — ISO já no formato correto
     const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/)
     if (isoMatch) return trimmed.slice(0, 10)
 
-    // Fallback: tenta parse genérico
     const date = new Date(trimmed)
     return isNaN(date.getTime()) ? null : toISODate(date)
   }
 
   return null
 }
-
 /**
  * Formata uma data ISO ou Date para exibição no formato brasileiro DD/MM/YYYY.
  * Usado na preview da tabela de importação.
