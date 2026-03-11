@@ -112,6 +112,7 @@ export const scheduleApi = {
         ...(params?.status      && { status:      params.status }),
         ...(params?.serviceType && { serviceType: params.serviceType }),
         ...(params?.responsible && { responsible: params.responsible }),
+        ...(params?.client && { client: params.client })
       },
     });
     return data;

@@ -165,7 +165,7 @@ export const serviceConfig: Record<string, BadgeConfig> = {
     icon: TimerReset,
   },
     //legacy
-    manutenção: {
+    Manutenção: {
     label: "Manutenção",
     className:
       "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200 dark:border-orange-800",
@@ -183,6 +183,21 @@ export const serviceConfig: Record<string, BadgeConfig> = {
       "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800",
     icon: CircleX,
   },
+
+   Cancelado: {
+    label: "Cancelado",
+    className:
+      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800",
+    icon: CircleX,
+  },
+
+    Reinstalação: {
+    label: "Reinstalação",
+    className:
+      "bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-300 border-lime-200 dark:border-lime-800",
+    icon: TimerReset,
+  },
+
   Outro: {
     label: "Outro",
     className:
