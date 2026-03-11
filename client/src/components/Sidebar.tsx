@@ -24,7 +24,7 @@ const navigation = [
   { name: 'Validação', href: '/validation', icon: SearchCheck, roles: [Roles.ADMIN, Roles.VALIDATION] },
   { name: 'Serviços', href: '/services', icon: CarFront, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING] },
   { name: 'Solicitações de Manutenção', href: '/maintenance-requests', icon: MailPlus, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT] },
-  { name: 'Relatórios', href: '/reports', icon: ChartArea, roles: [Roles.ADMIN, Roles.SUPPORT,Roles.BILLING, Roles.SCHEDULING] },
+  { name: 'Relatórios', href: '/reports', icon: ChartArea, roles: [Roles.ADMIN, Roles.SUPPORT,Roles.BILLING, Roles.SCHEDULING, Roles.VALIDATION] },
   { name: 'Produtos', href: '/products', icon: Cpu, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING] },
   { name: 'Clientes', href: '/clients', icon: Store , roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING] },
   { name: 'Usuários', href: '/users', icon: Users, roles: [Roles.ADMIN] },
