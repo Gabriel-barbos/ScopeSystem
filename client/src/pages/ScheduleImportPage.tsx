@@ -123,7 +123,11 @@ export default function ScheduleImportPage() {
 
         <div className="rounded-2xl border border-border bg-card px-6 py-8 shadow-sm min-h-[320px]">
           {step === 1 && (
-            <Step1Upload onFileLoaded={handleFileLoaded} />
+            <Step1Upload
+              templateUrl="/templates/agendamentos.xlsx"
+              templateName="template-importacao-agendamentos.xlsx"
+              onFileLoaded={handleFileLoaded}
+            />
           )}
           {step === 2 && (
             <Step2ColumnMapping
