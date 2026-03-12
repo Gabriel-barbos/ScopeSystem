@@ -24,7 +24,6 @@ export function normalizePlate(value: unknown): string {
   return cleanString(value).toUpperCase().replace(/[-\s]/g, "")
 }
 
-// ── Detecção de duplicatas ──────────────────────────────────────────────────
 
 /**
  * Retorna os índices das linhas duplicadas baseado em um campo chave.
@@ -53,7 +52,6 @@ export function findDuplicateIndexes(
   return duplicates
 }
 
-// ── Transformação de linha ──────────────────────────────────────────────────
 
 /**
  * Aplica limpeza em todos os campos string de uma linha.
@@ -68,7 +66,6 @@ export function cleanRow(row: Record<string, any>): Record<string, any> {
   )
 }
 
-// ── Normalização de serviceType ─────────────────────────────────────────────
 
 export function normalizeServiceType(value: unknown): string | undefined {
   const v = cleanString(value)
@@ -94,7 +91,7 @@ export function normalizeStatus(value: unknown): StatusType | undefined {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[\s_-]+/g, "")
 
-  if (v.includes("reinstal"))  return undefined // serviceType, não status
+  if (v.includes("reinstal"))  return undefined 
   if (v.includes("aguard"))    return "aguardando_cliente"
   if (v.includes("waitaddr"))  return "waiting_address"
   if (v.includes("waitresp"))  return "waiting_responsible"

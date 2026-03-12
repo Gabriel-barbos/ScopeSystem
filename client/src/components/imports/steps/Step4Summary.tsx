@@ -1,4 +1,3 @@
-// components/imports/steps/Step4Summary.tsx
 import {
   CheckCircle2,
   Loader2,
@@ -91,7 +90,6 @@ function getUniqueClients(rows: Record<string, any>[]): number {
   return set.size
 }
 
-// ── Loading State ─────────────────────────────────────────────────────────────
 
 function LoadingState({ total }: { total: number }) {
   return (
@@ -100,7 +98,6 @@ function LoadingState({ total }: { total: number }) {
       animate={{ opacity: 1, scale: 1 }}
       className="flex flex-col items-center justify-center gap-6 py-16"
     >
-      {/* Animated spinner */}
       <div className="relative">
         <div className="w-20 h-20 rounded-full border-4 border-muted" />
         <div className="absolute inset-0 w-20 h-20 rounded-full border-4 border-primary border-t-transparent animate-spin" />
@@ -116,7 +113,6 @@ function LoadingState({ total }: { total: number }) {
         </p>
       </div>
 
-      {/* Pulsing dots */}
       <div className="flex gap-1.5">
         {[0, 1, 2].map((i) => (
           <motion.div
@@ -131,7 +127,6 @@ function LoadingState({ total }: { total: number }) {
   )
 }
 
-// ── Success State ─────────────────────────────────────────────────────────────
 
 function SuccessState({ total }: { total: number }) {
   return (
@@ -141,7 +136,6 @@ function SuccessState({ total }: { total: number }) {
       transition={{ type: "spring", stiffness: 200, damping: 20 }}
       className="flex flex-col items-center justify-center gap-6 py-16"
     >
-      {/* Animated checkmark */}
       <div className="relative">
         <motion.div
           initial={{ scale: 0 }}
@@ -158,7 +152,6 @@ function SuccessState({ total }: { total: number }) {
           </motion.div>
         </motion.div>
 
-        {/* Sparkle effects */}
         {[...Array(3)].map((_, i) => (
           <motion.div
             key={i}
@@ -205,7 +198,6 @@ function SuccessState({ total }: { total: number }) {
   )
 }
 
-// ── Error State ───────────────────────────────────────────────────────────────
 
 function ErrorState({ message }: { message?: string }) {
   return (
@@ -242,7 +234,6 @@ function ErrorState({ message }: { message?: string }) {
   )
 }
 
-// ── Idle / Summary State ──────────────────────────────────────────────────────
 
 export function Step4Summary({ rows, status, errorMessage, onConfirm }: Step4SummaryProps) {
   const [confirmed, setConfirmed] = useState(false)
@@ -266,7 +257,6 @@ export function Step4Summary({ rows, status, errorMessage, onConfirm }: Step4Sum
         </p>
       </div>
 
-      {/* Overview cards */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -307,7 +297,6 @@ export function Step4Summary({ rows, status, errorMessage, onConfirm }: Step4Sum
         </div>
       </motion.div>
 
-      {/* Service type breakdown */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -333,7 +322,6 @@ export function Step4Summary({ rows, status, errorMessage, onConfirm }: Step4Sum
                   colors.border
                 )}
               >
-                {/* Header row */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", colors.icon)}>

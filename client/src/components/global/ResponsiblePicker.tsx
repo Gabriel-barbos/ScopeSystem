@@ -143,11 +143,7 @@ export const ResponsiblePicker = ({
         </Button>
       </PopoverTrigger>
 
-      {/* 
-        side="top" — abre para cima, evitando ser cortado pelo drawer bottom
-        avoidCollisions — reposiciona automaticamente se não couber
-        o max-h no CommandList garante scroll interno sem depender do viewport
-      */}
+      
       <PopoverContent
         side="top"
         align="start"

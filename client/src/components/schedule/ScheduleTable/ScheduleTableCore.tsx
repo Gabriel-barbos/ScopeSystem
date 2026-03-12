@@ -55,7 +55,6 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
   currentPage,
   pageLimit,
 }) => {
-  // Busca textual — apenas highlight, sem onFilter (servidor filtra)
   const getColumnSearchProps = useCallback(
     (dataIndex: DataIndex, _getValue: (r: Schedule) => string): ColumnType<Schedule> => ({
       filteredValue: tableFilters[dataIndex] ?? null,
@@ -95,7 +94,6 @@ const ScheduleTableCore: React.FC<ScheduleTableCoreProps> = ({
     [tableFilters, searchText, searchedColumn, searchInput, onSearch, onReset]
   );
 
-  // Filtro de seleção múltipla — sem onFilter (servidor filtra)
   const createSelectFilter = useCallback(
     (
       columnKey: string,

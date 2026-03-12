@@ -34,7 +34,7 @@ function Validation() {
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [products, setProducts] = useState<ProductRef[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false); // ← guard local
+  const [isSubmitting, setIsSubmitting] = useState(false); 
 
   const { scheduleList, isLoading } = useScheduleService({
     limit: 1000,

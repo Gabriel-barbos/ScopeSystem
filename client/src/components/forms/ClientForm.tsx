@@ -109,19 +109,15 @@ export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
   const selectedParent = mainClients.find((c) => c._id === parentValue) ?? null;
   const clientType: ClientType = selectedParent ? "subCliente" : "Cliente";
 
-  // Prefixo que aparece no input de nome quando há pai
+  // Prefixo do cliente
   const namePrefix = selectedParent ? `${selectedParent.name} - ` : "";
 
-  // Nome real armazenado no formulário (sem o prefixo)
-  // O que o usuário digita é apenas a parte após o prefixo
   const displayName = nameValue.startsWith(namePrefix)
     ? nameValue.slice(namePrefix.length)
     : nameValue;
 
-  // Quando o pai muda, atualiza o nome para incluir/remover o prefixo
   useEffect(() => {
     if (selectedParent) {
-      // Se já tem um nome, mantém a parte após qualquer prefixo anterior
       const baseName = nameValue.includes(" - ")
         ? nameValue.split(" - ").slice(1).join(" - ")
         : nameValue;
@@ -155,12 +151,10 @@ export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
     }
   };
 
-  // Handler do input de nome — mantém o prefixo intacto
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const typed = e.target.value;
 
     if (namePrefix && !typed.startsWith(namePrefix)) {
-      // Impede apagar o prefixo — restaura com o que o usuário tentou digitar
       const afterPrefix = typed.length > namePrefix.length
         ? typed.slice(namePrefix.length)
         : "";
@@ -234,7 +228,6 @@ export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
         </Upload>
       </div>
 
-      {/* ── Badge de tipo ── */}
       <div className="flex items-center gap-2">
         <Badge variant={clientType === "Cliente" ? "default" : "secondary"}>
           {clientType === "Cliente" ? "Cliente" : "Sub-cliente"}
@@ -246,19 +239,15 @@ export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
         </span>
       </div>
 
-      {/* ── Nome ── */}
       <div className="space-y-1">
         <Label>Nome *</Label>
 
-        {/* Quando há prefixo, mostra um wrapper visual com o prefixo fixo */}
         {namePrefix ? (
           <div className="flex items-center border rounded-md ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 overflow-hidden">
-            {/* Prefixo bloqueado */}
             <span className="flex items-center gap-1 pl-3 pr-1 text-sm text-muted-foreground whitespace-nowrap select-none">
               <User className="h-4 w-4 shrink-0" />
               {namePrefix}
             </span>
-            {/* Input apenas com a parte editável */}
             <input
               className="flex-1 h-9 bg-transparent pr-3 text-sm outline-none placeholder:text-muted-foreground"
               placeholder="Nome do sub-cliente"
@@ -285,7 +274,6 @@ export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
         )}
       </div>
 
-      {/* ── Descrição ── */}
       <div className="space-y-1">
         <Label>Descrição</Label>
         <InputWithIcon
@@ -295,7 +283,6 @@ export function ClientForm({ clientId, onSuccess, onCancel }: Props) {
         />
       </div>
 
-      {/* ── Cliente Principal ── */}
       <div className="space-y-1">
         <Label>Cliente Principal</Label>
         <p className="text-xs text-muted-foreground">

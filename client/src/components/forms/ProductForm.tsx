@@ -4,7 +4,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-// UI Components
 import { InputWithIcon } from "../InputWithIcon";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -16,15 +15,12 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-// Icons
 import { User, FileUser,DollarSign,Tag,NotebookText } from "lucide-react";
 import { LoadingOutlined, PlusOutlined,  } from "@ant-design/icons";
 
-// Ant Upload
 import { message, Upload } from "antd";
 import type { GetProp, UploadProps } from "antd";
 
-//import services
 import type { ProductPayload } from "@/services/ProductService";
 import { useProductService, productApi } from "@/services/ProductService";
 import { useQuery } from "@tanstack/react-query";
@@ -75,7 +71,7 @@ export function ProductForm({ productId, onSuccess, onCancel }: Props) {
  const { data: product, isLoading: loadingClient } = useQuery({
   queryKey: ["product", productId],
   queryFn: () => productApi.getById(productId!),
-  enabled: !!productId, // só roda se estiver editando
+  enabled: !!productId, 
 });
 
 
@@ -113,7 +109,6 @@ const { createProduct, updateProduct } = useProductService();
         category: product.category || "",
       });
 
-      // Se tiver imagem, mostra no preview
       if (product.image?.[0]) {
         setImageUrl(product.image[0]);
       }
@@ -125,10 +120,8 @@ const { createProduct, updateProduct } = useProductService();
     if (info.file.originFileObj) {
       const file = info.file.originFileObj;
 
-      //Guarda o File real 
       setImageFile(file);
 
-      // 2. Cria preview visual (base64)
       getBase64(file, (url) => {
         setImageUrl(url);
       });

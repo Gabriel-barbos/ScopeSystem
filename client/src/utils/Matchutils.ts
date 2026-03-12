@@ -21,8 +21,6 @@ function bigrams(s: string): string[] {
   return set
 }
 
-// ── Estrutura pré-computada por opção ────────────────────────────────────────
-// Evita recomputar normalize/tokenize/bigrams das options a cada linha.
 
 interface PrecomputedOption {
   _id: string
@@ -45,7 +43,6 @@ function precompute(options: MatchOption[]): PrecomputedOption[] {
   })
 }
 
-// Cache por referência de array — se a lista de options não mudar, não recomputa
 const cache = new WeakMap<MatchOption[], PrecomputedOption[]>()
 
 function getPrecomputed(options: MatchOption[]): PrecomputedOption[] {
@@ -53,7 +50,6 @@ function getPrecomputed(options: MatchOption[]): PrecomputedOption[] {
   return cache.get(options)!
 }
 
-// ── Algoritmos usando dados pré-computados ────────────────────────────────────
 
 function diceFromBigrams(aGrams: string[], bGrams: string[]): number {
   if (!aGrams.length || !bGrams.length) return 0
@@ -87,9 +83,6 @@ export interface MatchResult {
 
 const THRESHOLD = 0.4
 
-// ── rankClients usando pré-computados ─────────────────────────────────────────
-// Recebe tanto as options originais quanto os pré-computados para evitar
-// repassar o array raw desnecessariamente.
 
 function rankPrecomputed(
   needle: string,
@@ -111,7 +104,6 @@ function rankPrecomputed(
     .sort((a, b) => b.score - a.score)
 }
 
-// ── findBestMatch — API pública inalterada ────────────────────────────────────
 // Internamente usa pré-cômputo via WeakMap cache.
 
 export function findBestMatch(
@@ -123,11 +115,9 @@ export function findBestMatch(
   const needle = normalize(input)
   const precomputed = getPrecomputed(options)
 
-  // 1. Match exato
   const exact = precomputed.find((opt) => opt.normalized === needle)
   if (exact) return { id: exact._id, name: exact.name, score: 1 }
 
-  // 2. Contains
   const contained = precomputed.filter((opt) => {
     const hay = opt.normalized
     return (

@@ -412,7 +412,6 @@ export function Step3Validation({
           </div>
         )}
 
-        {/* Tabela — só renderiza após matching completo */}
         {!isMatching && progress === 100 && (
           <ScrollArea className="h-[420px] rounded-xl border border-border">
             <table className="w-full text-sm">

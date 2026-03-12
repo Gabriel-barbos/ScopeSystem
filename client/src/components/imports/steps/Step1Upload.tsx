@@ -75,7 +75,6 @@ export function Step1Upload({ templateUrl, templateName, onFileLoaded }: Step1Up
     }
   }
 
-  // ← NOVO: mesmo padrão do ImportModal e EditScheduleModal
   const handleDownloadTemplate = async () => {
     try {
       const response = await fetch(templateUrl)
@@ -117,7 +116,6 @@ export function Step1Upload({ templateUrl, templateName, onFileLoaded }: Step1Up
 
   return (
     <div className="flex flex-col items-center justify-center gap-8 py-6">
-      {/* Header */}
       <div className="text-center space-y-2 max-w-lg">
         <div className="mx-auto w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-3">
           <CloudUpload className="h-6 w-6 text-primary" />
@@ -139,7 +137,7 @@ export function Step1Upload({ templateUrl, templateName, onFileLoaded }: Step1Up
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2 }}
-            className="w-full max-w-lg space-y-3"  // ← space-y-3 para acomodar botão abaixo
+            className="w-full max-w-lg space-y-3"  
           >
             <div
               onDragEnter={() => setDragActive(true)}
@@ -183,7 +181,6 @@ export function Step1Upload({ templateUrl, templateName, onFileLoaded }: Step1Up
                     {parsing ? "Processando arquivo..." : dragActive ? "Solte o arquivo aqui" : "Clique para selecionar ou arraste o arquivo"}
                   </p>
                   {!parsing && !dragActive && (
-                    // ← NOVO: aviso de limite substituiu "Tamanho máximo"
                     <div className="flex items-center justify-center gap-1.5">
                       <AlertTriangle className="h-3 w-3 text-amber-500" />
                       <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
@@ -204,7 +201,6 @@ export function Step1Upload({ templateUrl, templateName, onFileLoaded }: Step1Up
               <input ref={inputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleInput} />
             </div>
 
-            {/* ← NOVO: botão de download do template */}
             <Button
               variant="outline"
               size="sm"
@@ -215,7 +211,6 @@ export function Step1Upload({ templateUrl, templateName, onFileLoaded }: Step1Up
               Baixar template de importação
             </Button>
 
-            {/* Error message */}
             <AnimatePresence>
               {parseError && (
                 <motion.div

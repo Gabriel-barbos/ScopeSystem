@@ -13,17 +13,13 @@ import { findBestMatch } from "@/utils/Matchutils"
 import { SCHEDULE_IMPORT_COLUMNS } from "@/utils/ScheduleImportconfig"
 import { parseExcelDate, formatDateBR, DATE_FIELDS } from "@/utils/Exceldateutils"
 
-// ── Tipos ─────────────────────────────────────────────────────────────────────
 
 interface MatchedRow {
-  /** Dados prontos para envio (IDs resolvidos) */
   payload: Record<string, any>
-  /** Metadados de matching para exibição */
   clientId?: string
   clientName?: string
   productId?: string
   productName?: string
-  /** Valor bruto digitado na planilha (fallback de exibição) */
   rawClient?: string
   rawProduct?: string
 }
@@ -36,7 +32,6 @@ interface EditScheduleModalProps {
   onUpdate: (data: Record<string, any>[]) => Promise<void>
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function normalizeKey(str: string) {
   return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
@@ -48,12 +43,10 @@ const COLUMN_MAPPING: Record<string, string> = Object.fromEntries(
   )
 )
 
-// Colunas de preview: tudo exceto client/product (tratados separadamente)
 const PREVIEW_FIELDS = SCHEDULE_IMPORT_COLUMNS.filter(
   (c) => c.field !== "client" && c.field !== "product"
 )
 
-// ── Sub-componente: MatchSelect (igual ao do Step3) ───────────────────────────
 
 interface MatchSelectProps {
   value?: string
@@ -95,7 +88,6 @@ function MatchSelect({ value, displayName, options, hasMatch, onChange, optional
   )
 }
 
-// ── Componente principal ──────────────────────────────────────────────────────
 
 export function EditScheduleModal({
   open,
@@ -123,7 +115,6 @@ export function EditScheduleModal({
     [productsRaw]
   )
 
-  // ── Parse ────────────────────────────────────────────────────────────────
 
   const handleFileUpload = (file: File) => {
     if (!file) return
@@ -175,7 +166,6 @@ export function EditScheduleModal({
     reader.readAsBinaryString(file)
   }
 
-  // ── Match handlers (igual ao Step3) ──────────────────────────────────────
 
   const handleClientChange = (rowIndex: number, clientId: string) => {
     const client = clients.find((c) => c._id === clientId)
@@ -199,9 +189,7 @@ export function EditScheduleModal({
     )
   }
 
-  // ── Envio ─────────────────────────────────────────────────────────────────
 
-  /** Monta o payload final com IDs resolvidos */
   const buildPayload = () =>
     rows.map(({ payload, clientId, productId }) => ({
       ...payload,
@@ -219,7 +207,6 @@ export function EditScheduleModal({
     }
   }
 
-  // ── Drag & drop / input ───────────────────────────────────────────────────
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -255,7 +242,6 @@ export function EditScheduleModal({
     }
   }
 
-  // ── Paginação ─────────────────────────────────────────────────────────────
 
   const totalPages = Math.ceil(rows.length / ITEMS_PER_PAGE)
   const pageRows = rows.slice(
@@ -263,7 +249,6 @@ export function EditScheduleModal({
     currentPage * ITEMS_PER_PAGE
   )
 
-  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -394,7 +379,6 @@ export function EditScheduleModal({
   )
 }
 
-// ── UploadZone (extraído para clareza) ────────────────────────────────────────
 
 function UploadZone({
   dragActive,

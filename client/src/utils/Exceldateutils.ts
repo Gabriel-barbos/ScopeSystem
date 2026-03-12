@@ -20,7 +20,6 @@ export function parseExcelDate(value: unknown): string | null {
     return isNaN(value.getTime()) ? null : toISODate(value)
   }
 
-  // Serial number do Excel → constrói via Date.UTC com noon para evitar drift de fuso
   if (typeof value === "number") {
     if (value <= 0) return null
     const days = Math.round(value) - 25569 // Math.round previne frações de dia
@@ -48,10 +47,7 @@ export function parseExcelDate(value: unknown): string | null {
 
   return null
 }
-/**
- * Formata uma data ISO ou Date para exibição no formato brasileiro DD/MM/YYYY.
- * Usado na preview da tabela de importação.
- */
+
 export function formatDateBR(value: unknown): string {
   const iso = value instanceof Date ? toISODate(value) : parseExcelDate(value)
   if (!iso) return typeof value === "string" ? value : "—"
@@ -60,7 +56,6 @@ export function formatDateBR(value: unknown): string {
   return `${day}/${month}/${year}`
 }
 
-// Converte Date para "YYYY-MM-DD" sem risco de fuso horário
 function toISODate(date: Date): string {
   const y = date.getUTCFullYear()
   const m = String(date.getUTCMonth() + 1).padStart(2, "0")
@@ -68,5 +63,4 @@ function toISODate(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-// Fields do banco que representam datas — usado pelo ScheduleImportconfig
 export const DATE_FIELDS = new Set(["scheduledDate", "orderDate", "removalDate"])

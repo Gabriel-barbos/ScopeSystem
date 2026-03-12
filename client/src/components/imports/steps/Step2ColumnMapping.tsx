@@ -34,7 +34,6 @@ export function Step2ColumnMapping({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
       <div className="text-center space-y-2">
         <div className="mx-auto w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-3">
           <Columns3 className="h-6 w-6 text-primary" />
@@ -48,14 +47,12 @@ export function Step2ColumnMapping({
         </p>
       </div>
 
-      {/* Stats cards */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
         className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl mx-auto w-full"
       >
-        {/* Mapped */}
         <div
           className={cn(
             "relative overflow-hidden rounded-xl border px-4 py-3",
@@ -77,7 +74,6 @@ export function Step2ColumnMapping({
           </div>
         </div>
 
-        {/* Unmapped */}
         <div
           className={cn(
             "relative overflow-hidden rounded-xl border px-4 py-3",
@@ -129,7 +125,6 @@ export function Step2ColumnMapping({
           </div>
         </div>
 
-        {/* Total */}
         <div className="relative overflow-hidden rounded-xl border border-border bg-card px-4 py-3">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -149,7 +144,6 @@ export function Step2ColumnMapping({
 
    
 
-      {/* Missing required warning */}
       {missingRequired.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -178,7 +172,6 @@ export function Step2ColumnMapping({
         </motion.div>
       )}
 
-      {/* All good message */}
       {missingRequired.length === 0 && unmappedCount === 0 && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -195,7 +188,6 @@ export function Step2ColumnMapping({
         </motion.div>
       )}
 
-      {/* Tip */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -211,7 +203,6 @@ export function Step2ColumnMapping({
         </div>
       </motion.div>
 
-      {/* Mapping panel */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}

@@ -315,7 +315,6 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
         <div className="flex-1 overflow-y-auto">
           <div className="flex gap-0 h-full divide-x">
 
-            {/* ── Coluna principal ── */}
             <div className="flex-1 px-6 py-5 overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-6">
 

@@ -222,7 +222,6 @@ export function PreviewTable({
   return (
     <div className="space-y-3">
 
-      {/* ── Resumo ──────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-3">
         <Card className="border-border/60">
           <CardContent className="flex items-center gap-3 p-4">
@@ -320,7 +319,6 @@ export function PreviewTable({
         </div>
       )}
 
-      {/* ── Tabela ──────────────────────────────────────────────────────────── */}
       <ScrollArea className="h-[360px] rounded-lg border border-border/60">
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm">

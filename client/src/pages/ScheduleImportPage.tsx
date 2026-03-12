@@ -50,10 +50,8 @@ export default function ScheduleImportPage() {
   const [file, setFile] = useState<File | null>(null)
   const [excelColumns, setExcelColumns] = useState<string[]>([])
 
-  // rawRows: linhas brutas do Excel (colunas originais)
   const [rawRows, setRawRows] = useState<Record<string, any>[]>([])
 
-  // matchedRows: rawRows enriquecidas com ClienteId / EquipamentoId pelo Step 3
   const [matchedRows, setMatchedRows] = useState<Record<string, any>[]>([])
 
   const [mapping, setMapping] = useState<Record<string, string>>({})
@@ -61,7 +59,6 @@ export default function ScheduleImportPage() {
   const [importStatus, setImportStatus] = useState<ImportStatus>("idle")
   const [importError, setImportError] = useState<string>()
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
 
   const handleFileLoaded = (f: File, columns: string[], rows: Record<string, any>[]) => {
     setFile(f)
@@ -77,7 +74,6 @@ export default function ScheduleImportPage() {
   const handleConfirmImport = async () => {
     setImportStatus("loading")
     try {
-      // matchedRows já tem ClienteId / EquipamentoId populados pelo Step 3
       const payload = buildSchedulePayload(matchedRows, mapping, {
         createdBy: user?.name || "Sistema",
       })
@@ -99,7 +95,6 @@ export default function ScheduleImportPage() {
     return false
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-page-background">
@@ -137,7 +132,6 @@ export default function ScheduleImportPage() {
             />
           )}
           {step === 3 && (
-            // Step 3 recebe rawRows e mapping, e devolve matchedRows + errors
             <Step3Validation
               rows={rawRows}
               mapping={mapping}
@@ -185,7 +179,6 @@ export default function ScheduleImportPage() {
   )
 }
 
-// ── Stepper ──────────────────────────────────────────────────────────────────
 
 interface StepperProps {
   current: number

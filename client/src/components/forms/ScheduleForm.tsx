@@ -243,7 +243,6 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5 pb-4">
 
-      {/* ── Veículo ── */}
       <div className="space-y-3">
         <SectionLabel>Veículo</SectionLabel>
 
@@ -298,7 +297,6 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
         </div>
       </div>
 
-      {/* ── Serviço ── */}
       <div className="space-y-3">
         <SectionLabel>Serviço</SectionLabel>
 
@@ -502,7 +500,6 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
         </div>
       </div>
 
-      {/* ── Local do Serviço (sempre visível) ── */}
       <div className="space-y-3">
         <SectionLabel>Local do Serviço</SectionLabel>
 
@@ -525,7 +522,6 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
         </div>
       </div>
 
-      {/* ── Manutenção (condicional) ── */}
       {isMaintenance && (
         <div className="space-y-3">
           <SectionLabel>
@@ -556,7 +552,6 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
         </div>
       )}
 
-      {/* ── Observações ── */}
       <div className="space-y-3">
         <SectionLabel>Observações</SectionLabel>
         <div className="space-y-1">
