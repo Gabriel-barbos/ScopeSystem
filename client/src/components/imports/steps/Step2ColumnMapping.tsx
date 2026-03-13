@@ -212,6 +212,7 @@ export function Step2ColumnMapping({
           excelColumns={excelColumns}
           mapping={mapping}
           onMappingChange={onMappingChange}
+          importColumns={SCHEDULE_IMPORT_COLUMNS}
         />
       </motion.div>
     </div>
