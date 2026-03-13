@@ -5,13 +5,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { InputWithIcon } from "@/components/InputWithIcon";
 import { List, Pagination } from "antd";
-import { useServiceService, type Service } from "@/services/ServiceService";
+import { useServiceService, type Service, type BulkImportServicePayload } from "@/services/ServiceService";
 import ServiceDrawer from "@/components/service/ServiceDrawer";
 import { ImportModal } from "@/components/ImportModal";
 import { toast } from "sonner";
 import RoleIf from "@/components/RoleIf";
 import { Roles } from "@/utils/roles";
 import { getServiceConfig } from "@/utils/badges";
+import { SERVICE_IMPORT_COLUMNS } from "@/utils/ServiceImportConfig";
 
 const PAGE_SIZE = 50;
 
@@ -216,27 +217,13 @@ export default function Services() {
 
     const handleImport = async (data: Record<string, any>[]) => {
         try {
+            // data já vem com fields em inglês, mapeados pelo buildPayload do ImportModal
             const services = data.map((row) => ({
-                plate: row.Placa || undefined,
-                vin: row.Chassi,
-                model: row.Modelo,
-                serviceType: row.TipoServico || "installation",
-                client: row.ClienteId,
-                product: row.EquipamentoId || undefined,
-                deviceId: row.IDDispositivo,
-                technician: row.Tecnico,
-                provider: row.Prestador || undefined,
-                installationLocation: row.LocalInstalacao,
-                serviceAddress: row.Endereco,
-                odometer: row.Odometro ? Number(row.Odometro) : undefined,
-                blockingEnabled: row.Bloqueio?.toLowerCase() === "sim" || row.Bloqueio === true,
-                protocolNumber: row.NumeroProtocolo || undefined,
-                secondaryDevice: row.DispositivoSecundario || undefined,
-                validatedBy: row.ValidadoPor || "Importação",
-                validationNotes: row.Observacoes || undefined,
-                validatedAt: row.DataValidacao || undefined,
-                status: row.Status || "concluido",
-            }));
+                ...row,
+                serviceType: row.serviceType || "installation",
+                validatedBy: row.validatedBy || "Importação",
+                status: row.status || "concluido",
+            })) as BulkImportServicePayload[];
             await bulkImport.mutateAsync(services);
             toast.success(`${services.length} serviços importados com sucesso!`);
             setImportModalOpen(false);
@@ -335,15 +322,7 @@ export default function Services() {
                 templateUrl="/templates/servicos.xlsx"
                 templateName="template-servicos.xlsx"
                 onImport={handleImport}
-                columnMapping={{
-                    Chassi: "Chassi", Placa: "Placa", Modelo: "Modelo",
-                    Cliente: "Cliente", Equipamento: "Equipamento", TipoServico: "TipoServico",
-                    IDDispositivo: "IDDispositivo", Tecnico: "Tecnico", Prestador: "Prestador",
-                    LocalInstalacao: "LocalInstalacao", Endereco: "Endereco", Odometro: "Odometro",
-                    Bloqueio: "Bloqueio", NumeroProtocolo: "NumeroProtocolo",
-                    DispositivoSecundario: "DispositivoSecundario", ValidadoPor: "ValidadoPor",
-                    Observacoes: "Observacoes", DataValidacao: "DataValidacao", Status: "Status",
-                }}
+                importColumns={SERVICE_IMPORT_COLUMNS}
             />
 
             <ServiceDrawer open={drawerOpen} onClose={handleCloseDrawer} service={selectedService} />

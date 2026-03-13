@@ -8,7 +8,7 @@ import { Upload, Download, FileSpreadsheet, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useClientService } from "@/services/ClientService"
 import { useProductService } from "@/services/ProductService"
-import { SCHEDULE_IMPORT_COLUMNS } from "@/utils/ScheduleImportconfig"
+import type { ColumnConfig } from "@/utils/ScheduleImportconfig"
 import { parseExcelDate, DATE_FIELDS } from "@/utils/Exceldateutils"
 
 interface ImportModalProps {
@@ -18,25 +18,28 @@ interface ImportModalProps {
   templateUrl: string
   templateName: string
   onImport: (data: Record<string, any>[]) => void | Promise<void>
+  // Configuração de colunas para este contexto de importação
+  importColumns: ColumnConfig[]
 }
 
 function normalizeKey(str: string): string {
   return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
 }
 
-// { "coluna normalizada" → "field do banco" } — usado para deteção automática
-const BASE_COLUMN_MAP: Record<string, string> = Object.fromEntries(
-  SCHEDULE_IMPORT_COLUMNS.flatMap(({ header, aliases = [], field }) =>
-    [header, ...aliases].filter(Boolean).map((key) => [normalizeKey(key), field])
-  )
-)
-
 // Detecta automaticamente quais colunas do Excel mapeiam para qual field
-// Retorna { "Chassi" → "vin", "Data" → "scheduledDate", ... }
-function buildInitialMapping(excelCols: string[]): Record<string, string> {
+// Usa a config de colunas passada via prop
+function buildInitialMapping(
+  excelCols: string[],
+  columns: ColumnConfig[]
+): Record<string, string> {
+  const columnMap: Record<string, string> = Object.fromEntries(
+    columns.flatMap(({ header, aliases = [], field }) =>
+      [header, ...aliases].filter(Boolean).map((key) => [normalizeKey(key), field])
+    )
+  )
   const result: Record<string, string> = {}
   for (const col of excelCols) {
-    const field = BASE_COLUMN_MAP[normalizeKey(col)]
+    const field = columnMap[normalizeKey(col)]
     if (field) result[col] = field
   }
   return result
@@ -76,6 +79,7 @@ export function ImportModal({
   templateUrl,
   templateName,
   onImport,
+  importColumns,
 }: ImportModalProps) {
   // rawData sempre em português (colunas originais do Excel) — nunca convertido
   const [rawData, setRawData] = useState<Record<string, any>[]>([])
@@ -118,7 +122,7 @@ export function ImportModal({
       // NENHUMA linha tem valor naquela coluna (ex: 200 linhas, só 14 com Placa)
       const sheetHeaders = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 })[0] ?? []
       setRawData(jsonData)
-      setColumnMapping(buildInitialMapping(sheetHeaders.map(String)))
+      setColumnMapping(buildInitialMapping(sheetHeaders.map(String), importColumns))
     }
     reader.readAsBinaryString(file)
   }
@@ -235,6 +239,7 @@ export function ImportModal({
                 excelColumns={excelColumns}
                 mapping={columnMapping}
                 onMappingChange={setColumnMapping}
+                importColumns={importColumns}
               />
 
               <div className="space-y-2">
@@ -244,20 +249,29 @@ export function ImportModal({
                   data={rawData}
                   onDataChange={(processed) => {
                     // A PreviewTable adiciona _originalIndex, ClienteId, EquipamentoId no processedData.
-                    // Só nos interessa salvar de volta os IDs resolvidos — o resto é dado interno da tabela.
-                    setRawData((prev) =>
-                      prev.map((row, i) => {
+                    // Só atualiza rawData se algum ID resolvido mudou — evita o ciclo de reset de paginação.
+                    setRawData((prev) => {
+                      let changed = false
+                      const next = prev.map((row, i) => {
                         const match = processed.find((p) => p._originalIndex === i)
                         if (!match) return row
+                        const nextClienteId     = match.ClienteId     ?? row.ClienteId
+                        const nextEquipamentoId = match.EquipamentoId ?? row.EquipamentoId
+                        if (
+                          nextClienteId     === row.ClienteId &&
+                          nextEquipamentoId === row.EquipamentoId
+                        ) return row
+                        changed = true
                         return {
                           ...row,
-                          ...(match.ClienteId    && { ClienteId:     match.ClienteId }),
-                          ...(match.EquipamentoId && { EquipamentoId: match.EquipamentoId }),
+                          ...(nextClienteId     && { ClienteId:     nextClienteId }),
+                          ...(nextEquipamentoId && { EquipamentoId: nextEquipamentoId }),
                         }
                       })
-                    )
+                      return changed ? next : prev
+                    })
                   }}
-                  products={products?.filter((p: any) => p.category === "Dispositivo")}
+                  products={products}
                   clients={clients}
                   productColumn={productColumn}
                   clientColumn={clientColumn}

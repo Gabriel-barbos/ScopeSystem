@@ -77,6 +77,7 @@ const FormSchema = z.object({
   orderNumber: z.string().optional(),
   createdBy: z.string().optional(),
   orderDate: z.string().min(2, "Data do pedido é obrigatória"),
+  reason: z.string().optional(),
 });
 
 export type ScheduleFormValues = z.infer<typeof FormSchema>;
@@ -144,6 +145,7 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
       responsiblePhone: "",
       vehicleGroup: "",
       orderDate: "",
+      reason: "",
     },
   });
 
@@ -187,6 +189,7 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
         condutor: schedule.condutor || "",
         responsiblePhone: schedule.responsiblePhone || "",
         orderDate: schedule.orderDate ? schedule.orderDate.split("T")[0] : "",
+        reason: schedule.reason || "",
       });
     }
   }, [schedule, reset]);
@@ -214,6 +217,7 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
         ...(isMaintenance && {
           condutor: data.condutor,
           responsiblePhone: data.responsiblePhone,
+          reason: data.reason,
         }),
       };
 
@@ -549,6 +553,35 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
               />
             </div>
           </div>
+
+             <div className="space-y-1">
+          <Label>Motivo</Label>
+          <Controller
+            name="reason"
+            control={control}
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} value={field.value}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o motivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="maintenance">Dispositivo Sem Comunicação</SelectItem>
+                  <SelectItem value="installation">Dispositivo Sem Registro Viagem</SelectItem>
+                  <SelectItem value="removal">Dispositivo Sem Dados CAN</SelectItem>
+                  <SelectItem value="diagnostic">Instalação Sem Pós Chave</SelectItem>
+                  <SelectItem value="reinstallation">Instalação Inadequada</SelectItem>
+                  <SelectItem value="reinstallation">Leitor Travado</SelectItem>
+                  <SelectItem value="reinstallation">Problema Acessório</SelectItem>
+                  <SelectItem value="reinstallation">Problema Bateria</SelectItem>
+                  <SelectItem value="reinstallation">Substituição Tecnologia</SelectItem>
+                  <SelectItem value="reinstallation">Upgrade Produto</SelectItem>
+                  <SelectItem value="reinstallation">Recall Dispositivo</SelectItem>
+                  <SelectItem value="reinstallation">Recall Chicote</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </div>
         </div>
       )}
 

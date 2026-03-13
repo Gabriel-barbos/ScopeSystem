@@ -31,7 +31,7 @@ import { BarChartPendingTecnics } from "@/components/charts/BarChartPendingTecni
 import { EvolutionChart } from "@/components/charts/EvolutionChart";
 import { ReportDailyChart, type PeriodType } from "@/components/charts/ReportDailyChart";
 import { getDateRangeFromPeriod } from "@/utils/dateUtils";
-
+import { Separator } from "@/components/ui/separator";
 
 const statsConfig = {
 agendamentos: [
@@ -204,7 +204,8 @@ function Reports() {
             <BarChartPendingTecnics data={data?.pendingByProvider ?? []} />
           </div>
         </section>
-
+              <Separator />
+              <span className="align-center text-sm text-muted-foreground ">*Os gráficos abaixo não são influenciados pelos filtros</span>
         {/* Evolução Mensal */}
         <section className="space-y-3">
           <h3 className="text-lg font-semibold">Evolução Mensal</h3>

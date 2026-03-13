@@ -53,25 +53,59 @@ export function PreviewTable({
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 10
 
-  const isInternalUpdate = useRef(false)
-  const lastExternalData = useRef<Record<string, any>[]>([])
+  const lastDataKey = useRef<string>("")
 
+  // Dispara quando chega um arquivo novo (chave muda = número de linhas ou colunas diferentes)
+  // NÃO dispara quando apenas ClienteId/EquipamentoId são atualizados pelo ImportModal
   useEffect(() => {
-    if (isInternalUpdate.current) {
-      isInternalUpdate.current = false
+    // Chave estável: tamanho + nomes das colunas da primeira linha
+    const dataKey = data.length > 0
+      ? `${data.length}|${Object.keys(data[0]).filter(k => !k.endsWith('Id') && k !== '_originalIndex').join(',')}`
+      : ""
+
+    if (dataKey === lastDataKey.current) {
+      // Mesmo arquivo — re-executa o match (products/clients podem ter chegado depois)
+      // sem resetar a página
+      if (processedData.length === 0) return  // ainda não processado nenhuma vez
+      const newMatches: Record<number, any> = {}
+      let idsChanged = false
+      const updatedProcessed = processedData.map((row) => {
+        const source = data.find((d, i) => (d._originalIndex ?? i) === row._originalIndex)
+        if (!source) return row
+        const productMatch = findBestMatch(source[productColumn], products)
+        const clientMatch  = findBestMatch(source[clientColumn],  clients)
+        const idx = row._originalIndex
+        newMatches[idx] = { product: productMatch, client: clientMatch }
+        const newClienteId     = clientMatch?.id  ?? row.ClienteId
+        const newEquipamentoId = productMatch?.id ?? row.EquipamentoId
+        if (newClienteId !== row.ClienteId || newEquipamentoId !== row.EquipamentoId) {
+          idsChanged = true
+          return {
+            ...row,
+            ...(newClienteId     && { ClienteId:     newClienteId }),
+            ...(newEquipamentoId && { EquipamentoId: newEquipamentoId }),
+          }
+        }
+        return row
+      })
+
+      if (idsChanged) {
+        setMatches(newMatches)
+        setProcessedData(updatedProcessed)
+      }
       return
     }
 
-    if (data === lastExternalData.current) return
-    lastExternalData.current = data
+    // Novo arquivo — processa tudo e reseta página
+    lastDataKey.current = dataKey
 
-    const updatedData = data.map((row, idx) => {
+    const updatedData: Record<string, any>[] = data.map((row, idx) => {
       const productMatch = findBestMatch(row[productColumn], products)
       const clientMatch = findBestMatch(row[clientColumn], clients)
       return {
         ...row,
         _originalIndex: idx,
-        ...(clientMatch && { ClienteId: clientMatch.id }),
+        ...(clientMatch  && { ClienteId:     clientMatch.id }),
         ...(productMatch && { EquipamentoId: productMatch.id }),
       }
     })
@@ -89,7 +123,7 @@ export function PreviewTable({
     updatedData.forEach((row) => {
       const idx = row._originalIndex
       const productMatch = findBestMatch(row[productColumn], products)
-      const clientMatch = findBestMatch(row[clientColumn], clients)
+      const clientMatch  = findBestMatch(row[clientColumn],  clients)
       newMatches[idx] = { product: productMatch, client: clientMatch }
     })
     setMatches(newMatches)
@@ -126,8 +160,6 @@ export function PreviewTable({
   const handleMatchSelect = (originalIdx: number, col: string, itemId: string) => {
     const realIdx = processedData.findIndex(row => row._originalIndex === originalIdx)
     if (realIdx === -1) return
-
-    isInternalUpdate.current = true
 
     const list = col === productColumn ? products : clients
     const selected = list.find(i => i._id === itemId)

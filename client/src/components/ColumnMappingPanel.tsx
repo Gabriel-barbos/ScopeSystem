@@ -3,7 +3,7 @@ import { CheckCircle2, AlertCircle, ArrowRight, HelpCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { SCHEDULE_IMPORT_COLUMNS } from "@/utils/ScheduleImportconfig"
+import type { ColumnConfig } from "@/utils/ScheduleImportconfig"
 import { cn } from "@/lib/utils"
 
 interface ColumnMappingPanelProps {
@@ -13,19 +13,9 @@ interface ColumnMappingPanelProps {
   // Preenchido automaticamente pelo processo de leitura, editável pelo usuário
   mapping: Record<string, string>
   onMappingChange: (mapping: Record<string, string>) => void
+  // Configuração de colunas do contexto atual (schedule, services, etc.)
+  importColumns: ColumnConfig[]
 }
-
-// Labels amigáveis para exibição no select de destino
-const FIELD_LABELS: Record<string, string> = Object.fromEntries(
-  SCHEDULE_IMPORT_COLUMNS.map(({ field, header }) => [field, header])
-)
-
-// Todos os fields disponíveis para mapeamento manual
-const AVAILABLE_FIELDS = SCHEDULE_IMPORT_COLUMNS.map(({ field, header, required }) => ({
-  field,
-  label: header,
-  required,
-}))
 
 // Normaliza para comparação case-insensitive sem acento
 function normalizeKey(str: string): string {
@@ -40,7 +30,19 @@ export function ColumnMappingPanel({
   excelColumns,
   mapping,
   onMappingChange,
+  importColumns,
 }: ColumnMappingPanelProps) {
+  // Labels amigáveis para exibição no select de destino
+  const FIELD_LABELS = useMemo(
+    () => Object.fromEntries(importColumns.map(({ field, header }) => [field, header])),
+    [importColumns]
+  )
+
+  // Todos os fields disponíveis para mapeamento manual
+  const AVAILABLE_FIELDS = useMemo(
+    () => importColumns.map(({ field, header, required }) => ({ field, label: header, required })),
+    [importColumns]
+  )
   // Separa colunas em reconhecidas e não reconhecidas
   const { mapped, unmapped } = useMemo(() => {
     const mapped: Array<{ excelCol: string; field: string }> = []
@@ -71,13 +73,15 @@ export function ColumnMappingPanel({
     onMappingChange(updated)
   }
 
-  const requiredFields = new Set(
-    SCHEDULE_IMPORT_COLUMNS.filter((c) => c.required).map((c) => c.field)
+  const requiredFields = useMemo(
+    () => new Set(importColumns.filter((c) => c.required).map((c) => c.field)),
+    [importColumns]
   )
 
-  const missingRequired = SCHEDULE_IMPORT_COLUMNS
-    .filter((c) => c.required && !usedFields.has(c.field))
-    .map((c) => c.header)
+  const missingRequired = useMemo(
+    () => importColumns.filter((c) => c.required && !usedFields.has(c.field)).map((c) => c.header),
+    [importColumns, usedFields]
+  )
 
   return (
     <TooltipProvider delayDuration={200}>

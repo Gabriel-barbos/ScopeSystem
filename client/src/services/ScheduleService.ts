@@ -38,6 +38,7 @@ export interface Schedule {
   createdAt?: string;
   updatedAt?: string;
   removalDate?: string;
+  reason?: string;
 }
 
 export interface SchedulePayload {
@@ -62,6 +63,7 @@ export interface SchedulePayload {
   orderDate?: string;
   situation?: string;
   removalDate?: string;
+  reason?: string;
 }
 
 export interface BulkUpdatePayload {
