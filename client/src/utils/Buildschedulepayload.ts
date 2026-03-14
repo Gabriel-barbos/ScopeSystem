@@ -1,5 +1,5 @@
 import { parseExcelDate, DATE_FIELDS } from "@/utils/Exceldateutils"
-import { cleanRow, normalizeVin, normalizePlate, normalizeServiceType, normalizeStatus } from "@/utils/importHelpers"
+import { cleanRow, normalizeVin, normalizePlate, normalizeServiceType, normalizeStatus, normalizeReason } from "@/utils/importHelpers"
 import type { SchedulePayload } from "@/services/ScheduleService"
 
 export function buildSchedulePayload(
@@ -50,6 +50,13 @@ export function buildSchedulePayload(
       if (field === "status") {
         const normalized = normalizeStatus(value)
         if (normalized) payload[field] = normalized
+        continue
+      }
+
+      if (field === "reason") {
+        const normalized = normalizeReason(value)
+        if (normalized) payload[field] = normalized
+        // valor não reconhecido é descartado (campo opcional)
         continue
       }
 

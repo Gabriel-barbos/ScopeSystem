@@ -1,4 +1,5 @@
 import { parseExcelDate, DATE_FIELDS } from "@/utils/Exceldateutils"
+import { normalizeReason } from "@/utils/importHelpers"
 
 export interface ColumnConfig {
   header: string
@@ -28,6 +29,7 @@ export const SCHEDULE_IMPORT_COLUMNS: ColumnConfig[] = [
   { header: "Equipamento",         field: "product",          required: false, aliases: ["Fabricante", "Dispositivo"] },
   { header: "Data do pedido",      field: "orderDate",        required: true,  aliases: ["Data Pedido", "data de solicitação"] },
   { header: "Data da remoção",     field: "removalDate",      required: false, aliases: ["Data Remocao", "DATA REMOCAO", "Data Remoção"] },
+  { header: "Motivo",              field: "reason",           required: false, aliases: ["Motivo do Agendamento"] },
 ]
 
 export const SCHEDULE_COLUMN_MAPPING = Object.fromEntries(
@@ -53,6 +55,10 @@ export function mapRowToPayload(row: Record<string, any>): Record<string, any> {
 
     if (field === "vin") {
       payload[field] = String(raw).trim()
+    } else if (field === "reason") {
+      const normalized = normalizeReason(raw)
+      if (normalized) payload[field] = normalized
+      // se não reconhecer, descarta para não salvar lixo
     } else if (DATE_FIELDS.has(field)) {
       // Converte serial do Excel, DD/MM/YYYY, ISO, etc → "YYYY-MM-DD"
       const iso = parseExcelDate(raw)

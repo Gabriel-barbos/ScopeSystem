@@ -37,7 +37,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmModal } from "@/components/ConfirmModal";
-
+import { ShieldQuestionMark } from "lucide-react";
 
 type ScheduleDrawerProps = {
   open: boolean;
@@ -65,6 +65,23 @@ const STATUS_OPTIONS = [
   { value: "atrasado",  label: "Atrasado" },
   { value: "frustrado", label: "Frustrado" },
   { value: "aguardando_cliente", label: "Aguardando Cliente" },
+
+];
+
+const REASON_OPTIONS = [
+  { value: "dispositivo_sem_comunicacao", label: "Dispositivo Sem Comunicação" },
+  { value: "dispositivo_sem_registro_de_viagem", label: "Dispositivo Sem Registro Viagem" },
+  { value: "dispositivo_sem_dados_CAN", label: "Dispositivo Sem Dados CAN" },
+  { value: "instalacao_sem_pos_chave", label: "Instalação Sem Pós Chave" },
+  { value: "instalacao_inadequada", label: "Instalação Inadequada" },
+  { value: "leitor_travado", label: "Leitor Travado" },
+  { value: "problema_acessorio", label: "Problema Acessório" },
+  { value: "problema_bateria", label: "Problema Bateria" },
+  { value: "substituicao_tecnologia", label: "Substituição Tecnologia" },
+  { value: "upgrade_produto", label: "Upgrade Produto" },
+  { value: "recall_dispositivo", label: "Recall Dispositivo" },
+  { value: "recall_chicote", label: "Recall Chicote" },
+  { value: "Outros", label: "Outros" },
 ];
 
 
@@ -215,7 +232,7 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
         ...(isMaintenance(editedSchedule.serviceType) && {
           responsiblePhone: editedSchedule.responsiblePhone,
           condutor:         editedSchedule.condutor,
-          
+          reason:           editedSchedule.reason,
           removalDate:      editedSchedule.removalDate,
         }),
         ...(isRemovalService(editedSchedule.serviceType) && {
@@ -556,6 +573,35 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
                       value={data.condutor || ""} onChange={(v) => updateField("condutor", v)}
                       placeholder="Nome do condutor"
                     />
+
+                        {/* MOTIVO */}
+                  {isEditing ? (
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <ShieldQuestionMark className="h-3.5 w-3.5" /> Motivo
+                      </label>
+                      <Select
+                        value={data.reason}
+                        onValueChange={(v) => updateField("reason", v)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {REASON_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : (
+                    <InfoField
+                      icon={ShieldQuestionMark} label="Motivo"
+                      value={REASON_OPTIONS.find((r) => r.value === data.reason)?.label ?? data.reason ?? "Não informado"}
+                    />
+                  )}
+
+
                   </div>
                 )}
               </div>

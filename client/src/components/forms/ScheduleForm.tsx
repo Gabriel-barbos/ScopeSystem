@@ -565,18 +565,18 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
                   <SelectValue placeholder="Selecione o motivo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="maintenance">Dispositivo Sem Comunicação</SelectItem>
-                  <SelectItem value="installation">Dispositivo Sem Registro Viagem</SelectItem>
-                  <SelectItem value="removal">Dispositivo Sem Dados CAN</SelectItem>
-                  <SelectItem value="diagnostic">Instalação Sem Pós Chave</SelectItem>
-                  <SelectItem value="reinstallation">Instalação Inadequada</SelectItem>
-                  <SelectItem value="reinstallation">Leitor Travado</SelectItem>
-                  <SelectItem value="reinstallation">Problema Acessório</SelectItem>
-                  <SelectItem value="reinstallation">Problema Bateria</SelectItem>
-                  <SelectItem value="reinstallation">Substituição Tecnologia</SelectItem>
-                  <SelectItem value="reinstallation">Upgrade Produto</SelectItem>
-                  <SelectItem value="reinstallation">Recall Dispositivo</SelectItem>
-                  <SelectItem value="reinstallation">Recall Chicote</SelectItem>
+                  <SelectItem value="dispositivo_sem_comunicacao">Dispositivo Sem Comunicação</SelectItem>
+                  <SelectItem value="dispositivo_sem_registro_de_viagem">Dispositivo Sem Registro Viagem</SelectItem>
+                  <SelectItem value="dispositivo_sem_dados_CAN">Dispositivo Sem Dados CAN</SelectItem>
+                  <SelectItem value="instalacao_sem_pos_chave">Instalação Sem Pós Chave</SelectItem>
+                  <SelectItem value="instalacao_inadequada">Instalação Inadequada</SelectItem>
+                  <SelectItem value="leitor_travado">Leitor Travado</SelectItem>
+                  <SelectItem value="problema_acessorio">Problema Acessório</SelectItem>
+                  <SelectItem value="problema_bateria">Problema Bateria</SelectItem>
+                  <SelectItem value="substituicao_tecnologia">Substituição Tecnologia</SelectItem>
+                  <SelectItem value="upgrade_produto">Upgrade Produto</SelectItem>
+                  <SelectItem value="recall_dispositivo">Recall Dispositivo</SelectItem>
+                  <SelectItem value="recall_chicote">Recall Chicote</SelectItem>
                 </SelectContent>
               </Select>
             )}

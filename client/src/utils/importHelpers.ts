@@ -104,3 +104,151 @@ export function normalizeStatus(value: unknown): StatusType | undefined {
 
   return undefined
 }
+
+/**
+ * Normaliza o campo "Motivo" da manutenção.
+ *
+ * Estratégia em 3 etapas:
+ *  1. Match exato com o value canônico (case-insensitive)
+ *  2. Match por tabela de keywords — cada motivo tem vários sinônimos e variações,
+ *     testados contra o texto compactado (sem espaços) E contra palavras individuais.
+ *  3. Retorna undefined se nenhum match for encontrado.
+ */
+export function normalizeReason(value: unknown): string | undefined {
+  const raw = cleanString(value)
+  if (!raw) return undefined
+
+  // ── helpers de normalização ──────────────────────────────────────────────
+  /** Strip acentos + minúsculas + remove espaços/traços/underscores */
+  const compact = (s: string) =>
+    s.toLowerCase()
+     .normalize("NFD")
+     .replace(/[\u0300-\u036f]/g, "")
+     .replace(/[\s_\-]+/g, "")
+
+  /** Mesma normalização, mas mantém espaços (para match de palavras individuais) */
+  const spaced = (s: string) =>
+    s.toLowerCase()
+     .normalize("NFD")
+     .replace(/[\u0300-\u036f]/g, "")
+     .replace(/[\s_\-]+/g, " ")
+     .trim()
+
+  const c = compact(raw)   // ex: "dispositivosemreportar"
+  const s = spaced(raw)    // ex: "dispositivo sem reportar"
+  const words = s.split(" ") // ex: ["dispositivo", "sem", "reportar"]
+
+  // ── 1. Match exato com value canônico ────────────────────────────────────
+  const CANON_VALUES = [
+    "dispositivo_sem_comunicacao",
+    "dispositivo_sem_registro_de_viagem",
+    "dispositivo_sem_dados_CAN",
+    "instalacao_sem_pos_chave",
+    "instalacao_inadequada",
+    "leitor_travado",
+    "problema_acessorio",
+    "problema_bateria",
+    "substituicao_tecnologia",
+    "upgrade_produto",
+    "recall_dispositivo",
+    "recall_chicote",
+    "Outros",
+  ]
+  const exact = CANON_VALUES.find((v) => compact(v) === c)
+  if (exact) return exact
+
+  // ── 2. Tabela de keywords ────────────────────────────────────────────────
+  // Cada linha: [value canônico, keywords que disparam o match]
+  // Keywords são testadas via includes() tanto no compact quanto no spaced.
+  // Adicione sinônimos, typos comuns e abreviações aqui.
+  const RULES: [string, string[]][] = [
+    // --- Sem Registro de Viagem ---
+    ["dispositivo_sem_registro_de_viagem", [
+      "viagem", "registro", "semregistro", "naoregistra",
+      "naoviaja", "semviagem", "registroviagem",
+    ]],
+
+    // --- Sem Comunicação (cobrindo "reportar", "offline", "resposta", etc.) ---
+    ["dispositivo_sem_comunicacao", [
+      "comunicacao", "comunic",
+      "reportar", "semreportar", "naoreporta",
+      "offline", "semresposta", "naoresponde",
+      "naocomunica", "semcomunic", "semsinais", "semsinal",
+      "naorespond", "naocomun",
+    ]],
+
+    // --- Sem Dados CAN ---
+    ["dispositivo_sem_dados_CAN", [
+      "dadoscan", "semcan", "barramento", "semdadoscan",
+      // "can" sozinho só vira match se não há "cancel" no texto
+    ]],
+
+    // --- Sem Pós-Chave ---
+    ["instalacao_sem_pos_chave", [
+      "poschave", "chave", "posicaochave", "semposchave",
+      "posichave", "poschav",
+    ]],
+
+    // --- Instalação Inadequada ---
+    ["instalacao_inadequada", [
+      "inadequad", "instalacaoinad", "malinstalad",
+      "instalacaoinco", "pessimainst", "erradainst",
+    ]],
+
+    // --- Leitor Travado ---
+    ["leitor_travado", [
+      "leitor", "travado", "leitortrav",
+    ]],
+
+    // --- Problema Acessório ---
+    ["problema_acessorio", [
+      "acessorio", "acessor", "acess",
+    ]],
+
+    // --- Problema Bateria ---
+    ["problema_bateria", [
+      "bateria", "bat",
+    ]],
+
+    // --- Substituição de Tecnologia ---
+    ["substituicao_tecnologia", [
+      "substituic", "substituir", "tecnologia", "tecno",
+      "trocatecnolog", "novatecn",
+    ]],
+
+    // --- Upgrade de Produto ---
+    ["upgrade_produto", [
+      "upgrade", "upgradeprod",
+    ]],
+
+    // --- Recall Chicote (deve vir antes de recall genérico) ---
+    ["recall_chicote", [
+      "recallchicote", "recalchicote", "chicote",
+    ]],
+
+    // --- Recall Dispositivo ---
+    ["recall_dispositivo", [
+      "recall", "recal", "recaul", "recalle",
+      "recalldispositivo", "recaldispositivo",
+    ]],
+
+    // --- Outros ---
+    ["Outros", [
+      "outro", "outros", "other", "nenhum", "naose", "nda",
+    ]],
+  ]
+
+  // Testa: keyword contida no compact  OU  keyword igual a alguma palavra individual
+  const wordSet = new Set(words)
+  for (const [returnValue, keywords] of RULES) {
+    for (const kw of keywords) {
+      if (c.includes(kw) || s.includes(kw) || wordSet.has(kw)) {
+        // Guarda especial: "can" sozinho só casa com dados_CAN se não houver "cancel"
+        if (kw === "can" && (c.includes("cancel") || c.includes("cancelado"))) continue
+        return returnValue
+      }
+    }
+  }
+
+  return undefined
+}
