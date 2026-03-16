@@ -16,8 +16,8 @@ export default function AiAssistantPage() {
     handleRetry,
   } = useAiChat()
 
-  return (
-    <div className="flex h-screen flex-col">
+   return (
+    <div className="flex h-full flex-col">  
       <TopBar />
 
       <ChatArea

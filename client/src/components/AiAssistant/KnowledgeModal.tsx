@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { saveKnowledge } from '../../services/aiService'
+import { aiApi } from '../../services/aiService'
 
 export function KnowledgeModal() {
   const [mode, setMode] = useState('email')
@@ -30,7 +30,7 @@ export function KnowledgeModal() {
     if (!content.trim()) return
     setSaving(true)
     try {
-      await saveKnowledge({ mode, category: mode === 'duvidas' ? category : undefined, content })
+      await aiApi.saveKnowledge({ mode, category: mode === 'duvidas' ? category : undefined, content })
       setContent('')
       setCategory('')
     } finally {

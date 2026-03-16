@@ -1,5 +1,6 @@
 
 import { useState, useCallback } from 'react'
+import API from '@/api/axios'
 
 
 export type Mode = 'email' | 'acessos' | 'duvidas'
@@ -8,65 +9,51 @@ export type ChatStatus = 'idle' | 'loading' | 'error'
 
 export interface Message {
   role: MessageRole
-  text: string,
+  text: string
   timestamp: Date
 }
 
-interface SendMessageParams {
+export interface SendMessageParams {
   mode: Mode
   category: string | null
   history: Message[]
   message: string
 }
 
-
-const BASE = '/api'
-
-async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${url}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  })
-  if (!res.ok) throw new Error('Erro na requisição.')
-  return res.json()
-}
-
-export async function sendMessage(params: SendMessageParams): Promise<string> {
-  const data = await request<{ text: string }>('/ai/chat', {
-    method: 'POST',
-    body: JSON.stringify(params),
-  })
-  return data.text
-}
-
-export async function fetchKnowledge(mode: string, category?: string) {
-  const path = category ? `/knowledge/${mode}/${category}` : `/knowledge/${mode}`
-  return request(path)
-}
-
-export async function saveKnowledge(payload: {
+export interface KnowledgePayload {
   mode: string
   category?: string
   content: string
-}) {
-  return request('/knowledge', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
 }
 
-export async function updateKnowledge(id: string, content: string) {
-  return request(`/knowledge/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify({ content }),
-  })
+
+export const aiApi = {
+  sendMessage: async (params: SendMessageParams): Promise<string> => {
+    const { data } = await API.post<{ reply: string }>('/ai/chat', params)
+return data.reply
+  },
+
+  fetchKnowledge: async (mode: string, category?: string) => {
+    const path = category ? `/knowledge/${mode}/${category}` : `/knowledge/${mode}`
+    const { data } = await API.get(path)
+    return data
+  },
+
+  saveKnowledge: async (payload: KnowledgePayload) => {
+    const { data } = await API.post('/knowledge', payload)
+    return data
+  },
+
+  updateKnowledge: async (id: string, content: string) => {
+    const { data } = await API.put(`/knowledge/${id}`, { content })
+    return data
+  },
+
+  deleteKnowledge: async (id: string): Promise<void> => {
+    await API.delete(`/knowledge/${id}`)
+  },
 }
 
-export async function deleteKnowledge(id: string) {
-  return request(`/knowledge/${id}`, { method: 'DELETE' })
-}
-
-// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useAiChat() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -85,7 +72,7 @@ export function useAiChat() {
 
   const handleSend = useCallback(
     async (text: string) => {
-      const userMessage: Message = { role: 'user', text }
+      const userMessage: Message = { role: 'user', text, timestamp: new Date() }
       const updatedHistory = [...messages, userMessage]
 
       setMessages(updatedHistory)
@@ -93,13 +80,8 @@ export function useAiChat() {
       setError(null)
 
       try {
-        const reply = await sendMessage({
-          mode,
-          category,
-          history: messages,
-          message: text,
-        })
-        setMessages([...updatedHistory, { role: 'model', text: reply }])
+        const reply = await aiApi.sendMessage({ mode, category, history: messages, message: text })
+        setMessages([...updatedHistory, { role: 'model', text: reply, timestamp: new Date() }])
         setStatus('idle')
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erro desconhecido.')
@@ -110,21 +92,11 @@ export function useAiChat() {
   )
 
   const handleRetry = useCallback(() => {
-    const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
-    if (!lastUserMessage) return
+    const lastUser = [...messages].reverse().find(m => m.role === 'user')
+    if (!lastUser) return
     setMessages(prev => prev.slice(0, -1))
-    handleSend(lastUserMessage.text)
+    handleSend(lastUser.text)
   }, [messages, handleSend])
 
-  return {
-    messages,
-    status,
-    mode,
-    category,
-    error,
-    setCategory,
-    handleModeChange,
-    handleSend,
-    handleRetry,
-  }
+  return { messages, status, mode, category, error, setCategory, handleModeChange, handleSend, handleRetry }
 }

@@ -307,9 +307,9 @@ function AIAvatar() {
   return (
     <div
       style={{
-        width: '28px',
-        height: '28px',
-        borderRadius: '8px',
+        width: '36px',
+        height: '36px',
+        borderRadius: '10px',
         background: 'hsl(var(--primary))',
         display: 'flex',
         alignItems: 'center',
@@ -318,12 +318,28 @@ function AIAvatar() {
         marginTop: '2px',
       }}
     >
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+      <svg width="22" height="22" viewBox="0 0 36 36" fill="none">
+        {/* anteninha */}
+        <rect x="15" y="0" width="6" height="8" rx="3" fill="white" fillOpacity="0.9"/>
+        <circle cx="18" cy="0" r="3.5" fill="white" fillOpacity="0.9"/>
+        {/* cabeça */}
+        <rect x="2" y="7" width="32" height="26" rx="8" fill="white" fillOpacity="0.15"/>
+        {/* olhos */}
+        <rect x="7" y="13" width="8" height="8" rx="2.5" fill="white" fillOpacity="0.92"/>
+        <rect x="21" y="13" width="8" height="8" rx="2.5" fill="white" fillOpacity="0.92"/>
+        <circle cx="11" cy="17" r="2.5" fill="hsl(var(--primary))"/>
+        <circle cx="25" cy="17" r="2.5" fill="hsl(var(--primary))"/>
+        {/* sorriso */}
         <path
-          d="M8 2C5.24 2 3 4.24 3 7c0 1.6.74 3.03 1.9 3.97V13l2.1-1.05c.32.07.65.05 1 .05 2.76 0 5-2.24 5-5S10.76 2 8 2Z"
-          fill="white"
-          fillOpacity="0.9"
+          d="M10 24 Q18 30 26 24"
+          stroke="white"
+          strokeWidth="2"
+          strokeLinecap="round"
+          fill="none"
+          opacity="0.85"
         />
+        {/* parafusinho */}
+        <circle cx="18" cy="16" r="0" fill="none"/>
       </svg>
     </div>
   )

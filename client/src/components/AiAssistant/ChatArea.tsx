@@ -165,7 +165,7 @@ export function ChatArea({ messages, status, error, mode, onRetry }: ChatAreaPro
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-5 pb-6">
+    <div className="flex flex-1 flex-col gap-4 overflow-y-auto min-h-0 px-4 py-5 pb-6">
       {messages.map((msg, i) => (
         <div
           key={i}
