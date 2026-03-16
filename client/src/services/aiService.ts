@@ -8,7 +8,8 @@ export type ChatStatus = 'idle' | 'loading' | 'error'
 
 export interface Message {
   role: MessageRole
-  text: string
+  text: string,
+  timestamp: Date
 }
 
 interface SendMessageParams {

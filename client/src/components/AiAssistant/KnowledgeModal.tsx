@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BookOpen } from 'lucide-react'
+import { BookOpenCheck  } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -42,8 +42,8 @@ export function KnowledgeModal() {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
-          <BookOpen className="h-4 w-4" />
-          Conhecimento
+          <BookOpenCheck className="h-4 w-4" />
+          Ensinar
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
