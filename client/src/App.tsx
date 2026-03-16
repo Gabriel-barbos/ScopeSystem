@@ -23,6 +23,7 @@ import { Roles } from "@/utils/roles";
 import  Removal  from "./pages/Removal";
 import Home from "./pages/Home";
 import ScheduleImportPage from "./pages/ScheduleImportPage";
+import AiPage from "./pages/AiAssistant";
 
 const queryClient = new QueryClient();
 
@@ -159,6 +160,17 @@ const App = () => (
               }
             />
                    <Route
+              path="/ai-assistant"
+              element={
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT,  Roles.SCHEDULING, Roles.CX]}>
+                  <Layout>
+                    <AiPage />
+                  </Layout>
+                </PrivateRoute>
+              }
+            /> 
+
+                     <Route
               path="/maintenance-requests"
               element={
                 <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT,  Roles.SCHEDULING, Roles.CX]}>
@@ -167,7 +179,7 @@ const App = () => (
                   </Layout>
                 </PrivateRoute>
               }
-            /> 
+            />
 
             <Route path="/import/schedules" element={
                 <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING, Roles.CX, Roles.COMMERCIAL]}>
