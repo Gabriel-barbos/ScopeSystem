@@ -3,8 +3,18 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
 import type { Message } from '../../services/aiService'
+import { WelcomeEmailCards, type EmailData } from './Welcomeemailcards'
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
+function extractEmailsJson(text: string): EmailData[] | null {
+  try {
+    const match = text.match(/\{[\s\S]*"emails"[\s\S]*\}/)
+    if (!match) return null
+    const parsed = JSON.parse(match[0])
+    return Array.isArray(parsed.emails) ? parsed.emails : null
+  } catch {
+    return null
+  }
+}
 
 function IconCopy({ size = 14 }: { size?: number }) {
   return (
@@ -34,7 +44,6 @@ function IconCheck({ size = 14 }: { size?: number }) {
   )
 }
 
-// ─── Copy button ──────────────────────────────────────────────────────────────
 
 function CopyButton({
   text,
@@ -51,7 +60,6 @@ function CopyButton({
       setCopied(true)
       setTimeout(() => setCopied(false), 1800)
     } catch {
-      // fallback silencioso
     }
   }, [text])
 
@@ -84,7 +92,6 @@ function CopyButton({
   )
 }
 
-// ─── Code block com header ────────────────────────────────────────────────────
 
 function CodeBlock({ language, code }: { language: string; code: string }) {
   return (
@@ -146,7 +153,6 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
   )
 }
 
-// ─── Markdown customizado ─────────────────────────────────────────────────────
 
 const markdownComponents: React.ComponentProps<typeof ReactMarkdown>['components'] = {
   // Parágrafos
@@ -301,7 +307,6 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>['components
   ),
 }
 
-// ─── Avatar da IA ─────────────────────────────────────────────────────────────
 
 function AIAvatar() {
   return (
@@ -388,16 +393,19 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         >
           {isUser ? (
             <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{message.text}</p>
-          ) : (
-            <div style={{ minWidth: 0 }}>
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={markdownComponents}
-              >
-                {message.text}
-              </ReactMarkdown>
-            </div>
-          )}
+       ) : (
+     <div style={{ minWidth: 0 }}>
+       {(() => {
+         const emails = extractEmailsJson(message.text)
+         if (emails) return <WelcomeEmailCards emails={emails} />
+         return (
+           <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+             {message.text}
+           </ReactMarkdown>
+         )
+       })()}
+     </div>
+   )}
         </div>
 
         {/* Actions row — aparece no hover */}

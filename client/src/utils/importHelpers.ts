@@ -152,6 +152,7 @@ export function normalizeReason(value: unknown): string | undefined {
     "upgrade_produto",
     "recall_dispositivo",
     "recall_chicote",
+    "veiculo_bloqueado",
     "Outros",
   ]
   const exact = CANON_VALUES.find((v) => compact(v) === c)
@@ -235,6 +236,11 @@ export function normalizeReason(value: unknown): string | undefined {
     // --- Outros ---
     ["Outros", [
       "outro", "outros", "other", "nenhum", "naose", "nda",
+    ]],
+
+    // --- Veículo Bloqueado ---
+    ["veiculo_bloqueado", [
+      "bloqueado", "veiculobloq", "bloq",
     ]],
   ]
 

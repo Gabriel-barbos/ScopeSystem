@@ -81,6 +81,7 @@ const REASON_OPTIONS = [
   { value: "upgrade_produto", label: "Upgrade Produto" },
   { value: "recall_dispositivo", label: "Recall Dispositivo" },
   { value: "recall_chicote", label: "Recall Chicote" },
+  { value: "veiculo_bloqueado", label: "Veículo Bloqueado" },
   { value: "Outros", label: "Outros" },
 ];
 

@@ -577,6 +577,7 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
                   <SelectItem value="upgrade_produto">Upgrade Produto</SelectItem>
                   <SelectItem value="recall_dispositivo">Recall Dispositivo</SelectItem>
                   <SelectItem value="recall_chicote">Recall Chicote</SelectItem>
+                  <SelectItem value="veiculo_bloqueado">Veículo Bloqueado</SelectItem>
                 </SelectContent>
               </Select>
             )}
