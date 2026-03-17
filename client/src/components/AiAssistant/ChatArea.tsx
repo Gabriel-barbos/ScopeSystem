@@ -13,9 +13,7 @@ interface ChatAreaProps {
   onRetry: () => void
 }
 
-/* ─────────────────────────────────────────
-   Typing Indicator — três bolinhas animadas
-───────────────────────────────────────── */
+
 function TypingIndicator() {
   return (
     <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">

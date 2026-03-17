@@ -116,7 +116,7 @@ export function WelcomeScreen() {
           maxWidth: '440px',
         }}
       >
-      Cris, Carinha Ridiculamente Inteligente do Suporte
+      Cris, Capitão das Respostas Inteligentes de Suporte
       </p>
 
       {/* Text flip block */}

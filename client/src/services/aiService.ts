@@ -1,9 +1,7 @@
-
 import { useState, useCallback } from 'react'
 import API from '@/api/axios'
 
-
-export type Mode = 'email' | 'acessos' | 'duvidas'
+export type Mode = 'email' | 'acessos' | 'equipamento' | 'plataforma' | 'conhecimento'
 export type MessageRole = 'user' | 'model'
 export type ChatStatus = 'idle' | 'loading' | 'error'
 
@@ -21,30 +19,36 @@ export interface SendMessageParams {
 }
 
 export interface KnowledgePayload {
-  mode: string
-  category?: string
+  name: string
+  mode: Mode
   content: string
 }
 
+export interface Knowledge {
+  _id: string
+  name: string
+  mode: Mode
+  content: string
+  createdAt?: string
+}
 
 export const aiApi = {
   sendMessage: async (params: SendMessageParams): Promise<string> => {
     const { data } = await API.post<{ reply: string }>('/ai/chat', params)
-return data.reply
+    return data.reply
   },
 
-  fetchKnowledge: async (mode: string, category?: string) => {
-    const path = category ? `/knowledge/${mode}/${category}` : `/knowledge/${mode}`
-    const { data } = await API.get(path)
+  fetchKnowledge: async (mode: Mode): Promise<Knowledge[]> => {
+    const { data } = await API.get(`/knowledge/${mode}`)
     return data
   },
 
-  saveKnowledge: async (payload: KnowledgePayload) => {
+  saveKnowledge: async (payload: KnowledgePayload): Promise<Knowledge> => {
     const { data } = await API.post('/knowledge', payload)
     return data
   },
 
-  updateKnowledge: async (id: string, content: string) => {
+  updateKnowledge: async (id: string, content: string): Promise<Knowledge> => {
     const { data } = await API.put(`/knowledge/${id}`, { content })
     return data
   },
@@ -53,7 +57,6 @@ return data.reply
     await API.delete(`/knowledge/${id}`)
   },
 }
-
 
 export function useAiChat() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -92,9 +95,9 @@ export function useAiChat() {
   )
 
   const handleRetry = useCallback(() => {
-    const lastUser = [...messages].reverse().find(m => m.role === 'user')
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user')
     if (!lastUser) return
-    setMessages(prev => prev.slice(0, -1))
+    setMessages((prev) => prev.slice(0, -1))
     handleSend(lastUser.text)
   }, [messages, handleSend])
 
