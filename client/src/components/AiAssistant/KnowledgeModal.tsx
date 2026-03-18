@@ -30,7 +30,6 @@ const MODE_OPTIONS: { value: Mode; label: string }[] = [
   { value: 'conhecimento', label: 'Conhecimento' },
 ]
 
-// ─── Detail Dialog ─────────────────────────────────────────────────────────
 function KnowledgeDetailDialog({ item, onClose }: { item: Knowledge; onClose: () => void }) {
   const queryClient = useQueryClient()
   const [content, setContent] = useState(item.content)

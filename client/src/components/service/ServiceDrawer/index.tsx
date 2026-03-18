@@ -246,59 +246,65 @@ const ServiceDrawer = ({ open, onClose, service }: ServiceDrawerProps) => {
                                             </Button>
                                    
 
-                                {isEditing ? (
-                                    <>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={handleCancel}
-                                            className="gap-1.5"
-                                        >
-                                            <X className="h-4 w-4" /> Cancelar
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            onClick={handleSave}
-                                            disabled={isSaving}
-                                            className="gap-1.5"
-                                        >
-                                            {isSaving ? (
-                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                            ) : (
-                                                <Check className="h-4 w-4" />
-                                            )}
-                                            {isSaving ? "Salvando..." : "Salvar"}
-                                        </Button>
-                                    </>
-                                ) : (
-                                    !isLegacy && (
-                                        <RoleIf roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION, Roles.SCHEDULING]}>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={handleEdit}
-                                                className="gap-1.5"
-                                            >
-                                                <Pencil className="h-4 w-4" /> Editar
-                                            </Button>
-                                            
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setOpenDeleteModal(true)}
-                                                disabled={isDeleting}
-                                                className="gap-1.5 text-destructive hover:text-destructive"
-                                            >
-                                                {isDeleting ? (
-                                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                                ) : (
-                                                    <Trash2 className="h-4 w-4" />
-                                                )}
-                                                Excluir
-                                            </Button>
-                                        </RoleIf>
-                                    )
-                                )}
+                         {isEditing ? (
+    <>
+        <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCancel}
+            className="gap-1.5"
+        >
+            <X className="h-4 w-4" /> Cancelar
+        </Button>
+        <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="gap-1.5"
+        >
+            {isSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+                <Check className="h-4 w-4" />
+            )}
+            {isSaving ? "Salvando..." : "Salvar"}
+        </Button>
+    </>
+) : (
+    !isLegacy && (
+        <>
+            {/* Editar — permissões originais */}
+            <RoleIf roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION, Roles.SCHEDULING]}>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEdit}
+                    className="gap-1.5"
+                >
+                    <Pencil className="h-4 w-4" /> Editar
+                </Button>
+            </RoleIf>
+
+            {/* Excluir — somente ADMIN */}
+            <RoleIf roles={[Roles.ADMIN]}>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setOpenDeleteModal(true)}
+                    disabled={isDeleting}
+                    className="gap-1.5 text-destructive hover:text-destructive"
+                >
+                    {isDeleting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <Trash2 className="h-4 w-4" />
+                    )}
+                    Excluir
+                </Button>
+            </RoleIf>
+        </>
+    )
+)}
                             </div>
                         </div>
                     </SheetHeader>
