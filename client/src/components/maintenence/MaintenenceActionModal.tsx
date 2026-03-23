@@ -18,6 +18,7 @@ import { ClientPicker } from "../global/ClientPicker";
 import { ResponsiblePicker } from "../global/ResponsiblePicker";
 import { toast } from "sonner";
 import { useAuth } from "@/context/Authcontext";
+import { EmailThread } from "@/components/maintenence/EmailTread";
 
 interface VehicleForm {
   id: string;
@@ -145,15 +146,7 @@ export default function MaintenanceActionModal({
 
   if (!request) return null;
 
-  const sanitizedContent = DOMPurify.sanitize(request.description || "", {
-    ALLOWED_TAGS: [
-      "div", "p", "span", "br", "strong", "em", "b", "i", "u",
-      "blockquote", "table", "thead", "tbody", "tr", "td", "th",
-      "ul", "ol", "li", "a", "h1", "h2", "h3", "h4", "h5", "h6",
-    ],
-    ALLOWED_ATTR: ["style", "class", "href", "target", "rel", "title", "spellcheck"],
-  });
-
+ 
   const fieldError = (value: string | undefined) =>
     submitted && !value ? "border-destructive focus-visible:ring-destructive" : "";
 
@@ -403,7 +396,7 @@ export default function MaintenanceActionModal({
             </button>
             {showDetails && (
               <div className="p-4 border-t border-border">
-                <div className="email-content" dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
+                <EmailThread description={request.description || ""} />
               </div>
             )}
           </div>

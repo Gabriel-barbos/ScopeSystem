@@ -43,6 +43,11 @@ export const aiApi = {
     return data
   },
 
+  fetchAllKnowledge: async (): Promise<Knowledge[]> => {
+  const { data } = await API.get('/knowledge')
+  return data
+},
+
   saveKnowledge: async (payload: KnowledgePayload): Promise<Knowledge> => {
     const { data } = await API.post('/knowledge', payload)
     return data

@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { MaintenanceRequest } from "@/services/MaintenenceRequestService";
+import { EmailThread } from "@/components/maintenence/EmailTread";
 
 interface MaintenanceDetailModalProps {
   request: MaintenanceRequest | null;
@@ -21,38 +22,6 @@ export default function MaintenanceDetailModal({
 }: MaintenanceDetailModalProps) {
   if (!request) return null;
 
-  // Sanitiza permitindo mais tags comuns de e-mail
-  const sanitizedContent = DOMPurify.sanitize(request.description || "", {
-    ALLOWED_TAGS: [
-      "div",
-      "p",
-      "span",
-      "br",
-      "strong",
-      "em",
-      "b",
-      "i",
-      "u",
-      "blockquote",
-      "table",
-      "thead",
-      "tbody",
-      "tr",
-      "td",
-      "th",
-      "ul",
-      "ol",
-      "li",
-      "a",
-      "h1",
-      "h2",
-      "h3",
-      "h4",
-      "h5",
-      "h6",
-    ],
-    ALLOWED_ATTR: ["style", "class", "href", "target", "rel", "title", "spellcheck"],
-  });
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -67,10 +36,7 @@ export default function MaintenanceDetailModal({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto -mx-6 px-6">
-          <div
-            className="email-content"
-            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
-          />
+          <EmailThread description={request.description || ""} />
         </div>
       </DialogContent>
     </Dialog>

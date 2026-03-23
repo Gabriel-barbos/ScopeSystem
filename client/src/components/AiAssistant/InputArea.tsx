@@ -1,13 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import type { Mode, ChatStatus } from '../../services/aiService'
+import { aiApi } from '../../services/aiService'
 
 const MODES: { value: Mode; label: string }[] = [
   { value: 'email', label: 'E-mail' },
   { value: 'acessos', label: 'Acessos' },
   { value: 'duvidas', label: 'Dúvidas' },
 ]
-
-const CATEGORIES = ['Sistema', 'Instalação', 'Equipamento X', 'Equipamento Y']
 
 interface InputAreaProps {
   mode: Mode
@@ -28,11 +27,24 @@ export function InputArea({
 }: InputAreaProps) {
   const [text, setText] = useState('')
   const [catOpen, setCatOpen] = useState(false)
+  const [knowledgeNames, setKnowledgeNames] = useState<string[]>([])
+  const [loadingCats, setLoadingCats] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const catRef = useRef<HTMLDivElement>(null)
 
   const isLoading = status === 'loading'
   const canSend = text.trim().length > 0 && !isLoading && (mode !== 'duvidas' || !!category)
+
+  // Busca todos os conhecimentos cadastrados ao entrar no modo dúvidas
+  useEffect(() => {
+    if (mode !== 'duvidas') return
+    setLoadingCats(true)
+    aiApi
+      .fetchAllKnowledge()
+      .then((data) => setKnowledgeNames(data.map((d) => d.name)))
+      .catch(() => setKnowledgeNames([]))
+      .finally(() => setLoadingCats(false))
+  }, [mode])
 
   // Auto-resize textarea
   useEffect(() => {
@@ -42,7 +54,7 @@ export function InputArea({
     ta.style.height = Math.min(ta.scrollHeight, 200) + 'px'
   }, [text])
 
-  // Close category dropdown on outside click
+  // Fecha dropdown ao clicar fora
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (catRef.current && !catRef.current.contains(e.target as Node)) {
@@ -82,14 +94,7 @@ export function InputArea({
         pointerEvents: 'none',
       }}
     >
-      <div
-        style={{
-          maxWidth: '720px',
-          margin: '0 auto',
-          pointerEvents: 'all',
-        }}
-      >
-        {/* Floating card */}
+      <div style={{ maxWidth: '720px', margin: '0 auto', pointerEvents: 'all' }}>
         <div
           style={{
             background: 'hsl(var(--card))',
@@ -154,18 +159,10 @@ export function InputArea({
               background: 'hsl(var(--card))',
             }}
           >
-            {/* Left: mode pills + category */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                flexWrap: 'wrap',
-                flex: 1,
-                minWidth: 0,
-              }}
-            >
-              {/* Mode pill group */}
+            {/* Left: mode pills + knowledge picker */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+
+              {/* Mode pills */}
               <div
                 style={{
                   display: 'flex',
@@ -185,18 +182,12 @@ export function InputArea({
                       borderRadius: '999px',
                       border: 'none',
                       background: mode === m.value ? 'hsl(var(--card))' : 'transparent',
-                      color:
-                        mode === m.value
-                          ? 'hsl(var(--primary))'
-                          : 'hsl(var(--muted-foreground))',
+                      color: mode === m.value ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
                       fontSize: '12.5px',
                       fontWeight: 500,
                       cursor: 'pointer',
                       transition: 'background 0.15s, color 0.15s',
-                      boxShadow:
-                        mode === m.value
-                          ? '0 1px 3px hsl(215 20% 10% / 0.10)'
-                          : 'none',
+                      boxShadow: mode === m.value ? '0 1px 3px hsl(215 20% 10% / 0.10)' : 'none',
                       whiteSpace: 'nowrap',
                     }}
                   >
@@ -205,11 +196,12 @@ export function InputArea({
                 ))}
               </div>
 
-              {/* Category dropdown — only in dúvidas */}
+              {/* Knowledge picker — só aparece no modo dúvidas */}
               {mode === 'duvidas' && (
                 <div ref={catRef} style={{ position: 'relative' }}>
                   <button
                     onClick={() => setCatOpen((v) => !v)}
+                    disabled={loadingCats}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -218,17 +210,16 @@ export function InputArea({
                       borderRadius: '999px',
                       border: '1px solid hsl(var(--border))',
                       background: 'hsl(var(--card))',
-                      color: category
-                        ? 'hsl(var(--foreground))'
-                        : 'hsl(var(--muted-foreground))',
+                      color: category ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
                       fontSize: '12.5px',
                       fontWeight: 500,
-                      cursor: 'pointer',
+                      cursor: loadingCats ? 'wait' : 'pointer',
                       transition: 'border-color 0.15s, background 0.15s',
                       whiteSpace: 'nowrap',
+                      opacity: loadingCats ? 0.6 : 1,
                     }}
                   >
-                    <span>{category ?? 'Categoria'}</span>
+                    <span>{loadingCats ? 'Carregando…' : (category ?? 'Conhecimento')}</span>
                     <svg
                       width="12"
                       height="12"
@@ -240,17 +231,10 @@ export function InputArea({
                         flexShrink: 0,
                       }}
                     >
-                      <path
-                        d="M2.5 4.5L6 8L9.5 4.5"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
+                      <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
 
-                  {/* Dropdown menu */}
                   {catOpen && (
                     <div
                       style={{
@@ -260,50 +244,51 @@ export function InputArea({
                         background: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '12px',
-                        boxShadow:
-                          '0 8px 24px hsl(215 20% 10% / 0.12)',
+                        boxShadow: '0 8px 24px hsl(215 20% 10% / 0.12)',
                         padding: '4px',
-                        minWidth: '160px',
+                        minWidth: '180px',
                         zIndex: 9999,
                       }}
                     >
-                      {CATEGORIES.map((c) => (
+                      {knowledgeNames.length === 0 ? (
                         <div
-                          key={c}
-                          onClick={() => {
-                            onCategoryChange(c)
-                            setCatOpen(false)
-                          }}
                           style={{
-                            padding: '7px 12px',
-                            borderRadius: '8px',
+                            padding: '10px 12px',
                             fontSize: '13px',
-                            color:
-                              category === c
-                                ? 'hsl(var(--primary))'
-                                : 'hsl(var(--foreground))',
-                            background:
-                              category === c
-                                ? 'hsl(var(--accent))'
-                                : 'transparent',
-                            fontWeight: category === c ? 500 : 400,
-                            cursor: 'pointer',
-                            transition: 'background 0.1s',
-                          }}
-                          onMouseEnter={(e) => {
-                            if (category !== c)
-                              (e.currentTarget as HTMLDivElement).style.background =
-                                'hsl(var(--accent))'
-                          }}
-                          onMouseLeave={(e) => {
-                            if (category !== c)
-                              (e.currentTarget as HTMLDivElement).style.background =
-                                'transparent'
+                            color: 'hsl(var(--muted-foreground))',
+                            textAlign: 'center',
                           }}
                         >
-                          {c}
+                          Nenhum conhecimento cadastrado
                         </div>
-                      ))}
+                      ) : (
+                        knowledgeNames.map((name) => (
+                          <div
+                            key={name}
+                            onClick={() => { onCategoryChange(name); setCatOpen(false) }}
+                            style={{
+                              padding: '7px 12px',
+                              borderRadius: '8px',
+                              fontSize: '13px',
+                              color: category === name ? 'hsl(var(--primary))' : 'hsl(var(--foreground))',
+                              background: category === name ? 'hsl(var(--accent))' : 'transparent',
+                              fontWeight: category === name ? 500 : 400,
+                              cursor: 'pointer',
+                              transition: 'background 0.1s',
+                            }}
+                            onMouseEnter={(e) => {
+                              if (category !== name)
+                                (e.currentTarget as HTMLDivElement).style.background = 'hsl(var(--accent))'
+                            }}
+                            onMouseLeave={(e) => {
+                              if (category !== name)
+                                (e.currentTarget as HTMLDivElement).style.background = 'transparent'
+                            }}
+                          >
+                            {name}
+                          </div>
+                        ))
+                      )}
                     </div>
                   )}
                 </div>
@@ -311,21 +296,9 @@ export function InputArea({
             </div>
 
             {/* Right: char count + send */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                flexShrink: 0,
-              }}
-            >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
               {text.length > 80 && (
-                <span
-                  style={{
-                    fontSize: '11.5px',
-                    color: 'hsl(var(--muted-foreground))',
-                  }}
-                >
+                <span style={{ fontSize: '11.5px', color: 'hsl(var(--muted-foreground))' }}>
                   {text.length} car.
                 </span>
               )}
@@ -338,12 +311,8 @@ export function InputArea({
                   height: '34px',
                   borderRadius: '10px',
                   border: 'none',
-                  background: canSend
-                    ? 'hsl(var(--primary))'
-                    : 'hsl(var(--muted))',
-                  color: canSend
-                    ? 'hsl(var(--primary-foreground))'
-                    : 'hsl(var(--muted-foreground))',
+                  background: canSend ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
+                  color: canSend ? 'hsl(var(--primary-foreground))' : 'hsl(var(--muted-foreground))',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -352,36 +321,20 @@ export function InputArea({
                   flexShrink: 0,
                 }}
                 onMouseEnter={(e) => {
-                  if (canSend)
-                    (e.currentTarget as HTMLButtonElement).style.background =
-                      'hsl(var(--primary) / 0.85)'
+                  if (canSend) (e.currentTarget as HTMLButtonElement).style.background = 'hsl(var(--primary) / 0.85)'
                 }}
                 onMouseLeave={(e) => {
-                  if (canSend)
-                    (e.currentTarget as HTMLButtonElement).style.background =
-                      'hsl(var(--primary))'
+                  if (canSend) (e.currentTarget as HTMLButtonElement).style.background = 'hsl(var(--primary))'
                 }}
                 onMouseDown={(e) => {
-                  if (canSend)
-                    (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.93)'
+                  if (canSend) (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.93)'
                 }}
                 onMouseUp={(e) => {
-                  if (canSend)
-                    (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'
+                  if (canSend) (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'
                 }}
               >
-                {/* Send icon */}
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M13.5 8L3 13.5L5 8L3 2.5L13.5 8Z"
-                    fill="currentColor"
-                  />
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M13.5 8L3 13.5L5 8L3 2.5L13.5 8Z" fill="currentColor" />
                 </svg>
               </button>
             </div>
@@ -389,37 +342,10 @@ export function InputArea({
         </div>
 
         {/* Keyboard hint */}
-        <p
-          style={{
-            textAlign: 'center',
-            fontSize: '11.5px',
-            color: 'hsl(var(--muted-foreground))',
-            marginTop: '8px',
-          }}
-        >
-          <kbd
-            style={{
-              fontFamily: 'inherit',
-              background: 'hsl(var(--muted))',
-              borderRadius: '4px',
-              padding: '1px 5px',
-              fontSize: '11px',
-            }}
-          >
-            Enter
-          </kbd>{' '}
+        <p style={{ textAlign: 'center', fontSize: '11.5px', color: 'hsl(var(--muted-foreground))', marginTop: '8px' }}>
+          <kbd style={{ fontFamily: 'inherit', background: 'hsl(var(--muted))', borderRadius: '4px', padding: '1px 5px', fontSize: '11px' }}>Enter</kbd>{' '}
           para enviar &nbsp;·&nbsp;{' '}
-          <kbd
-            style={{
-              fontFamily: 'inherit',
-              background: 'hsl(var(--muted))',
-              borderRadius: '4px',
-              padding: '1px 5px',
-              fontSize: '11px',
-            }}
-          >
-            Shift + Enter
-          </kbd>{' '}
+          <kbd style={{ fontFamily: 'inherit', background: 'hsl(var(--muted))', borderRadius: '4px', padding: '1px 5px', fontSize: '11px' }}>Shift + Enter</kbd>{' '}
           para nova linha
         </p>
       </div>
