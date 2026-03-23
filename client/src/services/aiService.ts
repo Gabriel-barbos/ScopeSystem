@@ -1,9 +1,15 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react' 
 import API from '@/api/axios'
 
 export type Mode = 'email' | 'acessos' | 'equipamento' | 'plataforma' | 'conhecimento'
 export type MessageRole = 'user' | 'model'
 export type ChatStatus = 'idle' | 'loading' | 'error'
+
+export type ApiHealthStatus = 'online' | 'degraded' | 'offline' | 'checking'
+export interface AiStatusResponse {
+  status: ApiHealthStatus
+  detail: string
+}
 
 export interface Message {
   role: MessageRole
@@ -38,15 +44,21 @@ export const aiApi = {
     return data.reply
   },
 
+  // 2. Nova requisição para checar o status
+  fetchApiStatus: async (): Promise<AiStatusResponse> => {
+    const { data } = await API.get<AiStatusResponse>('/ai/status')
+    return data
+  },
+
   fetchKnowledge: async (mode: Mode): Promise<Knowledge[]> => {
     const { data } = await API.get(`/knowledge/${mode}`)
     return data
   },
 
   fetchAllKnowledge: async (): Promise<Knowledge[]> => {
-  const { data } = await API.get('/knowledge')
-  return data
-},
+    const { data } = await API.get('/knowledge')
+    return data
+  },
 
   saveKnowledge: async (payload: KnowledgePayload): Promise<Knowledge> => {
     const { data } = await API.post('/knowledge', payload)
@@ -70,6 +82,30 @@ export function useAiChat() {
   const [category, setCategory] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // 3. Novos estados para gerenciar o Status da API na tela
+  const [apiStatus, setApiStatus] = useState<ApiHealthStatus>('checking')
+  const [apiStatusDetail, setApiStatusDetail] = useState<string>('Verificando conexão...')
+
+  // 4. Função para consultar o backend e atualizar os estados
+  const checkApiStatus = useCallback(async () => {
+    setApiStatus('checking')
+    try {
+      const res = await aiApi.fetchApiStatus()
+      setApiStatus(res.status)
+      setApiStatusDetail(res.detail)
+    } catch (err) {
+      setApiStatus('offline')
+      setApiStatusDetail('Backend inacessível ou API fora do ar.')
+    }
+  }, [])
+
+  // 5. Dispara a checagem automaticamente quando a tela de chat abrir
+  useEffect(() => {
+    checkApiStatus()
+    
+
+  }, [checkApiStatus])
+
   const handleModeChange = useCallback((newMode: Mode) => {
     setMode(newMode)
     setMessages([])
@@ -83,9 +119,18 @@ export function useAiChat() {
       const userMessage: Message = { role: 'user', text, timestamp: new Date() }
       const updatedHistory = [...messages, userMessage]
 
+      // Sempre adiciona a mensagem do usuário primeiro para sair da WelcomeScreen
       setMessages(updatedHistory)
-      setStatus('loading')
       setError(null)
+
+      // Bloqueia o envio se soubermos que a API está caída, mas mostra o erro
+      if (apiStatus === 'offline' || apiStatus === 'degraded') {
+        setError(`Não é possível enviar a mensagem no momento. Status: ${apiStatusDetail}`)
+        setStatus('error')
+        return
+      }
+
+      setStatus('loading')
 
       try {
         const reply = await aiApi.sendMessage({ mode, category, history: messages, message: text })
@@ -94,9 +139,10 @@ export function useAiChat() {
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erro desconhecido.')
         setStatus('error')
+        checkApiStatus() 
       }
     },
-    [messages, mode, category]
+    [messages, mode, category, apiStatus, apiStatusDetail, checkApiStatus]
   )
 
   const handleRetry = useCallback(() => {
@@ -106,5 +152,18 @@ export function useAiChat() {
     handleSend(lastUser.text)
   }, [messages, handleSend])
 
-  return { messages, status, mode, category, error, setCategory, handleModeChange, handleSend, handleRetry }
+  return { 
+    messages, 
+    status, 
+    mode, 
+    category, 
+    error, 
+    apiStatus,        
+    apiStatusDetail,  
+    checkApiStatus,   
+    setCategory, 
+    handleModeChange, 
+    handleSend, 
+    handleRetry 
+  }
 }

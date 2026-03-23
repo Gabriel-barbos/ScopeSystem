@@ -10,6 +10,8 @@ export default function AiAssistantPage() {
     mode,
     category,
     error,
+    apiStatus,       
+    apiStatusDetail, 
     setCategory,
     handleModeChange,
     handleSend,
@@ -18,7 +20,11 @@ export default function AiAssistantPage() {
 
    return (
     <div className="flex h-full flex-col">  
-      <TopBar />
+      {/* Passando as props para a TopBar */}
+      <TopBar 
+        apiStatus={apiStatus} 
+        apiStatusDetail={apiStatusDetail} 
+      />
 
       <ChatArea
         messages={messages}
