@@ -43,8 +43,7 @@ export const aiApi = {
     const { data } = await API.post<{ reply: string }>('/ai/chat', params)
     return data.reply
   },
-
-  // 2. Nova requisição para checar o status
+  //requisição para checar o status
   fetchApiStatus: async (): Promise<AiStatusResponse> => {
     const { data } = await API.get<AiStatusResponse>('/ai/status')
     return data
@@ -82,11 +81,9 @@ export function useAiChat() {
   const [category, setCategory] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // 3. Novos estados para gerenciar o Status da API na tela
   const [apiStatus, setApiStatus] = useState<ApiHealthStatus>('checking')
   const [apiStatusDetail, setApiStatusDetail] = useState<string>('Verificando conexão...')
 
-  // 4. Função para consultar o backend e atualizar os estados
   const checkApiStatus = useCallback(async () => {
     setApiStatus('checking')
     try {
@@ -99,7 +96,6 @@ export function useAiChat() {
     }
   }, [])
 
-  // 5. Dispara a checagem automaticamente quando a tela de chat abrir
   useEffect(() => {
     checkApiStatus()
     
@@ -119,11 +115,9 @@ export function useAiChat() {
       const userMessage: Message = { role: 'user', text, timestamp: new Date() }
       const updatedHistory = [...messages, userMessage]
 
-      // Sempre adiciona a mensagem do usuário primeiro para sair da WelcomeScreen
       setMessages(updatedHistory)
       setError(null)
 
-      // Bloqueia o envio se soubermos que a API está caída, mas mostra o erro
       if (apiStatus === 'offline' || apiStatus === 'degraded') {
         setError(`Não é possível enviar a mensagem no momento. Status: ${apiStatusDetail}`)
         setStatus('error')

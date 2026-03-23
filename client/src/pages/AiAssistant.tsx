@@ -20,7 +20,6 @@ export default function AiAssistantPage() {
 
    return (
     <div className="flex h-full flex-col">  
-      {/* Passando as props para a TopBar */}
       <TopBar 
         apiStatus={apiStatus} 
         apiStatusDetail={apiStatusDetail} 

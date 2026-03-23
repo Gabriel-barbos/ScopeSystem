@@ -25,26 +25,24 @@ export function TopBar({ apiStatus = 'checking', apiStatusDetail = 'Verificando 
     },
     offline: {
       bg: 'bg-red-500',
-      ping: 'hidden', // Remove a animação de "pulsar" se estiver offline
+      ping: 'hidden', 
       text: 'text-red-500 dark:text-red-400',
       label: 'Offline'
     },
     checking: {
       bg: 'bg-blue-500',
-      ping: 'bg-blue-400/50 animate-pulse', // Usa um pulso suave enquanto verifica
+      ping: 'bg-blue-400/50 animate-pulse', 
       text: 'text-blue-500 dark:text-blue-400',
       label: 'Conectando...'
     }
   }
 
-  // Pega o estilo atual baseado na prop, ou cai no 'checking' por padrão
   const currentStyle = statusStyles[apiStatus] || statusStyles.checking
 
   return (
     <div className="sticky top-0 z-10 px-4 pt-3 pb-2 pointer-events-none">
       <div className="flex items-start justify-between">
 
-        {/* ── Esquerda: Avatar flutuante ── */}
         <div className="pointer-events-auto">
           <div 
             className="
@@ -57,9 +55,8 @@ export function TopBar({ apiStatus = 'checking', apiStatusDetail = 'Verificando 
               shadow-[0_4px_24px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.08)]
               transition-all duration-300
             "
-            title={apiStatusDetail} // Adicionado: mostra o detalhe do erro se o usuário passar o mouse por cima
+            title={apiStatusDetail} 
           >
-            {/* Avatar */}
             <div className="relative flex h-8 w-8 items-center justify-center rounded-full
               bg-gradient-to-br from-accent/80 to-accent/40
               border border-white/10
@@ -79,7 +76,6 @@ export function TopBar({ apiStatus = 'checking', apiStatusDetail = 'Verificando 
               </span>
             </div>
 
-            {/* Nome + Status dinâmico */}
             <div className="flex flex-col gap-0.5">
               <div className="flex items-center gap-1">
                 <span className="text-xs font-semibold text-foreground leading-none tracking-tight">
@@ -95,7 +91,6 @@ export function TopBar({ apiStatus = 'checking', apiStatusDetail = 'Verificando 
           </div>
         </div>
 
-        {/* ── Direita: KnowledgeModal flutuante ── */}
         <div className="pointer-events-auto">
           <div className="
             rounded-2xl
