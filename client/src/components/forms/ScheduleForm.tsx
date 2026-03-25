@@ -19,6 +19,7 @@ import {
   Phone,
   StickyNote,
   Wrench,
+  Loader2,
 } from "lucide-react";
 import { LoadingOutlined } from "@ant-design/icons";
 
@@ -116,6 +117,7 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
   });
 
   const { createSchedule, updateSchedule } = useScheduleService();
+  const isSubmitting = createSchedule.isPending || updateSchedule.isPending;
 
   const {
     register,
@@ -230,8 +232,16 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
       }
 
       onSuccess();
-    } catch {
-      toast.error("Erro ao salvar agendamento");
+    } catch (err: any) {
+      const responseData = err?.response?.data;
+      if (err?.response?.status === 409 && responseData?.error) {
+        toast.error(responseData.error, {
+          description: "Finalize ou cancele o agendamento existente antes de criar um novo.",
+          duration: 6000,
+        });
+      } else {
+        toast.error("Erro ao salvar agendamento");
+      }
     }
   }
 
@@ -270,7 +280,7 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
         </div>
 
         <div className="space-y-1">
-          <Label>Chassi *</Label>
+          <Label>Chassi <span className="text-red-500">*</span></Label>
           <InputWithIcon
             icon={<KeySquare className="h-4 w-4" />}
             placeholder="17 caracteres"
@@ -283,12 +293,15 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <Label>Modelo</Label>
+            <Label>Modelo <span className="text-red-500">*</span></Label>
             <InputWithIcon
               icon={<Car className="h-4 w-4" />}
               placeholder="Modelo"
               {...register("model")}
             />
+            {errors.model && (
+              <p className="text-xs text-red-500">{errors.model.message}</p>
+            )}
           </div>
           <div className="space-y-1">
             <Label>Grupo de Veículos</Label>
@@ -305,7 +318,7 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
         <SectionLabel>Serviço</SectionLabel>
 
         <div className="space-y-1">
-          <Label>Tipo de Serviço *</Label>
+          <Label>Tipo de Serviço <span className="text-red-500">*</span></Label>
           <Controller
             name="serviceType"
             control={control}
@@ -330,7 +343,7 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
         </div>
 
         <div className="space-y-1">
-          <Label>Cliente *</Label>
+          <Label>Cliente <span className="text-red-500">*</span></Label>
           <Controller
             name="client"
             control={control}
@@ -431,7 +444,7 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
 
 
         <div className="space-y-1">
-          <Label>Data do Pedido*</Label>
+          <Label>Data do Pedido <span className="text-red-500">*</span></Label>
           <Controller
             name="orderDate"
             control={control}
@@ -458,6 +471,9 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
               </Popover>
             )}
           />
+          {errors.orderDate && (
+            <p className="text-xs text-red-500">{errors.orderDate.message}</p>
+          )}
         </div>
 
 
@@ -599,11 +615,15 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
 
       {/* ── Actions ── */}
       <div className="flex gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+        <Button type="button" variant="outline" onClick={onCancel} className="flex-1" disabled={isSubmitting}>
           Cancelar
         </Button>
-        <Button type="submit" className="flex-1">
-          {isEditing ? "Atualizar" : "Criar"} Agendamento
+        <Button type="submit" className="flex-1" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{isEditing ? "Atualizando..." : "Criando..."}</>
+          ) : (
+            <>{isEditing ? "Atualizar" : "Criar"} Agendamento</>
+          )}
         </Button>
       </div>
     </form>

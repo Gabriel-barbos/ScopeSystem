@@ -18,12 +18,14 @@ export const SERVICE_IMPORT_COLUMNS: ColumnConfig[] = [
   { header: "Odometro",             field: "odometer",            required: false, aliases: ["Odômetro"] },
   { header: "Bloqueio",             field: "blockingEnabled",     required: false },
   { header: "NumeroProtocolo",      field: "protocolNumber",      required: false, aliases: ["Nº Protocolo", "Protocolo"] },
-  { header: "DispositivoSecundario",field: "secondaryDevice",     required: false, aliases: ["Dispositivo Secundário"] },
+  { header: "Dispositivo Secundario",field: "secondaryDevice",     required: false, aliases: ["Dispositivo Secundário"] },
   { header: "ValidadoPor",          field: "validatedBy",         required: false, aliases: ["Validado Por"] },
   { header: "Observacoes",          field: "validationNotes",     required: false, aliases: ["Observações"] },
-  { header: "DataValidacao",        field: "validatedAt",         required: false, aliases: ["Data Validação", "Data Validacao"] },
+  { header: "Data da Validacao",    field: "validatedAt",         required: false, aliases: ["Data Validação", "Data Validacao"] },
   { header: "Status",               field: "status",              required: false },
+
 ]
+
 
 export const SERVICE_COLUMN_MAPPING = Object.fromEntries(
   SERVICE_IMPORT_COLUMNS.flatMap(({ header, aliases = [] }) =>
