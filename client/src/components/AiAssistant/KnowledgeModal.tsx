@@ -259,8 +259,7 @@ function KnowledgeList() {
   )
 }
 
-// ─── KnowledgeCreate ─────────────────────────────────────────────────────────
-// Formulário de criação. Captura o erro 409 do backend e exibe toast claro.
+
 
 function KnowledgeCreate() {
   const queryClient = useQueryClient()
@@ -277,7 +276,6 @@ function KnowledgeCreate() {
       setContent('')
     },
     onError: (err: any) => {
-      // O backend retorna 409 quando o nome já existe (name é unique no schema)
       const msg = err?.response?.data?.error
       if (err?.response?.status === 409) {
         toast.error('Já existe um registro com esse nome. Use um nome diferente.')
@@ -338,8 +336,6 @@ function KnowledgeCreate() {
   )
 }
 
-// ─── KnowledgeModal ───────────────────────────────────────────────────────────
-// Modal principal. Dois sub-componentes controlam as abas.
 
 export function KnowledgeModal() {
   return (

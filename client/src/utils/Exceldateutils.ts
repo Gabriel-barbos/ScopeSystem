@@ -1,18 +1,4 @@
-/**
- * Converte qualquer valor de data vindo do Excel para uma string ISO (YYYY-MM-DD).
- *
- * O Excel armazena datas como serial numbers (número de dias desde 01/01/1900).
- * O XLSX.js devolve esse número bruto quando a célula não tem formatação explícita.
- * Ex: 42244 → 10/08/2015, mas sem conversão aparece como "12/12/1969" no JS.
- *
- * Formatos suportados:
- *   - number  → serial do Excel (ex: 42244)
- *   - string  → DD/MM/YYYY, YYYY-MM-DD, ou qualquer formato parseável pelo Date
- *   - Date    → passthrough
- *
- * Retorna string "YYYY-MM-DD" ou null se inválido.
- * O backend aceita ISO, então enviamos sempre nesse formato.
- */
+
 export function parseExcelDate(value: unknown): string | null {
   if (value === null || value === undefined || value === "") return null
 
@@ -22,7 +8,7 @@ export function parseExcelDate(value: unknown): string | null {
 
   if (typeof value === "number") {
     if (value <= 0) return null
-    const days = Math.round(value) - 25569 // Math.round previne frações de dia
+    const days = Math.round(value) - 25569 
     const date = new Date(Date.UTC(1970, 0, 1 + days, 12, 0, 0))
     return isNaN(date.getTime()) ? null : toISODate(date)
   }

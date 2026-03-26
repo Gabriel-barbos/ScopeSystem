@@ -228,7 +228,23 @@ export default function Services() {
             toast.success(`${services.length} serviços importados com sucesso!`);
             setImportModalOpen(false);
         } catch (error: any) {
-            toast.error(error?.response?.data?.error || "Erro ao importar serviços");
+            const serverError = error?.response?.data;
+            const details: string[] = serverError?.details ?? [];
+
+            if (details.length > 0) {
+                toast.error(serverError?.error || "Erro ao importar serviços", {
+                    description: (
+                        <ul className="mt-1 space-y-0.5 text-xs list-disc list-inside max-h-40 overflow-auto">
+                            {details.map((d: string, i: number) => (
+                                <li key={i}>{d}</li>
+                            ))}
+                        </ul>
+                    ),
+                    duration: 8000,
+                });
+            } else {
+                toast.error(serverError?.error || "Erro ao importar serviços");
+            }
         }
     };
 

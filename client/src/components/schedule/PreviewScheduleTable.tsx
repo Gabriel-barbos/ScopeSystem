@@ -110,12 +110,6 @@ export function PreviewTable({
       }
     })
 
-    updatedData.sort((a, b) => {
-      const aHasError = !a.ClienteId || (!a.EquipamentoId && a.TipoServico === "installation")
-      const bHasError = !b.ClienteId || (!b.EquipamentoId && b.TipoServico === "installation")
-      return Number(bHasError) - Number(aHasError)
-    })
-
     setCurrentPage(1)
     setProcessedData(updatedData)
 
@@ -140,20 +134,29 @@ export function PreviewTable({
   const allColumns = Object.keys(data[0])
   const columns = allColumns.filter(col => !HIDDEN_COLUMNS.includes(col) && !col.endsWith('Id'))
 
-  const totalPages = Math.ceil(processedData.length / pageSize)
-  const pagedData = processedData.slice(
+  // Ordenação dinâmica: linhas com erro sempre no topo, reage a mudanças nos matches
+  const sortedData = [...processedData].sort((a, b) => {
+    const idxA = a._originalIndex
+    const idxB = b._originalIndex
+    const aHasError = !matches[idxA]?.client || (!matches[idxA]?.product && a.TipoServico === "installation")
+    const bHasError = !matches[idxB]?.client || (!matches[idxB]?.product && b.TipoServico === "installation")
+    return Number(bHasError) - Number(aHasError)
+  })
+
+  const totalRows = sortedData.length
+  const totalPages = Math.ceil(totalRows / pageSize)
+  const pagedData = sortedData.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   )
 
-  const errorRows = processedData.filter((row) => {
+  const errorRows = sortedData.filter((row) => {
     const idx = row._originalIndex
     const hasClientError = !matches[idx]?.client
     const hasProductError = !matches[idx]?.product && row.TipoServico === "installation"
     return hasClientError || hasProductError
   })
 
-  const totalRows = processedData.length
   const totalErrors = errorRows.length
   const totalOk = totalRows - totalErrors
 

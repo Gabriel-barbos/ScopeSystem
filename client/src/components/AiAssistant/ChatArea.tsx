@@ -21,7 +21,6 @@ interface ChatAreaProps {
   onRetry: () => void
 }
 
-/* ───────────────────────── TYPING INDICATOR ───────────────────────── */
 function TypingIndicator() {
   return (
     <div className="flex justify-start animate-in fade-in slide-in-from-bottom-3 duration-400">
@@ -76,7 +75,6 @@ function TypingIndicator() {
   )
 }
 
-/* ───────────────────────── ERROR MAPPING ───────────────────────── */
 type ErrorConfig = {
   icon: React.ReactNode
   title: string
@@ -154,7 +152,6 @@ function getErrorConfig(error: string): ErrorConfig {
   }
 }
 
-/* ───────────────────────── ERROR CARD ───────────────────────── */
 function ErrorCard({
   error,
   onRetry,
@@ -266,7 +263,6 @@ function ErrorCard({
   )
 }
 
-/* ───────────────────────── SCROLL TO BOTTOM ───────────────────────── */
 function ScrollToBottomButton({
   onClick,
   visible,
@@ -312,7 +308,6 @@ function ScrollToBottomButton({
   )
 }
 
-/* ───────────────────────── MAIN CHAT AREA ───────────────────────── */
 export function ChatArea({
   messages,
   status,
