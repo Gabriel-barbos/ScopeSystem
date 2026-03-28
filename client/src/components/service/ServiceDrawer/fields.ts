@@ -13,6 +13,15 @@ import {
     BookUser,
     LocateFixed,
     Folder,
+    User,
+    Phone,
+    CalendarSearch,
+    Navigation,
+    ShieldQuestion,
+    ClipboardList,
+    Tag,
+    Ticket,
+ 
 } from "lucide-react";
 import { Service } from "@/services/ServiceService";
 
@@ -54,6 +63,7 @@ export const getSourceBadge = (source?: string) => {
             return { label: "Importado", variant: "secondary" as const };
     }
 };
+
 
 
 export const COL_LEFT: FieldDef[] = [
@@ -140,6 +150,68 @@ export const COL_CENTER_RIGHT: FieldDef[] = [
 ];
 
 
+export const COL_SCHEDULE: FieldDef[] = [
+    {
+        icon: User,
+        label: "Responsável",
+        field: "responsible",
+        format: (v) => v || "Não informado",
+    },
+    {
+        icon: Phone,
+        label: "Tel. Responsável",
+        field: "responsiblePhone",
+        format: (v) => v || "Não informado",
+    },
+    {
+        icon: BookUser,
+        label: "Condutor",
+        field: "condutor",
+        format: (v) => v || "Não informado",
+    },
+    {
+        icon: Hash,
+        label: "Número do Pedido",
+        field: "orderNumber",
+        format: (v) => v || "Não informado",
+    },
+    {
+        icon: CalendarSearch,
+        label: "Data do Pedido",
+        field: "orderDate",
+        format: (v) => formatDate(v),
+        editable: false,
+    },
+    {
+        icon: Navigation,
+        label: "Local do Serviço",
+        field: "serviceLocation",
+        format: (v) => v || "Não informado",
+        truncate: true,
+    },
+    {
+        icon: ShieldQuestion,
+        label: "Motivo",
+        field: "reason",
+        format: (v) => v || "Não informado",
+    },
+    {
+        icon: ClipboardList,
+        label: "Situação",
+        field: "situation",
+        format: (v) => v || "Não informado",
+        truncate: true,
+    },
+    {
+        icon: Ticket,
+        label: "Nº Ticket",
+        field: "ticketNumber",
+        format: (v) => v || "Não informado",
+    },
+
+
+];
+
 
 const ALL_COLUMNS = [...COL_LEFT, ...COL_CENTER_LEFT, ...COL_CENTER_RIGHT];
 
@@ -149,10 +221,12 @@ export const EDITABLE_FIELDS = ALL_COLUMNS.filter(
 
 export const EXTRA_EDITABLE_FIELDS: (keyof Service)[] = ["notes"];
 
-
+export const SCHEDULE_EDITABLE_FIELDS: (keyof Service)[] = COL_SCHEDULE
+    .filter((f) => f.editable !== false)
+    .map((f) => f.field);
 
 export function buildTSV(service: Service, notes: string): string {
-    const allFields = [...COL_LEFT, ...COL_CENTER_LEFT, ...COL_CENTER_RIGHT];
+    const allFields = [...COL_LEFT, ...COL_CENTER_LEFT, ...COL_CENTER_RIGHT, ...COL_SCHEDULE];
 
     const headers = [...allFields.map((f) => f.label), "Observações"];
     const values = [

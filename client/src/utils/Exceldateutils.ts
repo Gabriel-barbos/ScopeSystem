@@ -49,4 +49,4 @@ function toISODate(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-export const DATE_FIELDS = new Set(["scheduledDate", "orderDate", "removalDate"])
+export const DATE_FIELDS = new Set(["scheduledDate", "orderDate", "removalDate", "validatedAt"])

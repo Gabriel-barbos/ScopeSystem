@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServiceService, Service } from "@/services/ServiceService";
-import { EDITABLE_FIELDS, EXTRA_EDITABLE_FIELDS, buildTSV } from "./fields";
+import { EDITABLE_FIELDS, EXTRA_EDITABLE_FIELDS, SCHEDULE_EDITABLE_FIELDS, buildTSV } from "./fields";
 
 
 export function useServiceDrawer(service: Service | null, onClose: () => void) {
@@ -40,7 +40,7 @@ export function useServiceDrawer(service: Service | null, onClose: () => void) {
     const handleSave = async () => {
         if (!edited) return;
 
-        const payload = [...EDITABLE_FIELDS, ...EXTRA_EDITABLE_FIELDS].reduce(
+        const payload = [...EDITABLE_FIELDS, ...EXTRA_EDITABLE_FIELDS, ...SCHEDULE_EDITABLE_FIELDS].reduce(
             (acc, field) => ({ ...acc, [field]: edited[field] }),
             {} as Partial<Service>
         );

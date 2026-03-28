@@ -51,6 +51,20 @@ export interface Service {
   source: "validation" | "import" | "legacy";
   createdAt?: string;
   updatedAt?: string;
+  // Campos herdados do Schedule
+  orderNumber?: string;
+  orderDate?: string;
+  responsible?: string;
+  responsiblePhone?: string;
+  condutor?: string;
+  situation?: string;
+  serviceLocation?: string;
+  reason?: string;
+  maintenanceRequest?: string;
+  ticketNumber?: string;
+  subject?: string;
+  description?: string;
+  category?: string;
 }
 
 export interface ServicePagination {
@@ -79,23 +93,35 @@ export interface ServiceFilters {
 export interface BulkImportServicePayload {
   plate?: string;
   vin: string;
-  model: string;
+  model?: string;
   serviceType: string;
   client: string;
   product?: string;
-  deviceId: string;
-  technician: string;
+  deviceId?: string;
+  technician?: string;
   provider?: string;
-  installationLocation: string;
-  serviceAddress: string;
+  installationLocation?: string;
+  serviceAddress?: string;
   odometer?: number;
-  blockingEnabled: boolean;
+  blockingEnabled?: boolean;
   protocolNumber?: string;
   validationNotes?: string;
   secondaryDevice?: string;
   validatedBy?: string;
   validatedAt?: string | Date;
   status?: string;
+  // Campos herdados do Schedule
+  orderNumber?: string;
+  orderDate?: string | Date;
+  scheduledDate?: string | Date;
+  responsible?: string;
+  responsiblePhone?: string;
+  condutor?: string;
+  vehicleGroup?: string;
+  situation?: string;
+  serviceLocation?: string;
+  reason?: string;
+  notes?: string;
 }
 
 export const serviceApi = {

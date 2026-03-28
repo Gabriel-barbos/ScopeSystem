@@ -23,8 +23,19 @@ export const SERVICE_IMPORT_COLUMNS: ColumnConfig[] = [
   { header: "Observacoes",          field: "validationNotes",     required: false, aliases: ["Observações"] },
   { header: "Data da Validacao",    field: "validatedAt",         required: false, aliases: ["Data Validação", "Data Validacao"] },
   { header: "Status",               field: "status",              required: false },
-
+  // Campos herdados do Agendamento
+  { header: "NumeroPedido",         field: "orderNumber",         required: false, aliases: ["Número Pedido", "Pedido", "OS"] },
+  { header: "DataPedido",           field: "orderDate",           required: false, aliases: ["Data Pedido", "Data do Pedido"] },
+  { header: "DataAgendamento",      field: "scheduledDate",       required: false, aliases: ["Data Agendamento", "Data Agendada"] },
+  { header: "Responsavel",          field: "responsible",         required: false, aliases: ["Responsável"] },
+  { header: "Condutor",             field: "condutor",            required: false },
+  { header: "GrupoVeiculo",         field: "vehicleGroup",        required: false, aliases: ["Grupo Veículo", "Grupo"] },
+  { header: "Situacao",             field: "situation",           required: false, aliases: ["Situação"] },
+  { header: "LocalServico",         field: "serviceLocation",     required: false, aliases: ["Local Serviço"] },
+  { header: "Motivo",               field: "reason",              required: false },
+  { header: "Observacoes Gerais",   field: "notes",               required: false, aliases: ["Notas"] },
 ]
+
 
 
 export const SERVICE_COLUMN_MAPPING = Object.fromEntries(

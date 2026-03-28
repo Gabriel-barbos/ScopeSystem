@@ -1,6 +1,28 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import API from "@/api/axios";
 
+// Campos mínimos de um Service necessários para exibição na ScheduleTable
+export interface ServiceSummary {
+  _id: string;
+  vin: string;
+  plate?: string;
+  model?: string;
+  client: { _id: string; name: string; image?: string[] };
+  serviceType: string;
+  deviceId?: string;
+  technician?: string;
+  validatedAt?: string;
+  protocolNumber?: string;
+  provider?: string;
+  responsible?: string;
+  product?: { _id: string; name: string };
+  orderDate?: string;
+  orderNumber?: string;
+  source?: string;
+  installationLocation?: string;
+  validationNotes?: string;
+}
+
 interface ClientRef {
   _id: string;
   name: string;
@@ -94,6 +116,19 @@ export interface PaginatedResponse<T> {
   pagination: Pagination;
 }
 
+// Resposta dual: retornada quando a busca é por VIN/placa
+export interface ScheduleVinSearchResponse {
+  schedules: Schedule[];
+  services: ServiceSummary[];
+  pagination: Pagination;
+}
+
+export type ScheduleListResponse = PaginatedResponse<Schedule> | ScheduleVinSearchResponse;
+
+export function isVinSearchResponse(data: ScheduleListResponse): data is ScheduleVinSearchResponse {
+  return 'schedules' in data;
+}
+
 export interface ScheduleQueryParams {
   page?: number;
   limit?: number;
@@ -105,7 +140,7 @@ export interface ScheduleQueryParams {
 }
 
 export const scheduleApi = {
-  getAll: async (params?: ScheduleQueryParams): Promise<PaginatedResponse<Schedule>> => {
+  getAll: async (params?: ScheduleQueryParams): Promise<ScheduleListResponse> => {
     const { data } = await API.get("/schedules", {
       params: {
         page:  params?.page  ?? 1,
@@ -165,8 +200,23 @@ export function useScheduleService(params?: ScheduleQueryParams) {
     enabled: params !== undefined || true,
   });
 
-  const scheduleList = schedules.data?.data ?? [];
-  const pagination   = schedules.data?.pagination;
+  const rawData = schedules.data;
+  let isVinSearch = false;
+  let scheduleList: Schedule[] = [];
+  let vinServices: ServiceSummary[] = [];
+  let pagination: Pagination | undefined;
+
+  if (rawData) {
+    if (isVinSearchResponse(rawData)) {
+      isVinSearch    = true;
+      scheduleList   = rawData.schedules;
+      vinServices    = rawData.services;
+      pagination     = rawData.pagination;
+    } else {
+      scheduleList   = rawData.data;
+      pagination     = rawData.pagination;
+    }
+  }
 
   const createSchedule = useMutation({
     mutationFn: scheduleApi.create,
@@ -198,6 +248,8 @@ export function useScheduleService(params?: ScheduleQueryParams) {
     ...schedules,
     scheduleList,
     pagination,
+    isVinSearch,
+    vinServices,
     createSchedule,
     bulkCreateSchedules,
     bulkUpdateSchedules,
