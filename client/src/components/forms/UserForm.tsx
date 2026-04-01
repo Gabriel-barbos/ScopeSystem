@@ -24,7 +24,7 @@ const createFormSchema = (isEditing: boolean) =>
     password: isEditing
       ? z.string().optional()
       : z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
-    role: z.enum(["administrator", "scheduling", "support", "validation", "billing", "commercial", "CX"], ),
+    role: z.enum(["administrator", "scheduling", "support", "validation", "billing", "commercial", "CX", "lab"], ),
   });
 
 export type UserFormValues = z.infer<ReturnType<typeof createFormSchema>>;
@@ -163,6 +163,7 @@ export function UserForm({ userId, onSuccess, onCancel }: Props) {
                 <SelectItem value="billing">Financeiro</SelectItem>
                 <SelectItem value="commercial">Comercial</SelectItem>
                 <SelectItem value="CX">CX</SelectItem>
+                <SelectItem value="lab">Laboratório</SelectItem>
               </SelectContent>
             </Select>
           )}

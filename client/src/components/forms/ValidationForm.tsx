@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import {
   Wrench, MapPin, User, Gauge, Hash, Loader2, Monitor,
-  CheckCircle2, Shield, MessageSquare, Eye, ChevronsUpDown, Check, Package,KeySquare ,
+  CheckCircle2, Shield, MessageSquare, Eye, ChevronsUpDown, Check, Package, KeySquare, ArrowLeftRight,
 } from "lucide-react";
 import { InputWithIcon } from "@/components/InputWithIcon";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandInput, CommandList, CommandGroup, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/Authcontext";
+import { ChangeResellerModal } from "@/components/ResellerUnits/ChangeResellerModal";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface ProductRef {
   _id: string;
@@ -79,6 +83,7 @@ export function ValidationForm({
   });
   const [equipmentIdError, setEquipmentIdError] = useState<string | null>(null);
   const [openProduct, setOpenProduct] = useState(false);
+  const [resellerModalOpen, setResellerModalOpen] = useState(false);
 
   const updateField = useCallback((field: keyof ValidationFormData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -104,19 +109,48 @@ export function ValidationForm({
 
           {/* ID Equipamento */}
           <Field label="ID Equipamento" required>
-            <InputWithIcon
-              icon={<Wrench className="h-3.5 w-3.5" />}
-              placeholder="Digite o ID"
-              value={formData.equipmentId}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, "").slice(0, 15);
-                updateField("equipmentId", value);
-                setEquipmentIdError(validateEquipmentId(value));
-              }}
-              disabled={isSubmitting}
-              required
-              className="h-9 text-sm"
-            />
+            <div className="flex items-center gap-1.5">
+              <InputWithIcon
+                icon={<Wrench className="h-3.5 w-3.5" />}
+                placeholder="Digite o ID"
+                value={formData.equipmentId}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "").slice(0, 15);
+                  updateField("equipmentId", value);
+                  setEquipmentIdError(validateEquipmentId(value));
+                }}
+                disabled={isSubmitting}
+                required
+                className="h-9 text-sm flex-1"
+              />
+              {formData.equipmentId.length === 15 && (
+                <>
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-9 w-9 shrink-0 text-muted-foreground hover:text-primary hover:border-primary"
+                          onClick={() => setResellerModalOpen(true)}
+                        >
+                          <ArrowLeftRight className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        Solicitar troca de reseller
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <ChangeResellerModal
+                    unitNumber={formData.equipmentId}
+                    open={resellerModalOpen}
+                    onOpenChange={setResellerModalOpen}
+                  />
+                </>
+              )}
+            </div>
             {equipmentIdError && <p className="text-xs text-destructive mt-1">{equipmentIdError}</p>}
           </Field>
 

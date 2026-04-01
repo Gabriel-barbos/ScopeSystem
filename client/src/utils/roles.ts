@@ -6,15 +6,16 @@ export const Roles = {
   BILLING: "billing",
   COMMERCIAL: "commercial",
   CX: "CX",
+  LAB: "lab",
   
 } as const;
 
 export type Role = typeof Roles[keyof typeof Roles];
 
 //  verificar permissões
-export const canAccess = (userRole: Role | undefined, allowedRoles?: Role[] | undefined) => {
+export const canAccess = (userRole: string | undefined, allowedRoles?: Role[] | undefined) => {
   if (!allowedRoles || allowedRoles.length === 0) return true; // sem restrição
-  return !!userRole && allowedRoles.includes(userRole);
+  return !!userRole && (allowedRoles as string[]).includes(userRole);
 };
 
 // <RoleIf roles={[Roles.ADMIN]}>

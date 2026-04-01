@@ -189,7 +189,7 @@ const LoginPage = () => {
       await login(email, password);
       setBtnState('success');
       messageApi.success('Login realizado com sucesso! ufa!');
-      setTimeout(() => navigate('/services'), 1000);
+      setTimeout(() => navigate('/home'), 1000);
     } catch (err: any) {
       setBtnState('error');
       const status = err?.response?.status;

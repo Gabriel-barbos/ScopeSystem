@@ -17,6 +17,7 @@ import {
   UserStar,
   ShoppingBag,
   TimerReset,
+  TestTubeDiagonal, 
 SearchX,
 OctagonX,
 MailWarning 
@@ -46,7 +47,8 @@ export type BackendRole =
   | "scheduling"
   | "billing"
   | "CX"
-  | "commercial";
+  | "commercial"
+  | "lab";
 
 
 
@@ -57,7 +59,8 @@ export type RoleType =
   | "Agendamento"
   | "Financeiro"
   | "Comercial"
-  | "CX";
+  | "CX"
+  | "Laboratório";
   
 
 interface BadgeConfig {
@@ -250,6 +253,12 @@ export const roleConfig: Record<RoleType, BadgeConfig> = {
       "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800",
     icon: ShoppingBag,
   },
+    Laboratório: {
+    label: "Laboratório",
+    className:
+      "bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-300 border-lime-200 dark:border-lime-800",
+    icon: TestTubeDiagonal,
+  },
 };
 
 
@@ -261,6 +270,7 @@ const roleAliasMap: Record<BackendRole, RoleType> = {
   billing: "Financeiro",
   CX: "CX",
   commercial: "Comercial",
+  lab: "Laboratório",
 };
 
 

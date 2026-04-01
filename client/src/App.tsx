@@ -54,7 +54,7 @@ const App = () => (
              <Route
               path="/home"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING,Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING, Roles.CX, Roles.COMMERCIAL]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING,Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING, Roles.CX, Roles.COMMERCIAL, Roles.LAB]}>
                   <Layout>
                     <Home />
                   </Layout>
@@ -143,7 +143,7 @@ const App = () => (
                  <Route
               path="/services"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION, Roles.SCHEDULING, Roles.BILLING, Roles.CX, Roles.COMMERCIAL]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION, Roles.SCHEDULING, Roles.BILLING, Roles.CX, Roles.COMMERCIAL, Roles.LAB]}>
                   <Layout>
                     <Services />
                   </Layout>
@@ -163,7 +163,7 @@ const App = () => (
                    <Route
               path="/ai-assistant"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT,  Roles.SCHEDULING, Roles.CX]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT,  Roles.SCHEDULING, Roles.CX, Roles.LAB]}>
                   <Layout>
                     <AiPage />
                   </Layout>
@@ -174,7 +174,7 @@ const App = () => (
                    <Route
               path="/reseller-units"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT,  Roles.VALIDATION,]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT,  Roles.VALIDATION, Roles.LAB]}>
                   <Layout>
                     <ResellerUnits />
                   </Layout>

@@ -6,6 +6,7 @@ export const roleLabels: Record<string, string> = {
   billing: "Financeiro",
   commercial: "Comercial",
   CX: "CX",
+  lab: "Laboratório",
 };
 
 export function getRoleLabel(role: string = ""): string {

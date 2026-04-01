@@ -191,6 +191,7 @@ function KnowledgePicker({
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null)
   const catRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (mode !== 'conhecimento') return
@@ -208,7 +209,9 @@ function KnowledgePicker({
         catRef.current &&
         !catRef.current.contains(e.target as Node) &&
         buttonRef.current &&
-        !buttonRef.current.contains(e.target as Node)
+        !buttonRef.current.contains(e.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
       ) {
         setCatOpen(false)
       }
@@ -282,6 +285,7 @@ function KnowledgePicker({
         dropdownPos &&
         createPortal(
           <div
+            ref={dropdownRef}
             className="animate-in fade-in slide-in-from-bottom-2 duration-200"
             style={{
               position: 'fixed',
@@ -332,7 +336,8 @@ function KnowledgePicker({
               knowledgeNames.map((name) => (
                 <div
                   key={name}
-                  onClick={() => {
+                  onMouseDown={(e) => {
+                    e.preventDefault()
                     onCategoryChange(name)
                     setCatOpen(false)
                   }}

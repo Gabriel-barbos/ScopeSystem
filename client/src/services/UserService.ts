@@ -1,4 +1,5 @@
 import API from "@/api/axios";
+import type { Role } from "@/utils/roles";
 
 // Interfaces
 export type CreateUserDTO = {
@@ -17,7 +18,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: Role;
 };
 
 const normalizeUser = (u: any): User => ({
