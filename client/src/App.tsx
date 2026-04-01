@@ -24,6 +24,7 @@ import  Removal  from "./pages/Removal";
 import Home from "./pages/Home";
 import ScheduleImportPage from "./pages/ScheduleImportPage";
 import AiPage from "./pages/AiAssistant";
+import ResellerUnits from "./pages/ResellerUnits";
 
 const queryClient = new QueryClient();
 
@@ -42,7 +43,7 @@ const App = () => (
             <Route
               path="/appointments"
               element={
-                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING,]}>
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.CX]}>
                   <Layout>
                     <Appointments />
                   </Layout>
@@ -165,6 +166,17 @@ const App = () => (
                 <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT,  Roles.SCHEDULING, Roles.CX]}>
                   <Layout>
                     <AiPage />
+                  </Layout>
+                </PrivateRoute>
+              }
+            /> 
+
+                   <Route
+              path="/reseller-units"
+              element={
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT,  Roles.VALIDATION,]}>
+                  <Layout>
+                    <ResellerUnits />
                   </Layout>
                 </PrivateRoute>
               }
