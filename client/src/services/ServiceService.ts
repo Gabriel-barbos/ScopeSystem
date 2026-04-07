@@ -90,6 +90,65 @@ export interface ServiceFilters {
   client?: string;
 }
 
+//Bulk Validation
+
+export interface ResolvedVinSchedule {
+  id: string;
+  model: string;
+  plate?: string;
+  client: string;
+  product?: string;
+  serviceType: string;
+  status: string;
+}
+
+export interface ResolvedVinItem {
+  line: number;
+  vin: string;
+  found: boolean;
+  schedule: ResolvedVinSchedule | null;
+}
+
+export interface BulkValidationItem {
+  vin: string;
+  validationData: {
+    deviceId: string | null;
+    technician: string | null;
+    installationLocation: string | null;
+    plate?: string | null;
+    product?: string | null;
+    odometer?: number | null;
+    blockingEnabled?: string | null;
+    protocolNumber?: string | null;
+    validationNotes?: string | null;
+    secondaryDevice?: string | null;
+    validatedBy?: string | null;
+    validatedAt?: string | Date | null;
+  };
+}
+
+export interface BulkValidationPayload {
+  items: BulkValidationItem[];
+}
+
+export interface BulkValidationResultItem {
+  line: number;
+  vin: string;
+  serviceId?: string;
+  reason?: string;
+  error?: string;
+}
+
+export interface BulkValidationResponse {
+  success: boolean;
+  summary: { total: number; created: number; skipped: number; errors: number };
+  created: BulkValidationResultItem[];
+  skipped: BulkValidationResultItem[];
+  errors: BulkValidationResultItem[];
+}
+
+//Bulk Import (legacy)
+
 export interface BulkImportServicePayload {
   plate?: string;
   vin: string;
@@ -152,6 +211,18 @@ export const serviceApi = {
     services: BulkImportServicePayload[]
   ): Promise<{ success: boolean; count: number; message: string }> => {
     const { data } = await API.post("/services/bulk-import", { services });
+    return data;
+  },
+
+  resolveVins: async (vins: string[]): Promise<ResolvedVinItem[]> => {
+    const { data } = await API.post("/services/resolve-vins", { vins });
+    return data;
+  },
+
+  bulkValidation: async (payload: BulkValidationPayload): Promise<BulkValidationResponse> => {
+    const { data } = await API.post("/services/bulk-validation", payload, {
+      validateStatus: (s) => s < 500,
+    });
     return data;
   },
 

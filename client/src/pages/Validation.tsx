@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SearchCheck } from "lucide-react";
+import { SearchCheck, TableProperties } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { useScheduleService, Schedule } from "@/services/ScheduleService";
 import { useServiceService } from "@/services/ServiceService";
 import { productApi } from "@/services/ProductService";
@@ -10,8 +11,10 @@ import { ScheduleDetails } from "@/components/schedule/ScheduleDetails";
 import { ValidationForm, ValidationFormData, ProductRef } from "@/components/forms/ValidationForm";
 import { ValidationSuccessModal } from "@/components/ValidationSucessModal";
 import { EmptyValidationState } from "@/components/EmptyValidationStatus";
+import { BulkValidationModal } from "@/components/validation/BulkValidationModal";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-
+import { Tag } from "antd";
 function mapFormToPayload(formData: ValidationFormData) {
   return {
     plate: formData.plate || undefined,
@@ -34,7 +37,9 @@ function Validation() {
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [products, setProducts] = useState<ProductRef[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false); 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { scheduleList, isLoading } = useScheduleService({
     limit: 1000,
@@ -88,16 +93,23 @@ function Validation() {
     <>
       <Card style={{ height: "auto", minHeight: 0, maxHeight: "none" }}>
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-              <SearchCheck className="h-6 w-6 text-primary" />
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                <SearchCheck className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl">Validação de Instalação</CardTitle>
+                <CardDescription>
+                  Valide e registre os dados de instalação dos equipamentos
+                </CardDescription>
+              </div>
             </div>
-            <div>
-              <CardTitle className="text-2xl">Validação de Instalação</CardTitle>
-              <CardDescription>
-                Valide e registre os dados de instalação dos equipamentos
-              </CardDescription>
-            </div>
+            <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => setBulkOpen(true)}>
+              <TableProperties className="w-4 h-4" />
+              Validar em Lote
+              <Tag color="blue"> Beta</Tag>
+            </Button>
           </div>
         </CardHeader>
 
@@ -131,8 +143,17 @@ function Validation() {
 
       <ValidationSuccessModal
         open={showSuccessModal}
-        onClose={handleCloseSuccessModal}  // ← usa o novo handler
+        onClose={handleCloseSuccessModal}
         onNewValidation={handleNewValidation}
+      />
+
+      <BulkValidationModal
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["schedules"] });
+          queryClient.invalidateQueries({ queryKey: ["services"] });
+        }}
       />
     </>
   );
