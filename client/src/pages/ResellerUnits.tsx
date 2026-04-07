@@ -128,9 +128,10 @@ export default function ResellerUnits() {
   }, [searchQuery, items]);
 
 
-  const handleCopyAll = useCallback(async () => {
-    return resellerUnitsApi.exportUnitNumbers({ status: "pending" });
-  }, []);
+  const handleCopyAll = useCallback(
+    () => resellerUnitsApi.exportUnitNumbers({ status: "pending" }),
+    []
+  );
 
   const handleSubmit = () => {
     if (!parsedIds.length) return;

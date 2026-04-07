@@ -106,9 +106,9 @@ export const resellerUnitsApi = {
     await API.delete(`/reseller-units/${id}`);
   },
 
-  exportUnitNumbers: async (params?: Pick<ListParams, "status" | "old_reseller" | "new_reseller" | "askedBy" | "dateFrom" | "dateTo">): Promise<string[]> => {
+  exportUnitNumbers: async (params?: Pick<ListParams, "status" | "old_reseller" | "new_reseller" | "askedBy" | "dateFrom" | "dateTo">): Promise<Array<{ unit_number: string; old_reseller: string | null; askedBy: string }>> => {
   const { data } = await API.get("/reseller-units/export", { params });
-  return data.data;
+  return data.data as Array<{ unit_number: string; old_reseller: string | null; askedBy: string }>;
 },
 };
 

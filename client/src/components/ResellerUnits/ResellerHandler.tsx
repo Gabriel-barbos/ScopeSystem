@@ -36,7 +36,7 @@ interface ResellerHandlerProps {
   onBulkMarkDone:  (unitNumbers: string[]) => void;
   onPageChange:    (page: number)        => void;
   onLimitChange:   (limit: number)       => void;
-    onCopyAll: () => Promise<string[]>; 
+    onCopyAll: () => Promise<Array<{ unit_number: string; old_reseller: string | null; askedBy: string }>>;
 
 }
 
@@ -130,9 +130,19 @@ const [copyLoading, setCopyLoading] = useState(false);
 
 const handleCopyAll = useCallback(async () => {
   try {
-    setCopyLoading(true);                    
-    const allUnitNumbers = await onCopyAll();
-    const text = allUnitNumbers.join("\n");
+    setCopyLoading(true);
+    const rows = await onCopyAll();
+
+    // Formata como TSV (tab-separated) para colar direto no Excel
+    const header = "ID\tReseller Anterior\tSolicitado por";
+    const body = rows.map((r) =>
+      [
+        r.unit_number,
+        r.old_reseller ?? "",
+        r.askedBy,
+      ].join("\t")
+    );
+    const text = [header, ...body].join("\n");
 
     try {
       await navigator.clipboard.writeText(text);
