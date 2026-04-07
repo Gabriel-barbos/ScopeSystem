@@ -15,6 +15,10 @@ import { BulkValidationModal } from "@/components/validation/BulkValidationModal
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Tag } from "antd";
+import RoleIf from "@/components/RoleIf";
+import { Roles } from "@/utils/roles";
+
+
 function mapFormToPayload(formData: ValidationFormData) {
   return {
     plate: formData.plate || undefined,
@@ -105,11 +109,15 @@ function Validation() {
                 </CardDescription>
               </div>
             </div>
+          
+          <RoleIf roles={[Roles.ADMIN]}>
             <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => setBulkOpen(true)}>
               <TableProperties className="w-4 h-4" />
               Validar em Lote
               <Tag color="blue"> Beta</Tag>
             </Button>
+            </RoleIf>
+            
           </div>
         </CardHeader>
 
