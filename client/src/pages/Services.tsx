@@ -3,13 +3,13 @@ import { CarFront, Search, Eye, SquareUser, FileSpreadsheet, Copy, Check, Search
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { InputWithIcon } from "@/components/InputWithIcon";
+import { InputWithIcon } from "@/components/global/InputWithIcon";
 import { List, Pagination } from "antd";
 import { useServiceService, type Service, type BulkImportServicePayload } from "@/services/ServiceService";
 import ServiceDrawer from "@/components/service/ServiceDrawer";
-import { ImportModal } from "@/components/ImportModal";
+import { ImportModal } from "@/components/global/ImportModal";
 import { toast } from "sonner";
-import RoleIf from "@/components/RoleIf";
+import RoleIf from "@/components/layout/RoleIf";
 import { Roles } from "@/utils/roles";
 import { getServiceConfig } from "@/utils/badges";
 import { SERVICE_IMPORT_COLUMNS } from "@/utils/ServiceImportConfig";

@@ -7,7 +7,7 @@ import Highlighter from "react-highlight-words";
 import { Store } from "lucide-react";
 
 import { Schedule } from "@/services/ScheduleService";
-import { DateRangeFilter } from "../../DataRangeFilter";
+import { DateRangeFilter } from "../../global/DataRangeFilter";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getStatusConfig, getServiceConfig, statusFilterOptions } from "@/utils/badges";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";

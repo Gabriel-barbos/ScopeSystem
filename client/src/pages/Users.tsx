@@ -18,9 +18,9 @@ import { List } from "antd";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
-import { UniversalDrawer } from "@/components/UniversalDrawer";
+import { UniversalDrawer } from "@/components/global/UniversalDrawer";
 import { UserForm } from "@/components/forms/UserForm";
-import { ConfirmModal } from "@/components/ConfirmModal";
+import { ConfirmModal } from "@/components/global/ConfirmModal";
 import { getRoleLabel } from "@/utils/roleMapper";
 import { UserServiceInstance as UserService } from "@/services/UserService";
 

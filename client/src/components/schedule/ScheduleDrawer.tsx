@@ -36,7 +36,7 @@ import { productApi } from "@/services/ProductService";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
-import { ConfirmModal } from "@/components/ConfirmModal";
+import { ConfirmModal } from "@/components/global/ConfirmModal";
 import { ShieldQuestionMark } from "lucide-react";
 
 type ScheduleDrawerProps = {

@@ -9,7 +9,7 @@ import { LoadingOutlined, PlusOutlined } from "@ant-design/icons";
 import { message, Upload } from "antd";
 import type { GetProp, UploadProps } from "antd";
 
-import { InputWithIcon } from "../InputWithIcon";
+import { InputWithIcon } from "../global/InputWithIcon";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

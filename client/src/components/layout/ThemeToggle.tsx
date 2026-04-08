@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatedThemeToggler } from "./ui/animated-theme-toggler";
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 

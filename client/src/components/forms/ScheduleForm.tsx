@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { LoadingOutlined } from "@ant-design/icons";
 
-import { InputWithIcon } from "../InputWithIcon";
+import { InputWithIcon } from "../global/InputWithIcon";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {

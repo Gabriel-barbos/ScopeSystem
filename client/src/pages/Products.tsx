@@ -4,14 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { UniversalDrawer } from "@/components/UniversalDrawer";
+import { UniversalDrawer } from "@/components/global/UniversalDrawer";
 import { ProductForm } from "@/components/forms/ProductForm";
-import { ConfirmModal } from "@/components/ConfirmModal";
+import { ConfirmModal } from "@/components/global/ConfirmModal";
 import { useProductService } from "@/services/ProductService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { List } from "antd";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import RoleIf from "@/components/RoleIf";
+import RoleIf from "@/components/layout/RoleIf";
 import { Roles } from "@/utils/roles";
 
 function CategoryBadge({ category }: { category?: string }) {

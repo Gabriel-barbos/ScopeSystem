@@ -3,7 +3,7 @@ import {
   Wrench, MapPin, User, Gauge, Hash, Loader2, Monitor,
   CheckCircle2, Shield, MessageSquare, Eye, ChevronsUpDown, Check, Package, KeySquare, ArrowLeftRight,
 } from "lucide-react";
-import { InputWithIcon } from "@/components/InputWithIcon";
+import { InputWithIcon } from "@/components/global/InputWithIcon";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";

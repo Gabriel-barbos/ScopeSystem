@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Calendar, House , CarFront ,Cpu, Store,ChartArea,SearchCheck,MailPlus , Users, LogOut, ChevronLeft, ChevronRight,BotMessageSquare, BadgeMinus   } from 'lucide-react';
+import { Calendar, House, CarFront, Cpu, Store, ChartArea, SearchCheck, MailPlus, Users, LogOut, ChevronLeft, ChevronRight, BotMessageSquare, BadgeMinus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from "@/context/Authcontext";
 import { UserCard } from './UserCard';
 import { getRoleLabel } from "@/utils/roleMapper";
 import logo from "@/assets/logo.jpg";
 import { Roles, canAccess, Role } from "@/utils/roles"
-import { ScopeLogo } from '@/components/ScopeLogo';
+import { ScopeLogo } from '@/components/global/ScopeLogo';
 
 const getInitials = (name: string = "") => {
   const parts = name.split(" ");
@@ -24,15 +24,15 @@ const navigation = [
   { name: 'Validação', href: '/validation', icon: SearchCheck, roles: [Roles.ADMIN, Roles.VALIDATION] },
   { name: 'Serviços', href: '/services', icon: CarFront, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING, Roles.CX] },
   { name: 'Solicitações de Manutenção', href: '/maintenance-requests', icon: MailPlus, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.CX] },
-  { name: 'Relatórios', href: '/reports', icon: ChartArea, roles: [Roles.ADMIN, Roles.SUPPORT,Roles.BILLING, Roles.SCHEDULING, Roles.VALIDATION, Roles.CX] },
+  { name: 'Relatórios', href: '/reports', icon: ChartArea, roles: [Roles.ADMIN, Roles.SUPPORT, Roles.BILLING, Roles.SCHEDULING, Roles.VALIDATION, Roles.CX] },
   { name: 'Retirada de Reseller', href: '/reseller-units', icon: BadgeMinus, roles: [Roles.ADMIN, Roles.LAB, Roles.SUPPORT, Roles.VALIDATION] },
   { name: 'Produtos', href: '/products', icon: Cpu, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING, Roles.CX] },
-  { name: 'Clientes', href: '/clients', icon: Store , roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING, Roles.CX] },
+  { name: 'Clientes', href: '/clients', icon: Store, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING, Roles.CX] },
   { name: 'Usuários', href: '/users', icon: Users, roles: [Roles.ADMIN] },
-  { name: 'Cris', href: '/ai-assistant', icon: BotMessageSquare, roles: [Roles.ADMIN,  Roles.SUPPORT, Roles.CX, Roles.LAB] },
+  { name: 'Cris', href: '/ai-assistant', icon: BotMessageSquare, roles: [Roles.ADMIN, Roles.SUPPORT, Roles.CX, Roles.LAB] },
 ];
 
-  // { name: 'Remoção', href: '/removal', icon: BadgeMinus, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT]},   { name: 'Técnicos', href: '/technicians', icon: UserSearch, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.BILLING, Roles.BILLING] }
+// { name: 'Remoção', href: '/removal', icon: BadgeMinus, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT]},   { name: 'Técnicos', href: '/technicians', icon: UserSearch, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.BILLING, Roles.BILLING] }
 
 
 export function Sidebar() {
@@ -40,52 +40,51 @@ export function Sidebar() {
   const { user, logout } = useAuth();
 
   return (
-  <aside
-  className={`flex h-dvh flex-col border-r border-sidebar-border/50 bg-sidebar-background shadow-lg transition-all duration-300 ease-in-out ${
-    isCollapsed ? 'w-20' : 'w-64'
-  }`}
->
-      
+    <aside
+      className={`flex h-dvh flex-col border-r border-sidebar-border/50 bg-sidebar-background shadow-lg transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'
+        }`}
+    >
+
       {/* Logo */}
-    <div className="relative flex h-20 items-center justify-center border-b border-sidebar-border/50 px-3">
-  {!isCollapsed && (
-    <div className="flex h-full w-full items-center justify-center">
-      <img
-        src={logo}
-        alt="Scope System Logo"
-        className="max-h-16 w-auto object-contain"
-      />
-    </div>
-  )}
+      <div className="relative flex h-20 items-center justify-center border-b border-sidebar-border/50 px-3">
+        {!isCollapsed && (
+          <div className="flex h-full w-full items-center justify-center">
+            <img
+              src={logo}
+              alt="Scope System Logo"
+              className="max-h-16 w-auto object-contain"
+            />
+          </div>
+        )}
 
-  {isCollapsed && (
-    <img
-      src={logo}
-      alt="Scope Logo"
-      className="h-10 w-10 object-contain"
-    />
-  )}
+        {isCollapsed && (
+          <img
+            src={logo}
+            alt="Scope Logo"
+            className="h-10 w-10 object-contain"
+          />
+        )}
 
-  <Button
-    variant="ghost"
-    size="icon"
-    onClick={() => setIsCollapsed(!isCollapsed)}
-    className="absolute -right-4 top-6 h-8 w-8 rounded-lg bg-sidebar-background border border-sidebar-border/50 shadow-md hover:bg-sidebar-accent/50 transition-all z-10"
-  >
-    {isCollapsed ? (
-      <ChevronRight className="h-4 w-4" />
-    ) : (
-      <ChevronLeft className="h-4 w-4" />
-    )}
-  </Button>
-</div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="absolute -right-4 top-6 h-8 w-8 rounded-lg bg-sidebar-background border border-sidebar-border/50 shadow-md hover:bg-sidebar-accent/50 transition-all z-10"
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
 
-<nav
-  className="flex-1 overflow-y-auto space-y-1.5 px-3 py-6 sidebar-scroll"
-  aria-label="Main navigation"
->
-          {navigation
-          .filter(item => canAccess(user?.role, item.roles)) 
+      <nav
+        className="flex-1 overflow-y-auto space-y-1.5 px-3 py-6 sidebar-scroll"
+        aria-label="Main navigation"
+      >
+        {navigation
+          .filter(item => canAccess(user?.role, item.roles))
           .map((item) => (
             <NavLink
               key={item.name}
@@ -94,10 +93,9 @@ export function Sidebar() {
               className={({ isActive }) =>
                 `group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 relative 
                 ${isCollapsed ? 'justify-center' : ''} 
-                ${
-                  isActive
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                ${isActive
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
+                  : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
                 }`
               }
               title={isCollapsed ? item.name : undefined}
@@ -118,9 +116,9 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-sidebar-border/50 p-4 space-y-3">
-        <UserCard 
-          name={user?.name || "User"} 
-          role={getRoleLabel(user?.role)} 
+        <UserCard
+          name={user?.name || "User"}
+          role={getRoleLabel(user?.role)}
           initials={getInitials(user?.name)}
           isCollapsed={isCollapsed}
         />

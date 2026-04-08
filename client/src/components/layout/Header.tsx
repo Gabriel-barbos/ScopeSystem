@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "./ThemeToggle";
-import { JarvisButton } from "./JarvisButton";
+import { JarvisButton } from "@/components/global/JarvisButton";
 import { cn } from "@/lib/utils";
 import RoleIf from "./RoleIf";
 import { Roles } from "@/utils/roles";

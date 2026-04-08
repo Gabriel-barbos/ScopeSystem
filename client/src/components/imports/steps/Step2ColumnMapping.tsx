@@ -1,4 +1,4 @@
-import { ColumnMappingPanel } from "@/components/ColumnMappingPanel"
+import { ColumnMappingPanel } from "@/components/schedule/ColumnMappingPanel"
 import {
   CheckCircle2,
   AlertTriangle,

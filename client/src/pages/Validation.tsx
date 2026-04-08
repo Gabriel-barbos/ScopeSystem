@@ -6,16 +6,16 @@ import { Button } from "@/components/ui/button";
 import { useScheduleService, Schedule } from "@/services/ScheduleService";
 import { useServiceService } from "@/services/ServiceService";
 import { productApi } from "@/services/ProductService";
-import { ScheduleAutocomplete } from "@/components/ScheduleAutocomplete";
+import { ScheduleAutocomplete } from "@/components/schedule/ScheduleAutocomplete";
 import { ScheduleDetails } from "@/components/schedule/ScheduleDetails";
 import { ValidationForm, ValidationFormData, ProductRef } from "@/components/forms/ValidationForm";
-import { ValidationSuccessModal } from "@/components/ValidationSucessModal";
-import { EmptyValidationState } from "@/components/EmptyValidationStatus";
+import { ValidationSuccessModal } from "@/components/validation/ValidationSucessModal";
+import { EmptyValidationState } from "@/components/validation/EmptyValidationStatus";
 import { BulkValidationModal } from "@/components/validation/BulkValidationModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Tag } from "antd";
-import RoleIf from "@/components/RoleIf";
+import RoleIf from "@/components/layout/RoleIf";
 import { Roles } from "@/utils/roles";
 
 

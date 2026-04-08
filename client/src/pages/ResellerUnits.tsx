@@ -21,7 +21,7 @@ import {
 import { toast } from "sonner";
 import { ChangeResellerModal } from "@/components/ResellerUnits/ChangeResellerModal";
 import { Roles } from "@/utils/roles";
-import RoleIf from "@/components/RoleIf";
+import RoleIf from "@/components/layout/RoleIf";
 const SummaryCard = ({ icon: Icon, label, value, color }: {
   icon: React.ElementType; label: string; value: number; color: string;
 }) => (

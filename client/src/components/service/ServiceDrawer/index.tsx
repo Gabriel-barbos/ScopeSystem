@@ -32,9 +32,9 @@ import {
 import InfoField from "@/components/global/InfoField";
 import EditableField from "@/components/global/EditableField";
 import { getStatusConfig, getServiceConfig } from "@/utils/badges";
-import { ConfirmModal } from "@/components/ConfirmModal";
+import { ConfirmModal } from "@/components/global/ConfirmModal";
 import { Service } from "@/services/ServiceService";
-import RoleIf from "../../RoleIf";
+import RoleIf from "../../layout/RoleIf";
 import { Roles } from "@/utils/roles";
 import { useAuth } from "@/context/Authcontext";
 import { cn } from "@/lib/utils";

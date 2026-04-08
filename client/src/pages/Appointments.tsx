@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { UniversalDrawer } from "@/components/UniversalDrawer";
+import { UniversalDrawer } from "@/components/global/UniversalDrawer";
 import ScheduleForm from "@/components/forms/ScheduleForm";
 import ScheduleTable from "@/components/schedule/ScheduleTable/ScheduleTable";
 import { useScheduleService } from "@/services/ScheduleService";

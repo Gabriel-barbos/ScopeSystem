@@ -18,9 +18,9 @@ import {
 import { List } from "antd";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { UniversalDrawer } from "@/components/UniversalDrawer";
+import { UniversalDrawer } from "@/components/global/UniversalDrawer";
 import { ClientForm } from "@/components/client/ClientForm";
-import { ConfirmModal } from "@/components/ConfirmModal";
+import { ConfirmModal } from "@/components/global/ConfirmModal";
 import { ClientServiceInstance as ClientService } from "@/services/ClientService";
 import type { Client } from "@/services/ClientService";
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BackgroundGradientAnimation } from '../components/ui/background-gradient-animation';
 import { LayoutTextFlip } from '@/components/ui/layout-text-flip';
-import { InputWithIcon } from '@/components/InputWithIcon';
+import { InputWithIcon } from '@/components/global/InputWithIcon';
 import { Mail, Lock, ArrowRight, CheckCircle2, XCircle, Loader2,ShieldUser} from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useAuth } from "@/context/Authcontext";

@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import API from "@/api/axios";
 
-// Campos mínimos de um Service necessários para exibição na ScheduleTable
 export interface ServiceSummary {
   _id: string;
   vin: string;
@@ -116,7 +115,6 @@ export interface PaginatedResponse<T> {
   pagination: Pagination;
 }
 
-// Resposta dual: retornada quando a busca é por VIN/placa
 export interface ScheduleVinSearchResponse {
   schedules: Schedule[];
   services: ServiceSummary[];

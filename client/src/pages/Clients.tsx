@@ -3,15 +3,15 @@ import { SquareUser, Store, Plus, Search, SquarePen, CirclePlus, CircleUserRound
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { InputWithIcon } from "@/components/InputWithIcon";
-import { UniversalDrawer } from "@/components/UniversalDrawer";
+import { InputWithIcon } from "@/components/global/InputWithIcon";
+import { UniversalDrawer } from "@/components/global/UniversalDrawer";
 import { ClientForm } from "@/components/forms/ClientForm";
-import { ConfirmModal } from "@/components/ConfirmModal";
+import { ConfirmModal } from "@/components/global/ConfirmModal";
 import { useClientService } from "@/services/ClientService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { List } from "antd";
 import { Badge } from "@/components/ui/badge";
-import RoleIf from "@/components/RoleIf";
+import RoleIf from "@/components/layout/RoleIf";
 import { Roles } from "@/utils/roles";
 
 

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-import { InputWithIcon } from "../InputWithIcon";
+import { InputWithIcon } from "../global/InputWithIcon";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {

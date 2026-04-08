@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { InputWithIcon } from "../InputWithIcon";
+import { InputWithIcon } from "../global/InputWithIcon";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
