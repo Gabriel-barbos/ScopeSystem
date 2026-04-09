@@ -2,8 +2,10 @@ import { TopBar } from '../components/AiAssistant/TopBar'
 import { ChatArea } from '../components/AiAssistant/ChatArea'
 import { InputArea } from '../components/AiAssistant/InputArea'
 import { useAiChat } from '../services/aiService'
+import { useAuth } from '@/context/Authcontext'
 
 export default function AiAssistantPage() {
+  const { user } = useAuth()
   const {
     messages,
     status,
@@ -16,7 +18,7 @@ export default function AiAssistantPage() {
     handleModeChange,
     handleSend,
     handleRetry,
-  } = useAiChat()
+  } = useAiChat(user?.name)
 
    return (
     <div className="flex h-full flex-col">  

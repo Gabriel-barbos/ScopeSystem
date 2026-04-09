@@ -74,7 +74,7 @@ export const aiApi = {
   },
 }
 
-export function useAiChat() {
+export function useAiChat(userName?: string | null) {
   const [messages, setMessages] = useState<Message[]>([])
   const [status, setStatus] = useState<ChatStatus>('idle')
   const [mode, setMode] = useState<Mode>('email')
@@ -126,8 +126,10 @@ export function useAiChat() {
 
       setStatus('loading')
 
+      const messageWithUser = userName ? `[${userName}] ${text}` : text
+
       try {
-        const reply = await aiApi.sendMessage({ mode, category, history: messages, message: text })
+        const reply = await aiApi.sendMessage({ mode, category, history: messages, message: messageWithUser })
         setMessages([...updatedHistory, { role: 'model', text: reply, timestamp: new Date() }])
         setStatus('idle')
       } catch (err) {
@@ -136,7 +138,7 @@ export function useAiChat() {
         checkApiStatus() 
       }
     },
-    [messages, mode, category, apiStatus, apiStatusDetail, checkApiStatus]
+    [messages, mode, category, apiStatus, apiStatusDetail, checkApiStatus, userName]
   )
 
   const handleRetry = useCallback(() => {
