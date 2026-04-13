@@ -14,12 +14,22 @@ import {
   Settings,
   BadgeX,
   Loader2,
+  ClipboardList,
+  CalendarClock,
+  TrendingUp,
+  FileBarChart,
+  Info,
 } from "lucide-react";
 
 import { ExportButton } from "@/components/reports/ExportButton";
 import { ClientFilter } from "@/components/reports/ClientFilter";
 import { ReportsDateRangeFilter } from "@/components/reports/ReportsDataRangeFilter";
-import { Statistic } from "antd";
+import { SectionHeader } from "@/components/reports/SectionHeader";
+import { AnimatedSection } from "@/components/reports/AnimatedSection";
+import { AnimatedGrid, AnimatedGridItem } from "@/components/reports/AnimatedGrid";
+import { StatCard } from "@/components/reports/StatCard";
+import { ChartCardSkeleton } from "@/components/reports/ChartCardSkeleton";
+
 import { useState, useMemo, useCallback } from "react";
 import { DateRange } from "react-day-picker";
 import { toast } from "sonner";
@@ -31,13 +41,15 @@ import { BarChartPendingTecnics } from "@/components/charts/BarChartPendingTecni
 import { EvolutionChart } from "@/components/charts/EvolutionChart";
 import { ReportDailyChart, type PeriodType } from "@/components/charts/ReportDailyChart";
 import { getDateRangeFromPeriod } from "@/utils/dateUtils";
-import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
+
+// Config
 const statsConfig = {
-agendamentos: [
-  { key: "instalacoes", title: "Instalações", icon: Wrench,   color: "#1890ff" },
-  { key: "manutencoes", title: "Manutenções", icon: Settings, color: "#722ed1" },
-],
+  agendamentos: [
+    { key: "instalacoes", title: "Instalações", icon: Wrench, color: "#1890ff" },
+    { key: "manutencoes", title: "Manutenções", icon: Settings, color: "#722ed1" },
+  ],
   servicos: [
     { key: "instalacoes", title: "Instalações", icon: Wrench, color: "#1890ff" },
     { key: "manutencoes", title: "Manutenções", icon: Settings, color: "#722ed1" },
@@ -45,26 +57,8 @@ agendamentos: [
   ],
 } as const;
 
-type StatCardProps = {
-  title: string;
-  value: number;
-  icon: React.ElementType;
-  color: string;
-};
 
-const StatCard = ({ title, value, icon: Icon, color }: StatCardProps) => (
-  <Card className="flex items-center gap-4 p-4">
-    <div
-      className="flex h-10 w-10 items-center justify-center rounded-lg"
-      style={{ backgroundColor: `${color}20` }}
-    >
-      <Icon className="h-5 w-5" style={{ color }} />
-    </div>
-    <Statistic title={title} value={value} />
-  </Card>
-);
-
-// Hook customizado para construir os params de report
+//Hook
 function useReportParams(dateRange: DateRange | undefined, clientId: string | null) {
   return useMemo(() => {
     const params: Record<string, string> = {};
@@ -77,7 +71,6 @@ function useReportParams(dateRange: DateRange | undefined, clientId: string | nu
   }, [dateRange, clientId]);
 }
 
-// Hook ReportDaily
 function useReportDailyParams(period: PeriodType, clientId: string | null) {
   return useMemo(() => {
     const { startDate, endDate } = getDateRangeFromPeriod(period);
@@ -91,25 +84,22 @@ function useReportDailyParams(period: PeriodType, clientId: string | null) {
 }
 
 function Reports() {
-  // Filtros da página
   const [dateRange, setDateRange] = useState<DateRange>();
   const [clientId, setClientId] = useState<string | null>(null);
   const [reportPeriod, setReportPeriod] = useState<PeriodType>("today");
 
-  // Params usando hooks customizados
   const reportParams = useReportParams(dateRange, clientId);
   const reportDailyParams = useReportDailyParams(reportPeriod, clientId);
 
-  // Queries
   const { data, isLoading } = useReportService(reportParams);
-  const { data: reportDailyData, isLoading: isLoadingReportDaily } = useReportService(reportDailyParams);
+  const { data: reportDailyData, isLoading: isLoadingReportDaily } =
+    useReportService(reportDailyParams);
 
-  // Handlers
   const handleReportPeriodChange = useCallback((period: PeriodType) => {
     setReportPeriod(period);
   }, []);
 
-   const handleExportSchedules = useCallback(
+  const handleExportSchedules = useCallback(
     async (exportDateRange?: DateRange) => {
       try {
         await reportApi.export("schedules", exportDateRange);
@@ -121,7 +111,7 @@ function Reports() {
     []
   );
 
-    const handleExportServices = useCallback(
+  const handleExportServices = useCallback(
     async (exportDateRange?: DateRange, includeOldData?: boolean) => {
       try {
         await reportApi.export("services", exportDateRange, includeOldData);
@@ -133,35 +123,29 @@ function Reports() {
     []
   );
 
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="flex h-64 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
             <ChartArea className="h-6 w-6 text-primary" />
           </div>
-          <div>
-            <CardTitle className="text-2xl">Relatórios</CardTitle>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2.5">
+              <CardTitle className="text-2xl">Relatórios</CardTitle>
+            </div>
             <CardDescription>
               Visualize os dados da operação em tempo real
             </CardDescription>
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            {isLoading && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            )}
             <ReportsDateRangeFilter value={dateRange} onChange={setDateRange} />
             <ClientFilter value={clientId} onChange={setClientId} />
             <ExportButton
-          onExportSchedules={handleExportSchedules}
+              onExportSchedules={handleExportSchedules}
               onExportServices={handleExportServices}
             />
           </div>
@@ -169,61 +153,125 @@ function Reports() {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Serviços */}
-        <section className="space-y-3">
-          <h3 className="text-lg font-semibold">Serviços</h3>
-          <div className="grid grid-cols-3 gap-4">
-            {statsConfig.servicos.map(({ key, ...props }) => (
-              <StatCard
-                key={key}
-                {...props}
-                value={data?.servicesByType[key as keyof typeof data.servicesByType] ?? 0}
-              />
-            ))}
-          </div>
-        </section>
+      {/* Serviços */}
+<AnimatedSection index={0}>
+  <SectionHeader
+    icon={ClipboardList}
+    color="#1890ff"
+    title="Serviços"
+    description="Total de serviços realizados no período"
+    live
+  />
+  <AnimatedGrid columns={3}>
+    {statsConfig.servicos.map(({ key, ...props }) => (
+      <AnimatedGridItem key={key}>
+        <StatCard
+          {...props}
+          isLoading={isLoading}
+          value={
+            data?.servicesByType[key as keyof typeof data.servicesByType] ?? 0
+          }
+        />
+      </AnimatedGridItem>
+    ))}
+  </AnimatedGrid>
+</AnimatedSection>
 
-        {/* Agendamentos */}
-        <section className="space-y-3">
-          <h3 className="text-lg font-semibold">Pendências - Agendamentos</h3>
-          <div className="grid grid-cols-2 gap-4">
-            {statsConfig.agendamentos.map(({ key, ...props }) => (
-              <StatCard
-                key={key}
-                {...props}
-                value={data?.schedulesByStatus[key as keyof typeof data.schedulesByStatus] ?? 0}
-              />
-            ))}
-          </div>
-        </section>
+{/* Pendências */}
+<AnimatedSection index={1}>
+  <SectionHeader
+    icon={CalendarClock}
+    color="#722ed1"
+    title="Pendências — Agendamentos"
+    description="Agendamentos pendentes por tipo"
+  />
+  <AnimatedGrid columns={2}>
+    {statsConfig.agendamentos.map(({ key, ...props }) => (
+      <AnimatedGridItem key={key}>
+        <StatCard
+          {...props}
+          isLoading={isLoading}
+          value={
+            data?.schedulesByStatus[
+              key as keyof typeof data.schedulesByStatus
+            ] ?? 0
+          }
+        />
+      </AnimatedGridItem>
+    ))}
+  </AnimatedGrid>
+</AnimatedSection>
 
-        {/* Indicadores */}
-        <section className="space-y-3">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <PieChartPending data={data?.pendingByClient ?? []} />
-            <BarChartPendingTecnics data={data?.pendingByProvider ?? []} />
+        {/* Gráficos de Pendências */}
+        <AnimatedSection index={2}>
+          {isLoading ? (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <ChartCardSkeleton />
+              <ChartCardSkeleton />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <PieChartPending data={data?.pendingByClient ?? []} />
+              <BarChartPendingTecnics data={data?.pendingByProvider ?? []} />
+            </div>
+          )}
+        </AnimatedSection>
+
+        {/* Divider / Aviso */}
+        <div className="relative py-2">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-dashed" />
           </div>
-        </section>
-              <Separator />
-              <span className="align-center text-sm text-muted-foreground ">*Os gráficos abaixo não são influenciados pelos filtros</span>
+          <div className="relative flex justify-center">
+            <span className="bg-background px-3 text-xs font-medium uppercase tracking-widest text-muted-foreground/60">
+              Dados históricos
+            </span>
+          </div>
+        </div>
+
+        <Alert
+          variant="default"
+          className="border-blue-200/50 bg-blue-50/50 dark:border-blue-900/50 dark:bg-blue-950/20"
+        >
+          <Info className="h-4 w-4 text-blue-500" />
+          <AlertDescription className="text-sm text-muted-foreground">
+            Os gráficos abaixo exibem dados históricos e não são influenciados
+            pelos filtros de período e cliente.
+          </AlertDescription>
+        </Alert>
+
         {/* Evolução Mensal */}
-        <section className="space-y-3">
-          <h3 className="text-lg font-semibold">Evolução Mensal</h3>
-          <EvolutionChart
-            monthlyData={data?.evolutionByMonth ?? []}
-            dailyData={data?.evolutionByDay ?? {}}
+        <AnimatedSection index={3}>
+          <SectionHeader
+            icon={TrendingUp}
+            color="#13c2c2"
+            title="Evolução Mensal"
+            description="Acompanhe a tendência mês a mês"
           />
-        </section>
+          {isLoading ? (
+            <ChartCardSkeleton />
+          ) : (
+            <EvolutionChart
+              monthlyData={data?.evolutionByMonth ?? []}
+              dailyData={data?.evolutionByDay ?? {}}
+            />
+          )}
+        </AnimatedSection>
 
-        {/* Report Diário */}
-        <section className="space-y-3">
-          <h3 className="text-lg font-semibold">Reporte de Serviços</h3>
+        {/* Reporte Diário */}
+        <AnimatedSection index={4}>
+          <SectionHeader
+            icon={FileBarChart}
+            color="#fa8c16"
+            title="Reporte de Serviços"
+            description="Distribuição de serviços por período"
+          />
           <ReportDailyChart
             data={reportDailyData?.reportDaily}
             isLoading={isLoadingReportDaily}
             onPeriodChange={handleReportPeriodChange}
           />
-        </section>
+        </AnimatedSection>
       </CardContent>
     </Card>
   );
