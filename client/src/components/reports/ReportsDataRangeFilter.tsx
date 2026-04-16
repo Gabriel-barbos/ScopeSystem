@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Popover,
   PopoverContent,
@@ -46,9 +46,27 @@ export function ReportsDateRangeFilter({
 }: ReportsDateRangeFilterProps) {
   const [open, setOpen] = useState(false);
   const [internalRange, setInternalRange] = useState<DateRange | undefined>(value);
+  const [viewport, setViewport] = useState(() => ({
+    width: typeof window === "undefined" ? 0 : window.innerWidth,
+    height: typeof window === "undefined" ? 0 : window.innerHeight,
+  }));
 
   const today = new Date();
   const presets = getPresets(today);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setViewport({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleOpenChange = useCallback((isOpen: boolean) => {
     if (isOpen) {
@@ -94,6 +112,8 @@ export function ReportsDateRangeFilter({
   const buttonLabel = getButtonLabel();
   const hasSelection = internalRange?.from != null;
   const isRangeComplete = internalRange?.from != null && internalRange?.to != null;
+  const useCompactCalendar = viewport.height > 0 && viewport.height <= 820;
+  const useSingleMonth = viewport.width > 0 && viewport.width <= 1180;
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -108,10 +128,15 @@ export function ReportsDateRangeFilter({
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent align="end" className="p-3 w-auto">
-        <div className="flex gap-4">
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        collisionPadding={16}
+        className="w-[min(95vw,900px)] max-h-[calc(100vh-6rem)] overflow-y-auto p-3"
+      >
+        <div className="flex items-start gap-3">
 
-          <div className="flex flex-col gap-1">
+          <div className="flex shrink-0 flex-col gap-1">
             <span className="text-xs font-medium text-muted-foreground mb-2">
               Atalhos
             </span>
@@ -131,15 +156,17 @@ export function ReportsDateRangeFilter({
           <Separator orientation="vertical" />
 
           {/* Calendar */}
-          <div className="flex flex-col">
+          <div className="min-w-0 flex-1">
             <span className="text-xs font-medium text-muted-foreground mb-2">
               Selecione um intervalo
             </span>
             <Calendar
+              className={useCompactCalendar ? "p-2" : undefined}
+              compact={useCompactCalendar}
               mode="range"
               selected={internalRange}
               onSelect={handleCalendarSelect}
-              numberOfMonths={2}
+              numberOfMonths={useSingleMonth ? 1 : 2}
               locale={ptBR}
             />
 
@@ -159,7 +186,7 @@ export function ReportsDateRangeFilter({
             )}
 
             {/* Botões de ação */}
-            <div className="flex justify-end gap-2 mt-3 pt-3 border-t">
+            <div className="sticky bottom-0 mt-3 flex justify-end gap-2 border-t bg-popover/95 pt-3 backdrop-blur supports-[backdrop-filter]:bg-popover/80">
               <Button
                 variant="ghost"
                 size="sm"
