@@ -50,6 +50,24 @@ function RoleBadge({ role }: { role: string }) {
   );
 }
 
+/** Exibe um ou vários badges de role de forma retrocompatível */
+function UserRoleBadges({ user }: { user: any }) {
+  const roles: string[] =
+    Array.isArray(user.roles) && user.roles.length > 0
+      ? user.roles
+      : user.role
+      ? [user.role]
+      : [];
+
+  return (
+    <span className="flex flex-wrap gap-1">
+      {roles.map((r) => (
+        <RoleBadge key={r} role={r} />
+      ))}
+    </span>
+  );
+}
+
 
 export default function Users() {
   const [users, setUsers] = useState<any[]>([]);
@@ -168,7 +186,7 @@ export default function Users() {
                     <span className="text-base font-medium text-foreground">
                       {user.name}
                     </span>
-                <RoleBadge role={user.role} />
+                  <UserRoleBadges user={user} />
                   </div>
                 }
               />

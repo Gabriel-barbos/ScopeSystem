@@ -13,3 +13,9 @@ export function getRoleLabel(role: string = ""): string {
   return roleLabels[role] || "Cargo desconhecido";
 }
 
+/** Retorna os labels de um array de roles separados por vírgula. */
+export function getRoleLabels(roles: string[] = []): string {
+  if (roles.length === 0) return "Cargo desconhecido";
+  return roles.map((r) => roleLabels[r] || r).join(", ");
+}
+

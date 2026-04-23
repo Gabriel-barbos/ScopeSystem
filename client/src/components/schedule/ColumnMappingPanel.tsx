@@ -86,7 +86,7 @@ export function ColumnMappingPanel({
   return (
     <TooltipProvider delayDuration={200}>
       <div className="space-y-4">
-        {/* ── Resumo ────────────────────────────────────────────────────── */}
+        {/* ── Resumo  */}
         <div className="flex items-center gap-3 flex-wrap">
           <Badge variant="outline" className="gap-1.5 border-emerald-500/50 text-emerald-700 dark:text-emerald-400">
             <CheckCircle2 className="w-3 h-3" />

@@ -4,9 +4,9 @@ import { Calendar, House, CarFront, Cpu, Store, ChartArea, SearchCheck, MailPlus
 import { Button } from '@/components/ui/button';
 import { useAuth } from "@/context/Authcontext";
 import { UserCard } from './UserCard';
-import { getRoleLabel } from "@/utils/roleMapper";
+import { getRoleLabels } from "@/utils/roleMapper";
 import logo from "@/assets/logo.jpg";
-import { Roles, canAccess, Role } from "@/utils/roles"
+import { Roles, canAccess } from "@/utils/roles"
 import { ScopeLogo } from '@/components/global/ScopeLogo';
 
 const getInitials = (name: string = "") => {
@@ -84,7 +84,7 @@ export function Sidebar() {
         aria-label="Main navigation"
       >
         {navigation
-          .filter(item => canAccess(user?.role, item.roles))
+          .filter(item => canAccess(user ?? undefined, item.roles))
           .map((item) => (
             <NavLink
               key={item.name}
@@ -118,7 +118,7 @@ export function Sidebar() {
       <div className="border-t border-sidebar-border/50 p-4 space-y-3">
         <UserCard
           name={user?.name || "User"}
-          role={getRoleLabel(user?.role)}
+          role={getRoleLabels(user?.roles && user.roles.length > 0 ? user.roles : user?.role ? [user.role] : [])}
           initials={getInitials(user?.name)}
           isCollapsed={isCollapsed}
         />

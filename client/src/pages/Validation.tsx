@@ -110,7 +110,7 @@ function Validation() {
               </div>
             </div>
           
-          <RoleIf roles={[Roles.ADMIN]}>
+          <RoleIf roles={[Roles.ADMIN, Roles.SCHEDULING]}>
             <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => setBulkOpen(true)}>
               <TableProperties className="w-4 h-4" />
               Validar em Lote

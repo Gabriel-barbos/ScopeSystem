@@ -7,6 +7,7 @@ export type CreateUserDTO = {
   email: string;
   password: string;
   role?: string;
+  roles?: string[];
 };
 
 export type LoginDTO = {
@@ -19,6 +20,7 @@ export type User = {
   name: string;
   email: string;
   role: Role;
+  roles?: string[]; // presente apenas para usuários multi-role
 };
 
 const normalizeUser = (u: any): User => ({
@@ -26,6 +28,7 @@ const normalizeUser = (u: any): User => ({
   name: u.name,
   email: u.email,
   role: u.role,
+  roles: Array.isArray(u.roles) && u.roles.length > 0 ? u.roles : undefined,
 });
 
 const BASE = "/users";

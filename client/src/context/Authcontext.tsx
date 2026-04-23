@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { UserServiceInstance } from "@/services/UserService";
 import type { User } from "@/services/UserService";
-import { Roles } from "@/utils/roles";
+import { hasAnyRole } from "@/utils/roles";
 
 type AuthContextValue = {
   user: User | null;
@@ -51,7 +51,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasRole = (roles?: string[]) => {
     if (!roles || roles.length === 0) return true;
-    return !!user && roles.includes(user.role);
+    if (!user) return false;
+    return hasAnyRole(user, roles);
   };
 
   return (
