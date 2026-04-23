@@ -98,7 +98,7 @@ export function BulkValidationModal({ open, onOpenChange, onSuccess }: Props) {
     try {
       const parsed = await parseValidationSheet(file);
       if (parsed.length === 0) { toast.error("Planilha vazia."); return; }
-      if (parsed.length > 500) { toast.error("Máximo de 200 registros por lote."); return; }
+      if (parsed.length > 500) { toast.error("Máximo de 500 registros por lote."); return; }
 
       const vins = parsed.map((r) => r.vin).filter(Boolean);
       const resolved = await serviceApi.resolveVins(vins);
@@ -199,7 +199,7 @@ export function BulkValidationModal({ open, onOpenChange, onSuccess }: Props) {
                   <p className="mt-3 text-sm font-medium">
                     {loading ? "Processando..." : dragActive ? "Solte aqui" : "Arraste ou clique para enviar"}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">.xlsx ou .xls · máximo 200 registros</p>
+                  <p className="text-xs text-muted-foreground mt-1">.xlsx ou .xls · máximo 500 registros</p>
                 </label>
               </div>
 
