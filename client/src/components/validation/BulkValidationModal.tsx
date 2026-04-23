@@ -98,7 +98,7 @@ export function BulkValidationModal({ open, onOpenChange, onSuccess }: Props) {
     try {
       const parsed = await parseValidationSheet(file);
       if (parsed.length === 0) { toast.error("Planilha vazia."); return; }
-      if (parsed.length > 200) { toast.error("Máximo de 200 registros por lote."); return; }
+      if (parsed.length > 500) { toast.error("Máximo de 200 registros por lote."); return; }
 
       const vins = parsed.map((r) => r.vin).filter(Boolean);
       const resolved = await serviceApi.resolveVins(vins);
