@@ -118,7 +118,7 @@ export interface BulkValidationItem {
     plate?: string | null;
     product?: string | null;
     odometer?: number | null;
-    blockingEnabled?: string | null;
+    blockingEnabled?: boolean | string | null;
     protocolNumber?: string | null;
     validationNotes?: string | null;
     secondaryDevice?: string | null;

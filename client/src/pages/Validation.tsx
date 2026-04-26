@@ -114,7 +114,6 @@ function Validation() {
             <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => setBulkOpen(true)}>
               <TableProperties className="w-4 h-4" />
               Validar em Lote
-              <Tag color="blue"> Beta</Tag>
             </Button>
             </RoleIf>
             

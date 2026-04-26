@@ -1,8 +1,33 @@
 import * as XLSX from "xlsx";
 import type { BulkValidationItem } from "@/services/ServiceService";
+import { cleanString, normalizeVin, normalizePlate } from "@/utils/importHelpers";
+import { parseExcelDate } from "@/utils/Exceldateutils";
 
 export interface ParsedRow extends BulkValidationItem {
   _line: number;
+}
+
+/** Normaliza valores booleanos de planilha (Sim/Não/S/N/Yes/No/1/0) */
+function parseSheetBoolean(value: unknown): boolean | null {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "boolean") return value;
+  const s = String(value).trim().toLowerCase();
+  if (["sim", "s", "true", "1", "yes", "y"].includes(s)) return true;
+  if (["não", "nao", "n", "false", "0", "no"].includes(s)) return false;
+  return null;
+}
+
+/** Normaliza odômetro: remove "km", pontos de milhar, troca vírgula por ponto */
+function parseOdometer(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "number") return value;
+  const cleaned = String(value)
+    .replace(/\s*(km|KM|Km)\s*$/i, "")
+    .replace(/\./g, "")
+    .replace(",", ".")
+    .trim();
+  const num = Number(cleaned);
+  return isNaN(num) ? null : num;
 }
 
 export function parseValidationSheet(file: File): Promise<ParsedRow[]> {
@@ -17,20 +42,20 @@ export function parseValidationSheet(file: File): Promise<ParsedRow[]> {
         resolve(
           rows.map((row, idx): ParsedRow => ({
             _line: idx + 2,
-            vin: row["Chassi"]?.toString().trim() ?? "",
+            vin: normalizeVin(row["Chassi"]),
             validationData: {
-              deviceId:             row["ID Dispositivo"]?.toString().trim()        ?? null,
-              technician:           row["Técnico"]?.toString().trim()               ?? null,
-              installationLocation: row["Local de Instalação"]?.toString().trim()   ?? null,
-              plate:                row["Placa"]?.toString().trim()                 ?? null,
-              product:              row["Produto"]?.toString().trim()               ?? null,
-              odometer:             row["Odômetro"] != null ? Number(row["Odômetro"]) : null,
-              blockingEnabled:      row["Bloqueio Ativo"]?.toString()               ?? null,
-              protocolNumber:       row["Nº Protocolo"]?.toString().trim()          ?? null,
-              validationNotes:      row["Notas de Validação"]?.toString().trim()    ?? null,
-              secondaryDevice:      row["Dispositivo Secundário"]?.toString().trim() ?? null,
-              validatedBy:          row["Validado por"]?.toString().trim()          ?? null,
-              validatedAt:          (row["Data de Validação"] as string | Date | null) ?? null,
+              deviceId:             cleanString(row["ID Dispositivo"])             || null,
+              technician:           cleanString(row["Técnico"])                    || null,
+              installationLocation: cleanString(row["Local de Instalação"])        || null,
+              plate:                normalizePlate(row["Placa"])                   || null,
+              product:              cleanString(row["Produto"])                    || null,
+              odometer:             parseOdometer(row["Odômetro"]),
+              blockingEnabled:      parseSheetBoolean(row["Bloqueio Ativo"]),
+              protocolNumber:       cleanString(row["Nº Protocolo"])              || null,
+              validationNotes:      cleanString(row["Notas de Validação"])         || null,
+              secondaryDevice:      cleanString(row["Dispositivo Secundário"])     || null,
+              validatedBy:          cleanString(row["Validado por"])               || null,
+              validatedAt:          parseExcelDate(row["Data de Validação"])       ?? null,
             },
           }))
         );
