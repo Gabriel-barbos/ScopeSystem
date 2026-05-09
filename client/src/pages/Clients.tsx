@@ -13,7 +13,9 @@ import { List } from "antd";
 import { Badge } from "@/components/ui/badge";
 import RoleIf from "@/components/layout/RoleIf";
 import { Roles } from "@/utils/roles";
-
+import { useNavigate } from "react-router-dom";
+import { EXPERIMENTAL_CLIENT_DETAIL } from "@/config/experimental";
+import { ArrowRight } from "lucide-react";
 
 type ClientType = "Cliente" | "subCliente";
 type ActiveTab = "all" | ClientType;
@@ -41,6 +43,7 @@ function getTypeBadgeClass(type?: string): string {
 export default function Clients() {
   const { data: clients, isLoading } = useClientService();
   const { deleteClient } = useClientService();
+  const navigate = useNavigate();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
@@ -170,34 +173,57 @@ export default function Clients() {
               renderItem={(client) => (
                 <List.Item
                   key={client._id}
-                  className="rounded-lg px-2 transition-colors hover:bg-muted/40"
+                  className={`rounded-lg px-2 transition-colors ${EXPERIMENTAL_CLIENT_DETAIL ? 'hover:bg-muted/60 cursor-pointer' : 'hover:bg-muted/40'}`}
+                  onClick={() => EXPERIMENTAL_CLIENT_DETAIL ? navigate(`/clients/${client._id}`) : undefined}
                   actions={[
-                    <RoleIf
-                      key="actions"
-                      roles={[Roles.ADMIN, Roles.SUPPORT, Roles.COMMERCIAL, Roles.CX]}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEdit(client._id)}
-                          className="gap-1.5"
-                        >
-                          <Pen className="h-3.5 w-3.5" />
-                          Editar
-                        </Button>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                          onClick={() => setDeleteClientId(client._id)}
-                        >
-                          <Trash className="h-3.5 w-3.5" />
-                          Excluir
-                        </Button>
-                      </div>
-                    </RoleIf>,
+                    EXPERIMENTAL_CLIENT_DETAIL ? (
+                      <Button
+                        key="view"
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/clients/${client._id}`);
+                        }}
+                      >
+                        Ver mais
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Button>
+                    ) : (
+                      <RoleIf
+                        key="actions"
+                        roles={[Roles.ADMIN, Roles.SUPPORT, Roles.COMMERCIAL, Roles.CX]}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEdit(client._id);
+                            }}
+                            className="gap-1.5"
+                          >
+                            <Pen className="h-3.5 w-3.5" />
+                            Editar
+                          </Button>
+  
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteClientId(client._id);
+                            }}
+                          >
+                            <Trash className="h-3.5 w-3.5" />
+                            Excluir
+                          </Button>
+                        </div>
+                      </RoleIf>
+                    ),
                   ]}
                 >
                   <List.Item.Meta

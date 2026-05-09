@@ -14,7 +14,7 @@ import LoginPage from "./pages/Login";
 import Reports from "./pages/Reports";
 import Validation from "./pages/Validation";
 import Services from "./pages/Services";
-import Technicians from "./pages/Technicians";
+import Technicians from "./pages/Providers";
 import MaintenenceRequests from "./pages/MaintenenceRequests";
 import { AuthProvider } from "@/context/Authcontext";
 import { AntdThemeProvider } from "@/providers/AntdThemeProvider";
@@ -25,7 +25,9 @@ import Home from "./pages/Home";
 import ScheduleImportPage from "./pages/ScheduleImportPage";
 import AiPage from "./pages/AiAssistant";
 import ResellerUnits from "./pages/ResellerUnits";
-
+import ClientDetail from "./pages/ClientDetail";
+import Billing from "./pages/Billing";
+import Providers from "./pages/Providers";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -95,6 +97,27 @@ const App = () => (
               }
             />  
 
+            <Route
+              path="/clients/:id"
+              element={
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING, Roles.CX, Roles.COMMERCIAL]}>
+                  <Layout>
+                    <ClientDetail />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/billing"
+              element={
+                <PrivateRoute roles={[Roles.ADMIN, Roles.BILLING, Roles.COMMERCIAL]}>
+                  <Layout>
+                    <Billing />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
                <Route
               path="/removal"
               element={
@@ -151,11 +174,11 @@ const App = () => (
               }
             />
                    <Route
-              path="/technicians"
+              path="/providers"
               element={
                 <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION, Roles.SCHEDULING, Roles.BILLING]}>
                   <Layout>
-                    <Technicians />
+                    <Providers />
                   </Layout>
                 </PrivateRoute>
               }

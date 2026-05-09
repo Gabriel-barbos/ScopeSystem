@@ -3,6 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { roleConfig, type RoleType } from "@/utils/badges"; 
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface NoticeCardProps {
   title: string;
@@ -53,7 +55,7 @@ export function NoticeCard({ title, description, createdAt, roles, priority, cla
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
           <CalendarDays className="h-3.5 w-3.5" />
-          <span>{createdAt}</span>
+          <span>{format(new Date(createdAt), "dd 'de' MMM, HH:mm", { locale: ptBR })}</span>
         </div>
 
         {/* Avatar group — ícone e cor vindos direto do roleConfig */}

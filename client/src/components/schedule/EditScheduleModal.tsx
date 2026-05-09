@@ -12,6 +12,8 @@ import { useProductService } from "@/services/ProductService"
 import { findBestMatch } from "@/utils/Matchutils"
 import { SCHEDULE_IMPORT_COLUMNS } from "@/utils/ScheduleImportconfig"
 import { parseExcelDate, formatDateBR, DATE_FIELDS } from "@/utils/Exceldateutils"
+import { normalizeServiceType } from "@/utils/importHelpers"
+import { toast } from "sonner"
 
 
 interface MatchedRow {
@@ -198,6 +200,21 @@ export function EditScheduleModal({
     }))
 
   const handleUpdate = async () => {
+    // Validação de Manutenção
+    const invalidRow = rows.find((row) => {
+      const normalizedSvc = normalizeServiceType(row.payload.serviceType);
+      const isMaintenance = normalizedSvc === "maintenance";
+      if (isMaintenance && (!row.payload.reason || String(row.payload.reason).trim() === "")) return true;
+      return false;
+    });
+
+    if (invalidRow) {
+      toast.error("Motivo Obrigatório", {
+        description: "Para agendamentos de Manutenção, o campo 'Motivo' deve estar preenchido na planilha.",
+      });
+      return;
+    }
+
     setLoading(true)
     try {
       await onUpdate(buildPayload())

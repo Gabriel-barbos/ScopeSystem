@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Calendar, House, CarFront, Cpu, Store, ChartArea, SearchCheck, MailPlus, Users, LogOut, ChevronLeft, ChevronRight, BotMessageSquare, BadgeMinus } from 'lucide-react';
+import { Calendar, House, CarFront, Cpu, Store, ChartArea, SearchCheck, MailPlus, Users, LogOut, ChevronLeft, ChevronRight, BotMessageSquare, BadgeMinus, Receipt, ShieldUser } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from "@/context/Authcontext";
 import { UserCard } from './UserCard';
@@ -33,6 +33,8 @@ const navigation = [
 ];
 
 // { name: 'Remoção', href: '/removal', icon: BadgeMinus, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT]},   { name: 'Técnicos', href: '/technicians', icon: UserSearch, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.BILLING, Roles.BILLING] }
+//   { name: 'Prestadores', href: '/providers', icon: ShieldUser, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.BILLING, Roles.BILLING] },
+//    { name: 'Faturamento', href: '/billing', icon: Receipt, roles: [Roles.ADMIN, Roles.BILLING, Roles.COMMERCIAL] },
 
 
 export function Sidebar() {

@@ -1,0 +1,126 @@
+/* ── Service Table ──────────────────────────────────────────────────────── */
+
+.service-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid hsl(var(--border));
+  flex-wrap: wrap;
+}
+
+.service-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.service-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Search input customizado ─────────────────────────────────────────── */
+
+.service-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 300px;
+}
+
+.service-search-icon {
+  position: absolute;
+  left: 11px;
+  height: 15px;
+  width: 15px;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.service-search-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 32px 0 34px;
+  border-radius: 8px;
+  border: 1.5px solid hsl(var(--border));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.service-search-input::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+.service-search-input:focus {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
+}
+
+.service-search-input:focus + .service-search-icon,
+.service-search-wrapper:focus-within .service-search-icon {
+  color: hsl(var(--primary));
+}
+
+.service-search-clear {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  border: none;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.service-search-clear:hover {
+  background: hsl(var(--destructive) / 0.15);
+  color: hsl(var(--destructive));
+}
+
+/* ── Ant Table theming ─────────────────────────────────────────────────── */
+
+.service-table .ant-table {
+  background: transparent;
+}
+
+.service-table .ant-table-thead > tr > th {
+  background: hsl(var(--muted) / 0.5);
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.service-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+  transition: background 0.15s;
+}
+
+.service-table .ant-table-tbody > tr:hover > td {
+  background: hsl(var(--accent) / 0.3) !important;
+  cursor: pointer;
+}
+
+.service-table .ant-pagination {
+  padding: 16px;
+  margin: 0;
+  border-top: 1px solid hsl(var(--border));
+}

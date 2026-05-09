@@ -79,6 +79,14 @@ const FormSchema = z.object({
   createdBy: z.string().optional(),
   orderDate: z.string().min(2, "Data do pedido é obrigatória"),
   reason: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.serviceType === "maintenance" && (!data.reason || data.reason.trim() === "")) {
+    ctx.addIssue({
+      path: ["reason"],
+      code: z.ZodIssueCode.custom,
+      message: "Motivo é obrigatório para manutenção",
+    });
+  }
 });
 
 export type ScheduleFormValues = z.infer<typeof FormSchema>;
@@ -571,13 +579,13 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
           </div>
 
              <div className="space-y-1">
-          <Label>Motivo</Label>
+          <Label>Motivo <span className="text-red-500">*</span></Label>
           <Controller
             name="reason"
             control={control}
             render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger>
+                <SelectTrigger className={cn(errors.reason && "border-red-500")}>
                   <SelectValue placeholder="Selecione o motivo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -598,6 +606,9 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
               </Select>
             )}
           />
+          {errors.reason && (
+            <p className="text-xs text-red-500">{errors.reason.message}</p>
+          )}
         </div>
         </div>
       )}

@@ -84,10 +84,15 @@ export interface ServiceListResponse {
 export interface ServiceFilters {
   page?: number;
   limit?: number;
-  search?: string;
-  status?: string;
-  serviceType?: string;
+  // filtros server-side por coluna
   client?: string;
+  vin?: string;
+  deviceId?: string;
+  serviceType?: string;
+  validatedAtStart?: string;
+  validatedAtEnd?: string;
+  // busca global (placa / chassi / device — param legado)
+  search?: string;
 }
 
 //Bulk Validation
@@ -186,12 +191,15 @@ export interface BulkImportServicePayload {
 export const serviceApi = {
   getAll: async (filters: ServiceFilters = {}): Promise<ServiceListResponse> => {
     const params = new URLSearchParams();
-    if (filters.page)        params.set("page",        String(filters.page));
-    if (filters.limit)       params.set("limit",       String(filters.limit));
-    if (filters.search)      params.set("search",      filters.search);
-    if (filters.status)      params.set("status",      filters.status);
-    if (filters.serviceType) params.set("serviceType", filters.serviceType);
-    if (filters.client)      params.set("client",      filters.client);
+    if (filters.page)             params.set("page",             String(filters.page));
+    if (filters.limit)            params.set("limit",            String(filters.limit));
+    if (filters.client)           params.set("client",           filters.client);
+    if (filters.vin)              params.set("vin",              filters.vin);
+    if (filters.deviceId)         params.set("deviceId",         filters.deviceId);
+    if (filters.serviceType)      params.set("serviceType",      filters.serviceType);
+    if (filters.validatedAtStart) params.set("validatedAtStart", filters.validatedAtStart);
+    if (filters.validatedAtEnd)   params.set("validatedAtEnd",   filters.validatedAtEnd);
+    if (filters.search)           params.set("search",           filters.search);
 
     const { data } = await API.get(`/services?${params.toString()}`);
     return data;

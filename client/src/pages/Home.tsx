@@ -8,7 +8,22 @@ import type { RoleType } from "@/utils/badges";
 
 // Dados de exemplo
 const NOTICES: { id: number; title: string; description: string; createdAt: string; priority: "low" | "medium" | "high"; roles: RoleType[] }[] = [
-
+  {
+    id: 1,
+    title: "Manutenção programada no sistema",
+    description: "O sistema passará por uma manutenção preventiva no próximo domingo das 02:00 às 04:00. Algumas funcionalidades podem ficar indisponíveis durante este período.",
+    createdAt: new Date().toISOString(),
+    priority: "high",
+    roles: ["Administrador", "Suporte"]
+  },
+  {
+    id: 2,
+    title: "Novo fluxo de agendamento disponível",
+    description: "Agora é possível selecionar múltiplos técnicos para o mesmo serviço, facilitando a gestão de equipes em campo.",
+    createdAt: new Date().toISOString(),
+    priority: "medium",
+    roles: ["Agendamento", "Validação"]
+  }
 ];
 
 export default function Home() {

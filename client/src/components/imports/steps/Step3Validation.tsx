@@ -33,6 +33,7 @@ import {
   cleanRow,
   normalizeVin,
   findDuplicateIndexes,
+  normalizeReason,
 } from "@/utils/importHelpers"
 
 
@@ -108,6 +109,20 @@ function validateRow(
       errors.push({ rowIndex, field: "vin", message: `Chassi inválido (${vin.length}/17 dígitos)` })
     else if (duplicateRowIndexes.has(rowIndex))
       errors.push({ rowIndex, field: "vin", message: "Chassi duplicado na planilha" })
+  }
+
+  const serviceTypeVal = getVal(row, "serviceType", fieldToCol)
+  const isMaintenance = String(serviceTypeVal || "").trim().toLowerCase().includes("manuten")
+  if (isMaintenance) {
+    const reasonVal = getVal(row, "reason", fieldToCol)
+    if (!reasonVal || String(reasonVal).trim() === "") {
+      errors.push({ rowIndex, field: "reason", message: `"Motivo" é obrigatório para Manutenção` })
+    } else {
+      const normalizedReason = normalizeReason(reasonVal)
+      if (!normalizedReason) {
+        errors.push({ rowIndex, field: "reason", message: `Motivo inválido ou não reconhecido` })
+      }
+    }
   }
 
   return errors
@@ -511,7 +526,15 @@ export function Step3Validation({
                                       cellError && "text-amber-600 dark:text-amber-400 font-medium"
                                     )}
                                   >
-                                    {row[col] ?? <span className="text-muted-foreground/50 italic">—</span>}
+                                    {row[col] ? (
+                                      row[col]
+                                    ) : cellError ? (
+                                      <span className="text-amber-600 dark:text-amber-400 italic font-bold">
+                                        [{cellError.field === "reason" ? "Falta Motivo" : "Obrigatório"}]
+                                      </span>
+                                    ) : (
+                                      <span className="text-muted-foreground/50 italic">—</span>
+                                    )}
                                   </span>
                                 </TooltipTrigger>
                                 {cellError && (
