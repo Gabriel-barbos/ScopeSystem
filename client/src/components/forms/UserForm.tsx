@@ -119,7 +119,7 @@ export function UserForm({ userId, onSuccess, onCancel }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 p-2">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 p-2 max-h-[75vh] overflow-y-auto">
 
       {/* Nome */}
       <div className="space-y-1">
