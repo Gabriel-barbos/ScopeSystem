@@ -103,6 +103,26 @@ export interface BulkUpdatePayload {
   vehicleGroup?: string;
 }
 
+export interface BulkUpdateError {
+  line?: number;
+  row?: number;
+  vin?: string;
+  chassi?: string;
+  field?: string;
+  message?: string;
+  error?: string;
+}
+
+export interface BulkUpdateResponse {
+  success: boolean;
+  count?: number;
+  updated?: number;
+  failed?: number;
+  message: string;
+  errors?: BulkUpdateError[];
+  details?: string[];
+}
+
 export interface Pagination {
   total: number;
   page: number;
@@ -172,7 +192,7 @@ export const scheduleApi = {
 
   bulkUpdate: async (
     schedules: BulkUpdatePayload[]
-  ): Promise<{ errors: any; success: boolean; count: number; message: string }> => {
+  ): Promise<BulkUpdateResponse> => {
     const { data } = await API.put("/schedules/bulk", { schedules });
     return data;
   },

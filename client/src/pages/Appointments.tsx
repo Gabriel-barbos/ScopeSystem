@@ -6,11 +6,61 @@ import { Button } from "@/components/ui/button";
 import { UniversalDrawer } from "@/components/global/UniversalDrawer";
 import ScheduleForm from "@/components/forms/ScheduleForm";
 import ScheduleTable from "@/components/schedule/ScheduleTable/ScheduleTable";
-import { useScheduleService } from "@/services/ScheduleService";
+import { useScheduleService, type BulkUpdateError, type BulkUpdatePayload, type BulkUpdateResponse } from "@/services/ScheduleService";
 import { useAuth } from "@/context/Authcontext";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EditScheduleModal } from "@/components/schedule/EditScheduleModal";
+
+interface ApiErrorLike {
+  response?: {
+    data?: {
+      errors?: unknown;
+      error?: unknown;
+      message?: unknown;
+      details?: unknown;
+    };
+  };
+  message?: string;
+}
+
+function formatBulkUpdateError(error: unknown) {
+  const apiError = error as ApiErrorLike;
+  const data = apiError?.response?.data;
+  const rawErrors = data?.details ?? data?.errors ?? data?.error ?? data?.message ?? apiError?.message;
+  const errors = Array.isArray(rawErrors) ? rawErrors : [rawErrors];
+
+  return errors
+    .filter(Boolean)
+    .map((item) => {
+      if (typeof item === "string") return item;
+      const detail = item as Record<string, unknown>;
+      const line = detail.row ?? detail.line ?? detail.linha;
+      const vin = detail.vin ?? detail.chassi;
+      const message = detail.message ?? detail.error ?? detail.motivo ?? "Registro inválido";
+      return [line ? `Linha ${line}` : null, vin ? `Chassi ${vin}` : null, message]
+        .filter(Boolean)
+        .join(": ");
+    })
+    .join(", ");
+}
+
+function formatBulkUpdateResultErrors(result: BulkUpdateResponse) {
+  const detailErrors = result.details ?? [];
+  const structuredErrors = (result.errors ?? []).map(formatBulkUpdateErrorItem);
+
+  return [...detailErrors, ...structuredErrors].filter(Boolean);
+}
+
+function formatBulkUpdateErrorItem(item: BulkUpdateError) {
+  const line = item.line ?? item.row;
+  const vin = item.vin ?? item.chassi;
+  const message = item.message ?? item.error ?? "Registro inválido";
+
+  return [line ? `Linha ${line}` : null, vin ? `Chassi ${vin}` : null, message]
+    .filter(Boolean)
+    .join(": ");
+}
 
 export default function Appointments() {
   const navigate = useNavigate()
@@ -26,18 +76,26 @@ export default function Appointments() {
     setIsDrawerOpen(true);
   }
 
-  const handleBulkUpdate = async (data: Record<string, any>[]) => {
+  const handleBulkUpdate = async (data: BulkUpdatePayload[]) => {
     try {
       const result = await bulkUpdateSchedules.mutateAsync(data);
-      toast.success(result.message);
-      if (result.errors?.length > 0) {
-        toast.warning("Alguns registros apresentaram erros", {
-          description: result.errors.slice(0, 3).join(", "),
+
+      if (result.failed && result.failed > 0) {
+        const updated = result.updated ?? result.count ?? 0;
+        const errors = formatBulkUpdateResultErrors(result);
+
+        toast.warning(`${updated} agendamento(s) atualizado(s), ${result.failed} com erro`, {
+          description: errors.slice(0, 3).join(", "),
         });
+        return result;
       }
-    } catch (error: any) {
+
+      toast.success(result.message);
+      return result;
+    } catch (error: unknown) {
+      const description = formatBulkUpdateError(error);
       toast.error("Erro ao modificar agendamentos", {
-        description: error.response?.data?.error || error.message,
+        description: description || "Verifique os dados da planilha e tente novamente.",
       });
       throw error;
     }

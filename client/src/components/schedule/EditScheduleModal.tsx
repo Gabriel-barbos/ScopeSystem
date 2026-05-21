@@ -2,6 +2,7 @@ import { useState, useMemo } from "react"
 import * as XLSX from "xlsx"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Upload, Download, FileSpreadsheet, CheckCircle2, AlertCircle } from "lucide-react"
 import {
   Select, SelectContent, SelectItem, SelectTrigger,
@@ -14,10 +15,11 @@ import { SCHEDULE_IMPORT_COLUMNS } from "@/utils/ScheduleImportconfig"
 import { parseExcelDate, formatDateBR, DATE_FIELDS } from "@/utils/Exceldateutils"
 import { normalizeServiceType } from "@/utils/importHelpers"
 import { toast } from "sonner"
+import type { BulkUpdateError, BulkUpdatePayload, BulkUpdateResponse } from "@/services/ScheduleService"
 
 
 interface MatchedRow {
-  payload: Record<string, any>
+  payload: Record<string, unknown>
   clientId?: string
   clientName?: string
   productId?: string
@@ -31,12 +33,65 @@ interface EditScheduleModalProps {
   onOpenChange: (open: boolean) => void
   templateUrl: string
   templateName: string
-  onUpdate: (data: Record<string, any>[]) => Promise<void>
+  onUpdate: (data: BulkUpdatePayload[]) => Promise<BulkUpdateResponse>
+}
+
+interface ApiErrorLike {
+  response?: {
+    data?: {
+      errors?: unknown
+      error?: unknown
+      message?: unknown
+      details?: unknown
+    }
+  }
+  message?: string
 }
 
 
 function normalizeKey(str: string) {
   return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+}
+
+function normalizeVin(value: unknown) {
+  return String(value ?? "").trim().toUpperCase().replace(/\s+/g, "")
+}
+
+function extractSubmitErrors(error: unknown) {
+  const apiError = error as ApiErrorLike
+  const data = apiError?.response?.data
+  const rawErrors = data?.details ?? data?.errors ?? data?.error ?? data?.message ?? apiError?.message
+  const errors = Array.isArray(rawErrors) ? rawErrors : [rawErrors]
+
+  return errors
+    .filter(Boolean)
+    .map((item) => {
+      if (typeof item === "string") return item
+      const detail = item as Record<string, unknown>
+      const line = detail.row ?? detail.line ?? detail.linha
+      const vin = detail.vin ?? detail.chassi
+      const message = detail.message ?? detail.error ?? detail.motivo ?? "Registro inválido"
+      return [line ? `Linha ${line}` : null, vin ? `Chassi ${vin}` : null, message]
+        .filter(Boolean)
+        .join(": ")
+    })
+}
+
+function formatBulkUpdateErrors(result: BulkUpdateResponse) {
+  const detailErrors = result.details ?? []
+  const structuredErrors = (result.errors ?? []).map(formatBulkUpdateErrorItem)
+
+  return [...detailErrors, ...structuredErrors].filter(Boolean)
+}
+
+function formatBulkUpdateErrorItem(item: BulkUpdateError) {
+  const line = item.line ?? item.row
+  const vin = item.vin ?? item.chassi
+  const message = item.message ?? item.error ?? "Registro inválido"
+
+  return [line ? `Linha ${line}` : null, vin ? `Chassi ${vin}` : null, message]
+    .filter(Boolean)
+    .join(": ")
 }
 
 const COLUMN_MAPPING: Record<string, string> = Object.fromEntries(
@@ -103,17 +158,18 @@ export function EditScheduleModal({
   const [dragActive, setDragActive] = useState(false)
   const [fileName, setFileName] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
+  const [submitErrors, setSubmitErrors] = useState<string[]>([])
   const ITEMS_PER_PAGE = 20
 
   const { data: clientsRaw } = useClientService()
   const { data: productsRaw } = useProductService()
 
   const clients: { _id: string; name: string }[] = useMemo(
-    () => (clientsRaw as any) ?? [],
+    () => (clientsRaw ?? []) as { _id: string; name: string }[],
     [clientsRaw]
   )
   const products: { _id: string; name: string }[] = useMemo(
-    () => (productsRaw as any) ?? [],
+    () => (productsRaw ?? []) as { _id: string; name: string }[],
     [productsRaw]
   )
 
@@ -121,15 +177,16 @@ export function EditScheduleModal({
   const handleFileUpload = (file: File) => {
     if (!file) return
     setFileName(file.name)
+    setSubmitErrors([])
 
     const reader = new FileReader()
     reader.onload = (event) => {
       const wb = XLSX.read(event.target?.result, { type: "binary" })
       const ws = wb.Sheets[wb.SheetNames[0]]
-      const jsonData = XLSX.utils.sheet_to_json(ws) as Record<string, any>[]
+      const jsonData = XLSX.utils.sheet_to_json(ws) as Record<string, unknown>[]
 
       const parsed: MatchedRow[] = jsonData.map((row) => {
-        const payload: Record<string, any> = {}
+        const payload: Record<string, unknown> = {}
         let rawClient: string | undefined
         let rawProduct: string | undefined
 
@@ -170,6 +227,7 @@ export function EditScheduleModal({
 
 
   const handleClientChange = (rowIndex: number, clientId: string) => {
+    setSubmitErrors([])
     const client = clients.find((c) => c._id === clientId)
     setRows((prev) =>
       prev.map((r, i) =>
@@ -181,6 +239,7 @@ export function EditScheduleModal({
   }
 
   const handleProductChange = (rowIndex: number, productId: string) => {
+    setSubmitErrors([])
     const product = products.find((p) => p._id === productId)
     setRows((prev) =>
       prev.map((r, i) =>
@@ -195,11 +254,51 @@ export function EditScheduleModal({
   const buildPayload = () =>
     rows.map(({ payload, clientId, productId }) => ({
       ...payload,
+      vin: normalizeVin(payload.vin),
       ...(clientId ? { client: clientId } : {}),
       ...(productId ? { product: productId } : {}),
     }))
 
+  const validateRows = () => {
+    const errors: string[] = []
+    const vins = new Map<string, number>()
+
+    rows.forEach((row, index) => {
+      const line = index + 2
+      const vin = normalizeVin(row.payload.vin)
+
+      if (!vin) {
+        errors.push(`Linha ${line}: chassi ausente.`)
+        return
+      }
+
+      if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) {
+        errors.push(`Linha ${line}: chassi "${vin}" inválido. Use 17 caracteres sem I, O ou Q.`)
+      }
+
+      const firstLine = vins.get(vin)
+      if (firstLine) {
+        errors.push(`Linha ${line}: chassi "${vin}" duplicado na planilha. Primeira ocorrência na linha ${firstLine}.`)
+      } else {
+        vins.set(vin, line)
+      }
+    })
+
+    return errors
+  }
+
   const handleUpdate = async () => {
+    setSubmitErrors([])
+
+    const validationErrors = validateRows()
+    if (validationErrors.length > 0) {
+      setSubmitErrors(validationErrors)
+      toast.error("Revise os chassis da planilha", {
+        description: validationErrors[0],
+      })
+      return
+    }
+
     // Validação de Manutenção
     const invalidRow = rows.find((row) => {
       const normalizedSvc = normalizeServiceType(row.payload.serviceType);
@@ -217,8 +316,18 @@ export function EditScheduleModal({
 
     setLoading(true)
     try {
-      await onUpdate(buildPayload())
+      const result = await onUpdate(buildPayload())
+      const hasFailures = Boolean(result.failed && result.failed > 0) || Boolean(result.errors?.length) || Boolean(result.details?.length)
+
+      if (hasFailures) {
+        setSubmitErrors(formatBulkUpdateErrors(result))
+        return
+      }
+
       handleClose()
+    } catch (error: unknown) {
+      const errors = extractSubmitErrors(error)
+      setSubmitErrors(errors.length ? errors : ["Não foi possível modificar os agendamentos."])
     } finally {
       setLoading(false)
     }
@@ -244,6 +353,7 @@ export function EditScheduleModal({
     setRows([])
     setFileName("")
     setCurrentPage(1)
+    setSubmitErrors([])
   }
 
   const handleDownloadTemplate = async () => {
@@ -295,6 +405,25 @@ export function EditScheduleModal({
                   <p className="text-xs text-emerald-600 dark:text-emerald-400">{fileName}</p>
                 </div>
               </div>
+
+              {submitErrors.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Não foi possível modificar todos os agendamentos</AlertTitle>
+                  <AlertDescription>
+                    <ul className="mt-2 max-h-32 space-y-1 overflow-y-auto text-xs">
+                      {submitErrors.slice(0, 8).map((error, index) => (
+                        <li key={`${error}-${index}`}>{error}</li>
+                      ))}
+                    </ul>
+                    {submitErrors.length > 8 && (
+                      <p className="mt-2 text-xs">
+                        Mais {submitErrors.length - 8} erro{submitErrors.length - 8 !== 1 ? "s" : ""}. Corrija a planilha e envie novamente.
+                      </p>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
 
               {/* Tabela */}
               <div className="border rounded-lg overflow-hidden">
@@ -370,7 +499,7 @@ export function EditScheduleModal({
 
               <Button
                 variant="ghost" size="sm"
-                onClick={() => { setRows([]); setFileName(""); setCurrentPage(1) }}
+                onClick={() => { setRows([]); setFileName(""); setCurrentPage(1); setSubmitErrors([]) }}
                 className="w-full text-muted-foreground hover:text-foreground"
               >
                 Carregar outro arquivo
