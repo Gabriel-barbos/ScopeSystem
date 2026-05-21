@@ -28,6 +28,7 @@ import ResellerUnits from "./pages/ResellerUnits";
 import ClientDetail from "./pages/ClientDetail";
 import Billing from "./pages/Billing";
 import Providers from "./pages/Providers";
+import ExportReport from "./pages/ExportReport";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -148,6 +149,15 @@ const App = () => (
                   <Layout>
                     <Reports />
                   </Layout>
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/reports/export"
+              element={
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.BILLING, Roles.CX, Roles.COMMERCIAL, Roles.SCHEDULING, Roles.VALIDATION]}>
+                  <Layout><ExportReport /></Layout>
                 </PrivateRoute>
               }
             />

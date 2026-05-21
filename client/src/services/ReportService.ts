@@ -118,6 +118,8 @@ export interface ExportPayload {
   includeOldData?: boolean;
   dateFrom?: string | null;
   dateTo?: string | null;
+  clientIds?: string[];
+  clientId?: string;
 }
 
 
@@ -141,7 +143,8 @@ export const reportApi = {
   export: async (
     type: "schedules" | "services",
     dateRange?: DateRange,
-    includeOldData?: boolean
+    includeOldData?: boolean,
+    clientIds?: string[]
   ) => {
     const { dateFrom, dateTo } = dateRangeToStrings(dateRange);
 
@@ -150,6 +153,7 @@ export const reportApi = {
       includeOldData: type === "services" ? (includeOldData ?? false) : false,
       dateFrom,
       dateTo,
+      clientIds,
     };
 
     const response = await EXPORT_API.post("/reports/export", payload, {
@@ -158,8 +162,9 @@ export const reportApi = {
 
     const timestamp = format(new Date(), "yyyy-MM-dd");
     const suffix = includeOldData ? "-com-legado" : "";
+    const clientSuffix = clientIds && clientIds.length > 0 ? `-clientes-${clientIds.length}` : "";
     const periodSuffix = dateFrom ? `-${dateFrom}-a-${dateTo}` : "";
-    const filename = `${type}-report${suffix}${periodSuffix}-${timestamp}.xlsx`;
+    const filename = `${type}-report${suffix}${clientSuffix}${periodSuffix}-${timestamp}.xlsx`;
 
     const url = URL.createObjectURL(response.data);
     const link = document.createElement("a");

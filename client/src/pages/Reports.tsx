@@ -18,10 +18,11 @@ import {
   CalendarClock,
   TrendingUp,
   FileBarChart,
+  FileDown,
   Info,
 } from "lucide-react";
 
-import { ExportButton } from "@/components/reports/ExportButton";
+import { useNavigate } from "react-router-dom";
 import { ClientFilter } from "@/components/reports/ClientFilter";
 import { ReportsDateRangeFilter } from "@/components/reports/ReportsDataRangeFilter";
 import { SectionHeader } from "@/components/reports/SectionHeader";
@@ -87,6 +88,7 @@ function Reports() {
   const [dateRange, setDateRange] = useState<DateRange>();
   const [clientId, setClientId] = useState<string | null>(null);
   const [reportPeriod, setReportPeriod] = useState<PeriodType>("today");
+  const navigate = useNavigate();
 
   const reportParams = useReportParams(dateRange, clientId);
   const reportDailyParams = useReportDailyParams(reportPeriod, clientId);
@@ -144,10 +146,14 @@ function Reports() {
             )}
             <ReportsDateRangeFilter value={dateRange} onChange={setDateRange} />
             <ClientFilter value={clientId} onChange={setClientId} />
-            <ExportButton
-              onExportSchedules={handleExportSchedules}
-              onExportServices={handleExportServices}
-            />
+            <button
+              type="button"
+              onClick={() => navigate("/reports/export")}
+              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm transition-all hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              Extrair relatórios
+              <FileDown className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </CardHeader>
