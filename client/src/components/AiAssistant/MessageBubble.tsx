@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
 import type { Message } from '../../services/aiService'
 import { WelcomeEmailCards, type EmailData } from './Welcomeemailcards'
+import crisAvatarImg from '../../assets/cris_avatar.png'
 
 function extractEmailsJson(text: string): EmailData[] | null {
   try {
@@ -315,37 +316,23 @@ function AIAvatar() {
         width: '36px',
         height: '36px',
         borderRadius: '10px',
-        background: 'hsl(var(--primary))',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        overflow: 'hidden',
         flexShrink: 0,
         marginTop: '2px',
+        border: '1.5px solid hsl(var(--primary) / 0.35)',
+        boxShadow: '0 0 10px hsl(var(--primary) / 0.2), 0 2px 8px hsl(215 20% 10% / 0.15)',
       }}
     >
-      <svg width="22" height="22" viewBox="0 0 36 36" fill="none">
-        {/* anteninha */}
-        <rect x="15" y="0" width="6" height="8" rx="3" fill="white" fillOpacity="0.9"/>
-        <circle cx="18" cy="0" r="3.5" fill="white" fillOpacity="0.9"/>
-        {/* cabeça */}
-        <rect x="2" y="7" width="32" height="26" rx="8" fill="white" fillOpacity="0.15"/>
-        {/* olhos */}
-        <rect x="7" y="13" width="8" height="8" rx="2.5" fill="white" fillOpacity="0.92"/>
-        <rect x="21" y="13" width="8" height="8" rx="2.5" fill="white" fillOpacity="0.92"/>
-        <circle cx="11" cy="17" r="2.5" fill="hsl(var(--primary))"/>
-        <circle cx="25" cy="17" r="2.5" fill="hsl(var(--primary))"/>
-        {/* sorriso */}
-        <path
-          d="M10 24 Q18 30 26 24"
-          stroke="white"
-          strokeWidth="2"
-          strokeLinecap="round"
-          fill="none"
-          opacity="0.85"
-        />
-        {/* parafusinho */}
-        <circle cx="18" cy="16" r="0" fill="none"/>
-      </svg>
+      <img
+        src={crisAvatarImg}
+        alt="Cris"
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition: 'center top',
+        }}
+      />
     </div>
   )
 }

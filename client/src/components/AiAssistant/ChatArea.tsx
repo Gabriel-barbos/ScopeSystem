@@ -5,13 +5,13 @@ import {
   Users,
   WifiOff,
   RefreshCw,
-  Bot,
   Sparkles,
   ChevronDown,
 } from 'lucide-react'
 import { MessageBubble } from './MessageBubble'
 import { WelcomeScreen } from './WelcomeScreen'
 import type { Message, Mode, ChatStatus } from '../../services/aiService'
+import crisAvatarImg from '../../assets/cris_avatar.png'
 
 interface ChatAreaProps {
   messages: Message[]
@@ -26,19 +26,28 @@ function TypingIndicator() {
     <div className="flex justify-start animate-in fade-in slide-in-from-bottom-3 duration-400">
       <div className="flex items-end gap-2.5">
         <div
-          className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+          className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px]"
           style={{
-            background:
-              'linear-gradient(135deg, hsl(var(--primary)), hsl(217 95% 65%))',
+            overflow: 'hidden',
+            border: '1.5px solid hsl(var(--primary) / 0.35)',
             boxShadow:
-              '0 0 12px hsl(var(--primary) / 0.25), 0 2px 8px hsl(215 20% 10% / 0.15)',
+              '0 0 10px hsl(var(--primary) / 0.25), 0 2px 8px hsl(215 20% 10% / 0.15)',
           }}
         >
-          <Bot className="h-4 w-4 text-white" />
-          <div
-            className="absolute inset-0 rounded-full"
+          <img
+            src={crisAvatarImg}
+            alt="Cris"
             style={{
-              border: '2px solid hsl(var(--primary) / 0.3)',
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center top',
+            }}
+          />
+          <div
+            className="absolute inset-0 rounded-[10px]"
+            style={{
+              border: '1.5px solid hsl(var(--primary) / 0.3)',
               animation: 'typingPulse 2s ease-out infinite',
             }}
           />

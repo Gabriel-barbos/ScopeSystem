@@ -1,5 +1,6 @@
-import { Bot, Sparkles } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import { KnowledgeModal } from '../AiAssistant/KnowledgeModal'
+import crisAvatarImg from '../../assets/cris_avatar.png'
 
 
 
@@ -58,11 +59,23 @@ export function TopBar({ apiStatus = 'checking', apiStatusDetail = 'Verificando 
             title={apiStatusDetail} 
           >
             <div className="relative flex h-8 w-8 items-center justify-center rounded-full
-              bg-gradient-to-br from-accent/80 to-accent/40
-              border border-white/10
+              overflow-hidden
+              border border-white/20
               shadow-inner
-            ">
-              <Bot className="h-[16px] w-[16px] text-accent-foreground" />
+            "
+            style={{
+              boxShadow: '0 0 8px hsl(var(--primary) / 0.3)',
+            }}>
+              <img
+                src={crisAvatarImg}
+                alt="Cris"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center top',
+                }}
+              />
 
               {/* Indicador de Status dinâmico */}
               <span className={`
