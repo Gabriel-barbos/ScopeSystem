@@ -462,7 +462,7 @@ export function WelcomeScreen() {
                 lineHeight: 1.6,
               }}
             >
-              Capitã das Respostas Inteligentes de Suporte — pronta pra te ajudar.
+              Capitão de Respostas Inteligentes de Suporte.
             </p>
           </div>
 
