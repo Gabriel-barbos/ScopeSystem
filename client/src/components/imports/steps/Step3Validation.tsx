@@ -34,7 +34,23 @@ import {
   normalizeVin,
   findDuplicateIndexes,
   normalizeReason,
+  normalizeStatus,
 } from "@/utils/importHelpers"
+
+const VALID_STATUSES: Record<string, string> = {
+  criado:               "Criado",
+  agendado:             "Agendado",
+  concluido:            "Concluído",
+  atrasado:             "Atrasado",
+  cancelado:            "Cancelado",
+  frustrado:            "Frustrado",
+  aguardando_cliente:   "Aguardando Cliente",
+  waiting_address:      "Aguardando Endereço",
+  waiting_responsible:  "Aguardando Responsável",
+  observacao:           "Em Observação",
+}
+
+const VALID_STATUS_LABELS = Object.values(VALID_STATUSES).join(", ")
 
 
 export interface RowError {
@@ -109,6 +125,19 @@ function validateRow(
       errors.push({ rowIndex, field: "vin", message: `Chassi inválido (${vin.length}/17 dígitos)` })
     else if (duplicateRowIndexes.has(rowIndex))
       errors.push({ rowIndex, field: "vin", message: "Chassi duplicado na planilha" })
+  }
+
+  const statusVal = getVal(row, "status", fieldToCol)
+  if (statusVal && String(statusVal).trim() !== "") {
+    const normalized = normalizeStatus(statusVal)
+    const isValid = normalized && Object.keys(VALID_STATUSES).includes(normalized)
+    if (!isValid) {
+      errors.push({
+        rowIndex,
+        field: "status",
+        message: `Status "${statusVal}" inválido. Valores aceitos: ${VALID_STATUS_LABELS}`,
+      })
+    }
   }
 
   const serviceTypeVal = getVal(row, "serviceType", fieldToCol)
