@@ -28,6 +28,7 @@ import ResellerUnits from "./pages/ResellerUnits";
 import ClientDetail from "./pages/ClientDetail";
 import Billing from "./pages/Billing";
 import Providers from "./pages/Providers";
+import ProviderDetail from "./pages/ProviderDetail";
 import ExportReport from "./pages/ExportReport";
 const queryClient = new QueryClient();
 
@@ -189,6 +190,16 @@ const App = () => (
                 <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION, Roles.SCHEDULING, Roles.BILLING]}>
                   <Layout>
                     <Providers />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+                   <Route
+              path="/providers/:id"
+              element={
+                <PrivateRoute roles={[Roles.ADMIN, Roles.SUPPORT, Roles.VALIDATION, Roles.SCHEDULING, Roles.BILLING]}>
+                  <Layout>
+                    <ProviderDetail />
                   </Layout>
                 </PrivateRoute>
               }

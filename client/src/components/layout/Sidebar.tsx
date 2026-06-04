@@ -27,13 +27,13 @@ const navigation = [
   { name: 'Relatórios', href: '/reports', icon: ChartArea, roles: [Roles.ADMIN, Roles.SUPPORT, Roles.BILLING, Roles.SCHEDULING, Roles.VALIDATION, Roles.CX] },
   { name: 'Retirada de Reseller', href: '/reseller-units', icon: BadgeMinus, roles: [Roles.ADMIN, Roles.LAB, Roles.SUPPORT, Roles.VALIDATION] },
   { name: 'Produtos', href: '/products', icon: Cpu, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING, Roles.CX] },
+  { name: 'Prestadores', href: '/providers', icon: ShieldUser, roles: [Roles.ADMIN, Roles.BILLING] },
   { name: 'Clientes', href: '/clients', icon: Store, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT, Roles.VALIDATION, Roles.BILLING, Roles.CX] },
   { name: 'Usuários', href: '/users', icon: Users, roles: [Roles.ADMIN] },
   { name: 'Cris', href: '/ai-assistant', icon: BotMessageSquare, roles: [Roles.ADMIN, Roles.SUPPORT, Roles.CX, Roles.LAB] },
 ];
 
 // { name: 'Remoção', href: '/removal', icon: BadgeMinus, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.SUPPORT]},   { name: 'Técnicos', href: '/technicians', icon: UserSearch, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.BILLING, Roles.BILLING] }
-//   { name: 'Prestadores', href: '/providers', icon: ShieldUser, roles: [Roles.ADMIN, Roles.SCHEDULING, Roles.BILLING, Roles.BILLING] },
 //    { name: 'Faturamento', href: '/billing', icon: Receipt, roles: [Roles.ADMIN, Roles.BILLING, Roles.COMMERCIAL] },
 
 
