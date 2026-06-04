@@ -46,7 +46,7 @@ export interface Schedule {
   client: ClientRef;
   product?: ProductRef;
   status: "criado" | "agendado" | "concluido" | "frustrado" | "cancelado" | "atrasado";
-  provider?: string;
+  provider?: { _id: string; name: string; image?: string | null } | null;
   vehicleGroup?: string;
   responsible?: string;
   responsiblePhone?: string;

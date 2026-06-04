@@ -38,7 +38,11 @@ import RoleIf from "../../layout/RoleIf";
 import { Roles } from "@/utils/roles";
 import { useAuth } from "@/context/Authcontext";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { ChevronsUpDown, UserCog } from "lucide-react";
+import { useProviderService } from "@/services/ProviderService";
 
 import { useServiceDrawer } from "./useServiceDrawer";
 import {
@@ -102,11 +106,13 @@ function FieldColumn({
     service,
     isEditing,
     onUpdate,
+    providers = [],
 }: {
     fields: FieldDef[];
     service: Service;
     isEditing: boolean;
     onUpdate: (field: keyof Service, value: any) => void;
+    providers?: any[];
 }) {
     return (
         <div className="space-y-4">
@@ -130,6 +136,53 @@ function FieldColumn({
                     );
                 }
 
+                if (isEditing && def.field === "provider") {
+                    const selectedProv = typeof raw === "object" && raw ? raw : providers.find((p: any) => p._id === raw);
+                    return (
+                        <div key={def.field} className="flex flex-col gap-1.5 min-w-[200px]">
+                            <label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                <def.icon className="h-3.5 w-3.5" /> {def.label}
+                            </label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className="w-full justify-between h-8 py-1.5 px-3 font-normal text-xs text-left">
+                                        <span className="truncate">
+                                            {selectedProv?.name || "Selecione o prestador"}
+                                        </span>
+                                        <ChevronsUpDown className="h-3.5 w-3.5 opacity-50 shrink-0" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="p-0 w-[220px]" align="start">
+                                    <Command>
+                                        <CommandInput placeholder="Buscar prestador..." className="h-8 text-xs" />
+                                        <CommandList>
+                                            <CommandEmpty className="text-xs p-2">Nenhum prestador encontrado</CommandEmpty>
+                                            <CommandGroup>
+                                                {providers.map((p: any) => (
+                                                    <CommandItem
+                                                        key={p._id}
+                                                        value={p.name}
+                                                        onSelect={() => {
+                                                            onUpdate("provider", p);
+                                                        }}
+                                                        className="text-xs"
+                                                    >
+                                                        <span className="flex-1 truncate">{p.name}</span>
+                                                        <Check className={cn(
+                                                            "h-3 w-3 shrink-0",
+                                                            (typeof raw === "object" && raw?._id === p._id) || raw === p._id ? "opacity-100" : "opacity-0"
+                                                        )} />
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                    );
+                }
+
                 if (isEditing && def.editable !== false) {
                     return (
                         <EditableField
@@ -140,6 +193,32 @@ function FieldColumn({
                             onChange={(value) => onUpdate(def.field, value)}
                             placeholder={def.label}
                         />
+                    );
+                }
+
+                if (!isEditing && def.field === "provider") {
+                    const providerObj = raw as any;
+                    return (
+                        <div key={def.field} className="flex items-center gap-3 cursor-default">
+                            <def.icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <div className="min-w-0">
+                                <span className="text-sm text-muted-foreground block">{def.label}</span>
+                                {providerObj ? (
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        {providerObj.image && (
+                                            <img
+                                                src={providerObj.image}
+                                                alt={providerObj.name}
+                                                className="w-6 h-6 rounded-md object-contain bg-white border border-border shrink-0"
+                                            />
+                                        )}
+                                        <span className="font-medium text-sm truncate">{providerObj.name}</span>
+                                    </div>
+                                ) : (
+                                    <p className="font-medium text-sm text-muted-foreground">Não informado</p>
+                                )}
+                            </div>
+                        </div>
                     );
                 }
 
@@ -260,6 +339,11 @@ function ScheduleFieldGrid({
 const ServiceDrawer = ({ open, onClose, service }: ServiceDrawerProps) => {
     const [activeTab, setActiveTab] = useState<ActiveTab>("service");
     const { user } = useAuth();
+    const { data: providersRaw } = useProviderService();
+    const providers = useMemo(() => {
+        const raw = (providersRaw as any)?.data ?? providersRaw ?? [];
+        return raw as { _id: string; name: string; image: string | null }[];
+    }, [providersRaw]);
 
     const canEditSchedule =
         user?.role === "administrator" || user?.role === "scheduling";
@@ -405,6 +489,7 @@ const ServiceDrawer = ({ open, onClose, service }: ServiceDrawerProps) => {
                                             service={current}
                                             isEditing={isEditing}
                                             onUpdate={handleUpdate}
+                                            providers={providers}
                                         />
                                         <Separator orientation="vertical" className="h-auto" />
                                         <FieldColumn

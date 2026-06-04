@@ -33,6 +33,7 @@ import EditableField from "@/components/global/EditableField";
 import { ResponsiblePicker } from "@/components/global/ResponsiblePicker";
 import { clientApi } from "@/services/ClientService";
 import { productApi } from "@/services/ProductService";
+import { providerApi } from "@/services/ProviderService";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
@@ -47,6 +48,7 @@ type ScheduleDrawerProps = {
 
 type Client = { _id: string; name: string; image?: string[] };
 type Product = { _id: string; name: string };
+type Provider = { _id: string; name: string; image: string | null };
 
 
 const SERVICE_TYPES: Record<string, string> = {
@@ -91,6 +93,18 @@ const isRemovalService = (t: string) => t === "diagnostic" || t === "reinstallat
 
 const getClientId  = (c: Schedule["client"]) => (typeof c === "string" ? c : c._id);
 const getProductId = (p: Schedule["product"]) => (typeof p === "string" ? p : p?._id);
+const getProviderId = (p: Schedule["provider"]) => {
+  if (!p) return undefined;
+  return typeof p === "string" ? p : p._id;
+};
+const getProviderName = (p: Schedule["provider"]) => {
+  if (!p) return "";
+  return typeof p === "string" ? p : p.name;
+};
+const getProviderImage = (p: Schedule["provider"]) => {
+  if (!p || typeof p === "string") return undefined;
+  return p.image || undefined;
+};
 const getInitials  = (name: string) =>
   name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
 
@@ -126,8 +140,10 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
   const [editedSchedule, setEditedSchedule]   = useState<Schedule | null>(null);
   const [openClient, setOpenClient]           = useState(false);
   const [openProduct, setOpenProduct]         = useState(false);
+  const [openProvider, setOpenProvider]       = useState(false);
   const [clients, setClients]                 = useState<Client[]>([]);
   const [products, setProducts]               = useState<Product[]>([]);
+  const [providers, setProviders]             = useState<Provider[]>([]);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
   const [openCalendar, setOpenCalendar]                     = useState(false);
@@ -163,13 +179,19 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
     setOpenRemovalDateCalendar(false);
     setOpenClient(false);
     setOpenProduct(false);
+    setOpenProvider(false);
   };
 
   const loadData = async () => {
     try {
-      const [c, p] = await Promise.all([clientApi.getAll(), productApi.getAll()]);
+      const [c, p, provs] = await Promise.all([
+        clientApi.getAll(),
+        productApi.getAll(),
+        providerApi.getAll({ limit: 100 })
+      ]);
       setClients(c.data ?? c);
       setProducts(p.data ?? p);
+      setProviders(provs.data ?? provs);
     } catch {
       toast.error("Erro ao carregar dados");
     }
@@ -177,6 +199,7 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
 
   const selectedClient  = clients.find((c) => c._id === getClientId(data.client));
   const selectedProduct = products.find((p) => p._id === getProductId(data.product));
+  const selectedProvider = providers.find((p) => p._id === getProviderId(data.provider));
 
   const clientName = !data.client
     ? "Cliente Desconhecido"
@@ -216,7 +239,7 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
         plate:           editedSchedule.plate,
         vin:             editedSchedule.vin,
         model:           editedSchedule.model,
-        provider:        editedSchedule.provider,
+        provider:        getProviderId(editedSchedule.provider),
         vehicleGroup:    editedSchedule.vehicleGroup,
         client:          getClientId(editedSchedule.client)!,
         serviceType:     editedSchedule.serviceType,
@@ -534,10 +557,93 @@ const ScheduleDrawer = ({ open, onClose, schedule }: ScheduleDrawerProps) => {
                     </div>
                   )}
 
-                  <Field editing={isEditing} icon={UserCog} label="Prestador"
-                    value={data.provider || ""} onChange={(v) => updateField("provider", v)}
-                    placeholder="Nome do prestador"
-                  />
+                  {/* Prestador */}
+                  {isEditing ? (
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <UserCog className="h-3.5 w-3.5" /> Prestador
+                      </label>
+                      <Popover open={openProvider} onOpenChange={setOpenProvider}>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-between h-auto py-1.5">
+                            {selectedProvider ? (
+                              <div className="flex items-center gap-2">
+                                {selectedProvider.image && (
+                                  <Avatar className="h-5 w-5">
+                                    <AvatarImage src={selectedProvider.image} />
+                                    <AvatarFallback className="text-xs">
+                                      {getInitials(selectedProvider.name)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                )}
+                                <span className="text-sm truncate">{selectedProvider.name}</span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">
+                                Selecione o prestador
+                              </span>
+                            )}
+                            <ChevronsUpDown className="h-3.5 w-3.5 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0 w-[240px]" align="start">
+                          <Command>
+                            <CommandInput placeholder="Buscar prestador..." />
+                            <CommandList>
+                              <CommandEmpty>Nenhum prestador encontrado</CommandEmpty>
+                              <CommandGroup>
+                                {providers.map((p) => (
+                                  <CommandItem
+                                    key={p._id}
+                                    value={p.name}
+                                    onSelect={() => {
+                                      updateField("provider", p as any);
+                                      setOpenProvider(false);
+                                    }}
+                                  >
+                                    {p.image && (
+                                      <Avatar className="h-6 w-6 mr-2">
+                                        <AvatarImage src={p.image} />
+                                        <AvatarFallback className="text-xs">
+                                          {getInitials(p.name)}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                    )}
+                                    <span className="flex-1 truncate">{p.name}</span>
+                                    <Check className={cn(
+                                      "h-4 w-4 shrink-0",
+                                      getProviderId(data.provider) === p._id ? "opacity-100" : "opacity-0"
+                                    )} />
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <UserCog className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0">
+                        <span className="text-sm text-muted-foreground block">Prestador</span>
+                        {data.provider ? (
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {getProviderImage(data.provider) && (
+                              <img
+                                src={getProviderImage(data.provider)!}
+                                alt={getProviderName(data.provider)}
+                                className="w-6 h-6 rounded-md object-contain bg-white border border-border shrink-0"
+                              />
+                            )}
+                            <span className="font-medium text-sm truncate">{getProviderName(data.provider)}</span>
+                          </div>
+                        ) : (
+                          <p className="font-medium text-sm text-muted-foreground">Não informado</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   <Field editing={isEditing} icon={Folder} label="Grupo de Veículos"
                     value={data.vehicleGroup || ""} onChange={(v) => updateField("vehicleGroup", v)}
                     placeholder="Nome do grupo"

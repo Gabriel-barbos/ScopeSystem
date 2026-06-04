@@ -52,12 +52,14 @@ import { productApi } from "@/services/ProductService";
 import { scheduleApi, useScheduleService } from "@/services/ScheduleService";
 import type { SchedulePayload } from "@/services/ScheduleService";
 import { clientApi } from "@/services/ClientService";
+import { providerApi } from "@/services/ProviderService";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { useAuth } from "@/context/Authcontext";
 
 type Client = { _id: string; name: string; image?: string };
 type Product = { _id: string; name: string };
+type Provider = { _id: string; name: string; image?: string | null };
 
 const FormSchema = z.object({
   plate: z.string().optional(),
@@ -115,8 +117,10 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
 
   const [openClient, setOpenClient] = useState(false);
   const [openProduct, setOpenProduct] = useState(false);
+  const [openProvider, setOpenProvider] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
 
   const { data: schedule, isLoading } = useQuery({
     queryKey: ["schedule", scheduleId],
@@ -165,12 +169,14 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
   useEffect(() => {
     async function loadData() {
       try {
-        const [clientsRes, productsRes] = await Promise.all([
+        const [clientsRes, productsRes, providersRes] = await Promise.all([
           clientApi.getAll(),
           productApi.getAll(),
+          providerApi.getAll({ limit: 100 }),
         ]);
         setClients(clientsRes.data ?? clientsRes);
         setProducts(productsRes.data ?? productsRes);
+        setProviders(providersRes.data ?? providersRes);
       } catch {
         toast.error("Erro ao carregar dados");
       }
@@ -192,7 +198,7 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
         product: schedule.product?._id,
         status: schedule.status,
         createdBy: schedule.createdBy,
-        provider: schedule.provider,
+        provider: typeof schedule.provider === "object" && schedule.provider ? schedule.provider._id : (schedule.provider || ""),
         vehicleGroup: schedule.vehicleGroup || "",
         serviceAddress: schedule.serviceAddress || "",
         serviceLocation: schedule.serviceLocation || "",
@@ -488,10 +494,50 @@ export default function ScheduleForm({ scheduleId, onSuccess, onCancel }: Props)
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <Label>Prestador</Label>
-            <InputWithIcon
-              icon={<ShieldUser className="h-4 w-4" />}
-              placeholder="Prestador"
-              {...register("provider")}
+            <Controller
+              name="provider"
+              control={control}
+              render={({ field }) => (
+                <Popover open={openProvider} onOpenChange={setOpenProvider}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between font-normal text-left">
+                      <span className="truncate">
+                        {field.value
+                          ? providers.find((p) => p._id === field.value)?.name || field.value
+                          : "Selecione o prestador"}
+                      </span>
+                      <ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0 w-72">
+                    <Command>
+                      <CommandInput placeholder="Buscar prestador..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum prestador encontrado</CommandEmpty>
+                        <CommandGroup>
+                          {providers.map((prov) => (
+                            <CommandItem
+                              key={prov._id}
+                              onSelect={() => {
+                                field.onChange(prov._id);
+                                setOpenProvider(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  field.value === prov._id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {prov.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
             />
           </div>
 

@@ -70,6 +70,11 @@ export function buildSchedulePayload(
         continue
       }
 
+      if (field === "provider") {
+        payload[field] = row["PrestadorName"] ?? value
+        continue
+      }
+
       payload[field] = value
     }
 

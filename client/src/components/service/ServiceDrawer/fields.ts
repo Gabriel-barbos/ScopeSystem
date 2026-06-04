@@ -98,7 +98,7 @@ export const COL_CENTER_LEFT: FieldDef[] = [
         icon: UserCog,
         label: "Prestador",
         field: "provider",
-        format: (v) => v || "Não informado",
+        format: (v) => (typeof v === "object" && v ? v.name : (v || "Não informado")),
     },
     {
         icon: LocateFixed,

@@ -49,6 +49,7 @@ export function mapRowToPayload(row: Record<string, any>): Record<string, any> {
     // Campos de referência usam os IDs já resolvidos pelo PreviewTable
     const raw = field === "client"  ? row["ClienteId"]
               : field === "product" ? row["EquipamentoId"]
+              : field === "provider" ? row["PrestadorName"]
               : row[header]
 
     if (raw === undefined || raw === null || raw === "") continue

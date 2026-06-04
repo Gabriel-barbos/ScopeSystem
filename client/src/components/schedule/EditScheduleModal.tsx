@@ -10,6 +10,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useClientService } from "@/services/ClientService"
 import { useProductService } from "@/services/ProductService"
+import { useProviderService } from "@/services/ProviderService"
 import { findBestMatch } from "@/utils/Matchutils"
 import { SCHEDULE_IMPORT_COLUMNS } from "@/utils/ScheduleImportconfig"
 import { parseExcelDate, formatDateBR, DATE_FIELDS } from "@/utils/Exceldateutils"
@@ -101,7 +102,7 @@ const COLUMN_MAPPING: Record<string, string> = Object.fromEntries(
 )
 
 const PREVIEW_FIELDS = SCHEDULE_IMPORT_COLUMNS.filter(
-  (c) => c.field !== "client" && c.field !== "product"
+  (c) => c.field !== "client" && c.field !== "product" && c.field !== "provider"
 )
 
 
@@ -115,6 +116,9 @@ interface MatchSelectProps {
 }
 
 function MatchSelect({ value, displayName, options, hasMatch, onChange, optional }: MatchSelectProps) {
+  const hasValue = !!displayName && String(displayName).trim() !== ""
+  const isWarning = !hasMatch && hasValue
+
   return (
     <Select value={value ?? ""} onValueChange={onChange}>
       <SelectTrigger
@@ -122,15 +126,15 @@ function MatchSelect({ value, displayName, options, hasMatch, onChange, optional
           "h-8 text-xs min-w-[160px] max-w-[220px]",
           hasMatch
             ? "border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-900/20 dark:border-emerald-600/40"
-            : optional
-              ? "border-border"
-              : "border-amber-500/50 bg-amber-50/50 dark:bg-amber-900/20 dark:border-amber-600/40"
+            : (isWarning || !optional)
+              ? "border-amber-500/50 bg-amber-50/50 dark:bg-amber-900/20 dark:border-amber-600/40"
+              : "border-border"
         )}
       >
         <div className="flex items-center gap-1.5 w-full overflow-hidden">
           {hasMatch ? (
             <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-          ) : !optional ? (
+          ) : (isWarning || !optional) ? (
             <AlertCircle className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
           ) : null}
           <span className="truncate">{displayName || "Selecionar..."}</span>
@@ -163,6 +167,7 @@ export function EditScheduleModal({
 
   const { data: clientsRaw } = useClientService()
   const { data: productsRaw } = useProductService()
+  const { data: providersRaw } = useProviderService()
 
   const clients: { _id: string; name: string }[] = useMemo(
     () => (clientsRaw ?? []) as { _id: string; name: string }[],
@@ -171,6 +176,10 @@ export function EditScheduleModal({
   const products: { _id: string; name: string }[] = useMemo(
     () => (productsRaw ?? []) as { _id: string; name: string }[],
     [productsRaw]
+  )
+  const providers: { _id: string; name: string }[] = useMemo(
+    () => ((providersRaw as any)?.data ?? providersRaw ?? []) as { _id: string; name: string }[],
+    [providersRaw]
   )
 
 
@@ -189,6 +198,7 @@ export function EditScheduleModal({
         const payload: Record<string, unknown> = {}
         let rawClient: string | undefined
         let rawProduct: string | undefined
+        let rawProvider: string | undefined
 
         for (const [excelCol, value] of Object.entries(row)) {
           const field = COLUMN_MAPPING[normalizeKey(excelCol)]
@@ -198,6 +208,8 @@ export function EditScheduleModal({
             rawClient = String(value ?? "")
           } else if (field === "product") {
             rawProduct = String(value ?? "")
+          } else if (field === "provider") {
+            rawProvider = String(value ?? "")
           } else if (DATE_FIELDS.has(field)) {
             payload[field] = parseExcelDate(value) ?? value
           } else {
@@ -207,15 +219,19 @@ export function EditScheduleModal({
 
         const clientMatch = rawClient ? findBestMatch(rawClient, clients) : null
         const productMatch = rawProduct ? findBestMatch(rawProduct, products) : null
+        const providerMatch = rawProvider ? findBestMatch(rawProvider, providers) : null
 
         return {
           payload,
           rawClient,
           rawProduct,
+          rawProvider,
           clientId: clientMatch?.id,
           clientName: clientMatch?.name,
           productId: productMatch?.id,
           productName: productMatch?.name,
+          providerId: providerMatch?.id,
+          providerName: providerMatch?.name,
         }
       })
 
@@ -250,13 +266,26 @@ export function EditScheduleModal({
     )
   }
 
+  const handleProviderChange = (rowIndex: number, providerId: string) => {
+    setSubmitErrors([])
+    const provider = providers.find((p) => p._id === providerId)
+    setRows((prev) =>
+      prev.map((r, i) =>
+        i === rowIndex
+          ? { ...r, providerId: provider?._id, providerName: provider?.name }
+          : r
+      )
+    )
+  }
+
 
   const buildPayload = () =>
-    rows.map(({ payload, clientId, productId }) => ({
+    rows.map(({ payload, clientId, productId, providerName }) => ({
       ...payload,
       vin: normalizeVin(payload.vin),
       ...(clientId ? { client: clientId } : {}),
       ...(productId ? { product: productId } : {}),
+      ...(providerName ? { provider: providerName } : {}),
     }))
 
   const validateRows = () => {
@@ -282,6 +311,10 @@ export function EditScheduleModal({
       } else {
         vins.set(vin, line)
       }
+
+      if (row.rawProvider && !row.providerId) {
+        errors.push(`Linha ${line}: prestador "${row.rawProvider}" não cadastrado ou não reconhecido.`)
+      }
     })
 
     return errors
@@ -293,7 +326,7 @@ export function EditScheduleModal({
     const validationErrors = validateRows()
     if (validationErrors.length > 0) {
       setSubmitErrors(validationErrors)
-      toast.error("Revise os chassis da planilha", {
+      toast.error("Revise os dados da planilha", {
         description: validationErrors[0],
       })
       return
@@ -433,6 +466,7 @@ export function EditScheduleModal({
                       <tr>
                         <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground">Cliente</th>
                         <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground">Produto</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground">Prestador</th>
                         {PREVIEW_FIELDS.map((col) => (
                           <th key={col.field} className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground whitespace-nowrap">
                             {col.header}
@@ -463,6 +497,17 @@ export function EditScheduleModal({
                                 options={products}
                                 hasMatch={!!row.productId}
                                 onChange={(id) => handleProductChange(absoluteIdx, id)}
+                                optional
+                              />
+                            </td>
+                            {/* Prestador */}
+                            <td className="px-3 py-2">
+                              <MatchSelect
+                                value={row.providerId}
+                                displayName={row.providerName ?? row.rawProvider}
+                                options={providers}
+                                hasMatch={!!row.providerId}
+                                onChange={(id) => handleProviderChange(absoluteIdx, id)}
                                 optional
                               />
                             </td>

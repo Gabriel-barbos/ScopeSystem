@@ -41,7 +41,13 @@ export function useServiceDrawer(service: Service | null, onClose: () => void) {
         if (!edited) return;
 
         const payload = [...EDITABLE_FIELDS, ...EXTRA_EDITABLE_FIELDS, ...SCHEDULE_EDITABLE_FIELDS].reduce(
-            (acc, field) => ({ ...acc, [field]: edited[field] }),
+            (acc, field) => {
+                let val = edited[field];
+                if (field === "provider") {
+                    val = typeof val === "object" && val ? val._id : val;
+                }
+                return { ...acc, [field]: val };
+            },
             {} as Partial<Service>
         );
 

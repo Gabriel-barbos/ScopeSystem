@@ -36,7 +36,7 @@ export interface Service {
   product?: { _id: string; name: string };
   client: { _id: string; name: string; image?: string[] };
   deviceId: string;
-  provider?: string;
+  provider?: { _id: string | null; name: string; image?: string | null } | null;
   technician: string;
   installationLocation: string;
   serviceAddress: string;

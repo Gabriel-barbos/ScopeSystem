@@ -27,6 +27,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useClientService } from "@/services/ClientService"
 import { useProductService } from "@/services/ProductService"
+import { useProviderService } from "@/services/ProviderService"
 import { findBestMatch } from "@/utils/Matchutils"
 import { SCHEDULE_IMPORT_COLUMNS } from "@/utils/ScheduleImportconfig"
 import {
@@ -64,6 +65,8 @@ interface MatchState {
   clientName?: string
   productId?: string
   productName?: string
+  providerId?: string
+  providerName?: string
 }
 
 interface Step3ValidationProps {
@@ -154,6 +157,14 @@ function validateRow(
     }
   }
 
+  const providerCol = fieldToCol["provider"]
+  const providerVal = providerCol !== undefined ? row[providerCol] : undefined
+  if (providerVal !== undefined && providerVal !== null && String(providerVal).trim() !== "") {
+    if (!matchState.providerId) {
+      errors.push({ rowIndex, field: "provider", message: "Prestador não encontrado" })
+    }
+  }
+
   return errors
 }
 
@@ -166,9 +177,14 @@ export function Step3Validation({
 }: Step3ValidationProps) {
   const { data: clientsData } = useClientService()
   const { data: productsData } = useProductService()
+  const { data: providersData } = useProviderService()
 
   const clients = useMemo(() => (clientsData as any) ?? [], [clientsData])
   const products = useMemo(() => (productsData as any) ?? [], [productsData])
+  const providers = useMemo(() => {
+    const raw = (providersData as any)?.data ?? providersData ?? []
+    return raw as { _id: string; name: string }[]
+  }, [providersData])
 
   const fieldToCol = useMemo(() => invertMapping(mapping), [mapping])
 
@@ -210,6 +226,7 @@ export function Step3Validation({
 
     const clientCol = fieldToCol["client"]
     const productCol = fieldToCol["product"]
+    const providerCol = fieldToCol["provider"]
 
     matchBufferRef.current = { ...matches }
 
@@ -234,11 +251,17 @@ export function Step3Validation({
           ? { id: prev.productId, name: prev.productName }
           : productCol ? findBestMatch(row[productCol], products) : null
 
+        const provm = prev?.providerId !== undefined
+          ? { id: prev.providerId, name: prev.providerName }
+          : providerCol ? findBestMatch(row[providerCol], providers) : null
+
         matchBufferRef.current[i] = {
           clientId: cm?.id,
           clientName: cm?.name,
           productId: pm?.id,
           productName: pm?.name,
+          providerId: provm?.id,
+          providerName: provm?.name,
         }
       }
 
@@ -259,7 +282,7 @@ export function Step3Validation({
     setTimeout(processChunk, 0)
 
     return () => { abort.cancelled = true }
-  }, [rows, clients, products]) 
+  }, [rows, clients, products, providers]) 
 
   useEffect(() => {
     if (!rows.length || isMatching || progress === 0) return
@@ -271,6 +294,8 @@ export function Step3Validation({
       ...row,
       ClienteId: matches[i]?.clientId,
       EquipamentoId: matches[i]?.productId,
+      PrestadorId: matches[i]?.providerId,
+      PrestadorName: matches[i]?.providerName,
     }))
 
     const allErrors = rows.flatMap((row, i) =>
@@ -302,6 +327,17 @@ export function Step3Validation({
       }))
     },
     [products]
+  )
+
+  const handleProviderChange = useCallback(
+    (rowIndex: number, providerId: string) => {
+      const provider = providers.find((p: any) => p._id === providerId)
+      setMatches((prev) => ({
+        ...prev,
+        [rowIndex]: { ...prev[rowIndex], providerId: provider?._id, providerName: provider?.name },
+      }))
+    },
+    [providers]
   )
 
   const handleDeleteRow = useCallback(
@@ -355,7 +391,7 @@ export function Step3Validation({
   const otherCols = useMemo(
     () =>
       Object.entries(mapping)
-        .filter(([, field]) => field !== "client" && field !== "product")
+        .filter(([, field]) => field !== "client" && field !== "product" && field !== "provider")
         .slice(0, 4)
         .map(([col, field]) => ({ col, field })),
     [mapping]
@@ -379,14 +415,14 @@ export function Step3Validation({
         <div className="text-center space-y-1">
           <h2 className="text-lg font-semibold">Validação e matching</h2>
           <p className="text-sm text-muted-foreground">
-            Verifique o vínculo de cliente e produto. Linhas em amarelo precisam de atenção.
+            Verifique o vínculo de cliente, produto e prestador. Linhas em amarelo precisam de atenção.
           </p>
         </div>
 
         {isMatching && (
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Identificando clientes e produtos…</span>
+              <span>Identificando clientes, produtos e prestadores…</span>
               <span>{progress}%</span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
@@ -464,6 +500,7 @@ export function Step3Validation({
                   <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground w-8">#</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground min-w-[180px]">Cliente</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground min-w-[180px]">Produto</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground min-w-[180px]">Prestador</th>
                   {otherCols.map(({ col }) => (
                     <th key={col} className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground whitespace-nowrap">
                       {col}
@@ -481,6 +518,7 @@ export function Step3Validation({
                   const isEditing = editingRow === i
                   const clientCol = fieldToCol["client"]
                   const productCol = fieldToCol["product"]
+                  const providerCol = fieldToCol["provider"]
 
                   return (
                     <tr
@@ -527,6 +565,17 @@ export function Step3Validation({
                           options={products}
                           hasMatch={!!match.productId}
                           onChange={(id) => handleProductChange(i, id)}
+                          optional
+                        />
+                      </td>
+
+                      <td className="px-3 py-2">
+                        <MatchSelect
+                          value={match.providerId}
+                          displayName={match.providerName ?? (providerCol ? row[providerCol] : "")}
+                          options={providers}
+                          hasMatch={!!match.providerId}
+                          onChange={(id) => handleProviderChange(i, id)}
                           optional
                         />
                       </td>
@@ -659,6 +708,9 @@ interface MatchSelectProps {
 }
 
 function MatchSelect({ value, displayName, options, hasMatch, onChange, optional }: MatchSelectProps) {
+  const hasValue = !!displayName && String(displayName).trim() !== ""
+  const isWarning = !hasMatch && hasValue
+
   return (
     <Select value={value ?? ""} onValueChange={onChange}>
       <SelectTrigger
@@ -666,15 +718,15 @@ function MatchSelect({ value, displayName, options, hasMatch, onChange, optional
           "h-8 text-xs min-w-[160px] max-w-[220px]",
           hasMatch
             ? "border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-900/20 dark:border-emerald-600/40"
-            : optional
-              ? "border-border"
-              : "border-amber-500/50 bg-amber-50/50 dark:bg-amber-900/20 dark:border-amber-600/40"
+            : (isWarning || !optional)
+              ? "border-amber-500/50 bg-amber-50/50 dark:bg-amber-900/20 dark:border-amber-600/40"
+              : "border-border"
         )}
       >
         <div className="flex items-center gap-1.5 w-full overflow-hidden">
           {hasMatch
             ? <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            : !optional && <AlertCircle className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+            : (isWarning || !optional) && <AlertCircle className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
           }
           <span className="truncate">{displayName || "Selecionar..."}</span>
         </div>
